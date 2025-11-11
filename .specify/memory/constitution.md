@@ -1,120 +1,207 @@
-# WatchTower Constitution
+<!--
+Sync Impact Report
+==================
+Version: (new) → 1.0.0
+Change Type: MAJOR (Initial constitution establishment)
+Date: 2025-11-10
+
+Modified Principles:
+  - All principles are new (initial establishment)
+
+Added Sections:
+  - Core Principles (5 principles)
+  - Template Standards
+  - Workflow Discipline
+  - Governance
+
+Removed Sections:
+  - None (initial version)
+
+Templates Validation Status:
+  ✅ .specify/templates/plan-template.md - Aligned with phased planning and constitution check
+  ✅ .specify/templates/spec-template.md - Aligned with specification-first principle
+  ✅ .specify/templates/tasks-template.md - Aligned with independent testing principle
+  ✅ .roo/commands/*.md - Command files reference constitution correctly
+  ⚠️ README.md - Not present; create if needed for project overview
+
+Follow-up TODOs:
+  - None
+
+Notes:
+  - This is the initial ratification of the SpecKit constitution
+  - All principles derive from existing template structure and workflow patterns
+  - Version 1.0.0 establishes baseline governance for the specification workflow toolkit
+-->
+
+# Watchtower Constitution
 
 ## Core Principles
 
-### I. MVVM Architecture Pattern
+### I. Template-Driven Workflow
 
-All UI components MUST follow the Model-View-ViewModel (MVVM) pattern with strict separation of concerns:
+All artifacts MUST follow standardized templates located in `.specify/templates/`. Templates
 
-- **ViewModels**: Handle all business logic, state management, data binding, and user interaction handling
-- **Views**: Handle presentation only (XAML/UI markup), no logic beyond data binding expressions
-- **Models**: Represent data structures and business entities
-- **NO code-behind logic** in Views except initialization; all interaction logic belongs in ViewModels
-- ViewModels must be independently testable without UI dependencies
+provide consistent structure, required sections, and validation checkpoints. Deviations require
 
-**Rationale**: MVVM provides clear separation of concerns, enables comprehensive unit testing of logic without UI dependencies, and follows Avalonia best practices for maintainable cross-platform applications.
+explicit justification in the artifact itself.
 
-### II. Service Layer Architecture
+**Rationale**: Consistency ensures predictability, reduces cognitive load, and enables automated
 
-Business logic MUST be organized into service classes that ViewModels consume:
+validation. Templates encode best practices and prevent documentation drift.
 
-- Services encapsulate reusable business operations
-- Services are injected via dependency injection
-- Services have clear interfaces for testability
-- ViewModels orchestrate services but don't implement complex logic themselves
+### II. Specification First
 
-**Rationale**: Keeps ViewModels thin, promotes code reuse, and maintains single responsibility principle.
+User requirements and business value MUST be captured in technology-agnostic specifications before
 
-### III. Test-First Development
+any technical design or implementation begins. Specifications focus on WHAT users need and WHY,
 
-TDD approach is strongly recommended:
+never HOW to implement.
 
-- Write tests for ViewModels before implementation
-- Tests verify business logic independent of UI
-- Integration tests for service interactions
-- UI tests for critical user workflows
+**Rationale**: Separating requirements from implementation enables better understanding, stakeholder
 
-**Rationale**: Ensures code quality, catches regressions early, and validates the MVVM separation is maintained.
+alignment, and design flexibility. Technical solutions change; user needs persist.
 
-### IV. Dependency Injection
+### III. Phased Planning (NON-NEGOTIABLE)
 
-All dependencies MUST be injected:
+Implementation planning MUST follow sequential phases:
 
-- Services injected into ViewModels via constructor injection
-- ViewModels registered in DI container
-- No static dependencies or service locators
-- Clear dependency graph for testing and maintenance
+- Phase 0: Research & Resolution (resolve all NEEDS CLARIFICATION markers)
+- Phase 1: Design & Contracts (data models, API contracts, quickstart guides)
+- Phase 2: Task Generation (independent, testable task breakdown)
 
-**Rationale**: Enables loose coupling, testability, and maintainability of the application architecture.
+Each phase MUST complete before the next begins. No implementation starts before Phase 2 completes.
 
-## Technology Standards
+**Rationale**: Upfront clarity prevents costly mid-implementation pivots. Each phase validates
 
-### Cross-Platform Native Requirements
+assumptions and builds on solid foundations. Sequential gates ensure quality.
 
-**MANDATORY**: Application MUST run natively on Windows, macOS, and Linux with equal functionality:
+### IV. Independent Testing
 
-- All three platforms are first-class targets
-- Platform-specific rendering optimizations are permitted where beneficial
-- Native look-and-feel per platform is encouraged
-- No platform may be treated as second-tier or unsupported
+User stories MUST be independently testable. Each story MUST:
 
-### Avalonia UI Framework
+- Deliver standalone value (viable as MVP)
+- Be implementable without other stories
+- Have clear acceptance criteria
+- Be verifiable in isolation
 
-**MANDATORY**: Use the latest stable version of Avalonia UI:
+**Rationale**: Independence enables incremental delivery, parallel development, and easy rollback.
 
-- Always use the most recent stable Avalonia release
-- Proactively upgrade to new major/minor versions when released
-- Monitor Avalonia releases and offer to upgrade when updates are available
-- Cross-platform UI framework targeting Windows, macOS, Linux
-- XAML-based declarative UI design
-- Reactive UI patterns with property change notifications
-- Built-in MVVM support with data binding
-- Platform-specific features via conditional rendering where needed
+MVP-focused stories reduce risk and accelerate feedback cycles.
 
-**Rationale**: Latest Avalonia versions provide best performance, bug fixes, new features, and ongoing platform support. Staying current prevents technical debt and ensures access to modern UI capabilities.
+### V. Constitution Compliance
 
-### Development Stack
+All planning artifacts MUST include a Constitution Check section that validates against these
 
-- .NET 10+ for application development (latest LTS or stable)
-- C# as primary programming language (latest language version)
-- Avalonia UI (latest stable version - currently check NuGet for most recent)
-- Dependency injection via built-in DI container
-- xUnit or NUnit for testing framework
+principles. Violations MUST be explicitly justified with:
 
-## Code Quality Standards
+- Why the violation is necessary
+- What simpler alternatives were considered and rejected
+- Impact on project complexity
 
-### Testability Requirements
+**Rationale**: Active compliance verification prevents governance erosion. Justified exceptions
 
-- ViewModels MUST be unit testable without UI dependencies
-- Services MUST have interface abstractions for mocking
-- Minimum 80% code coverage for ViewModels and Services
-- Integration tests for cross-service interactions
+create audit trails and force deliberate complexity decisions.
 
-### Code Organization
+## Template Standards
 
-- Clear folder structure: Models/, ViewModels/, Views/, Services/
-- One class per file with meaningful names
-- Proper namespace organization matching folder structure
-- No circular dependencies between layers
+### Required Template Sections
+
+All templates MUST clearly distinguish:
+
+- **Mandatory sections**: Required for every artifact
+- **Optional sections**: Include only when relevant
+- **Conditional sections**: Required based on feature characteristics
+
+### Placeholder Conventions
+
+Templates use `[ALL_CAPS_IDENTIFIER]` for placeholders. Generated artifacts MUST:
+
+- Replace all placeholders with concrete values
+- Remove example comments after replacement
+- Mark unknown values as `NEEDS CLARIFICATION: specific question`
+- Limit clarification markers to maximum 3 per artifact
+
+### Validation Requirements
+
+Each template MUST specify:
+
+- Success criteria for completion
+- Validation checklist items
+- Dependencies on other artifacts
+- Output file locations and naming conventions
+
+## Workflow Discipline
+
+### Command Execution Order
+
+SpecKit commands MUST execute in dependency order:
+
+1. `/speckit.specify` - Create feature specification
+2. `/speckit.clarify` - Resolve specification ambiguities (optional)
+3. `/speckit.plan` - Generate implementation plan and design artifacts
+4. `/speckit.tasks` - Break down into implementable tasks
+5. `/speckit.implement` - Execute tasks with constitution compliance
+
+### Branch and Directory Structure
+
+Features MUST use numbered branches and spec directories:
+
+- Format: `[###-feature-name]` (e.g., `001-user-auth`)
+- Number assignment: Next available number for that feature short-name
+- Specs directory: `specs/[###-feature-name]/`
+
+### Artifact Dependencies
+
+Generated artifacts form a dependency chain:
+
+```text
+spec.md (user requirements)
+  ↓
+plan.md (technical approach, constitution check)
+  ↓
+research.md (Phase 0), data-model.md, contracts/, quickstart.md (Phase 1)
+  ↓
+tasks.md (Phase 2, implementation breakdown)
+```
+
+Each artifact MUST reference its input artifacts and assume downstream artifacts depend on it.
 
 ## Governance
 
-This constitution supersedes all other development practices and conventions. All features, code reviews, and architectural decisions MUST align with these principles.
+### Amendment Procedure
 
-### Amendment Process
+Constitution amendments require:
 
-- Constitution changes require explicit documentation and rationale
-- Version must be incremented following semantic versioning
-- Major changes require team review and consensus
-- All dependent templates and documentation must be updated
+1. Version increment following semantic versioning (MAJOR.MINOR.PATCH)
+2. Sync Impact Report documenting all changes
+3. Validation of all templates for alignment
+4. Update of dependent artifacts and command files
 
-### Compliance
+### Version Semantics
 
-- All code reviews MUST verify MVVM pattern compliance
-- Architecture violations MUST be rejected in PR reviews
-- Regular audits to ensure ongoing compliance
-- Technical debt related to architecture must be prioritized
-- Cross-platform testing on all three target platforms before releases
-- Avalonia version MUST be kept current with latest stable releases
+- **MAJOR**: Backward incompatible changes (principle removal/redefinition)
+- **MINOR**: New principles, sections, or material expansions
+- **PATCH**: Clarifications, wording improvements, typo fixes
 
-**Version**: 1.1.0 | **Ratified**: 2025-11-24 | **Last Amended**: 2025-11-24
+### Compliance Review
+
+Constitution compliance is verified at:
+
+- Specification creation (via template requirements)
+- Implementation planning (via Constitution Check section)
+- Task generation (via principle-driven categorization)
+- Code review (via governance checklist)
+
+### Complexity Justification
+
+Any complexity that violates simplicity principles MUST be documented in a Complexity Tracking
+
+table with:
+
+- What principle is violated
+- Why the complexity is necessary
+- What simpler alternatives were rejected and why
+
+Unjustified complexity violations MUST block artifact approval.
+
+**Version**: 1.0.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-10
