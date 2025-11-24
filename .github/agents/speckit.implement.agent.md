@@ -1,5 +1,6 @@
 ---
 description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
+tools: ['read', 'edit', 'search', 'shell', 'execute', 'todo', 'agents']
 ---
 
 ## User Input

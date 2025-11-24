@@ -42,7 +42,7 @@ specs/NNN-feature-name/   # Feature specifications (one per branch)
 
 ### General Instructions
 * Use `runSubagent` when working on code to encapsulate changes.
-* ALWAYS prefer internal tools over invoking scripts through the terminal. When you must invoke a tool, provide sufficient justificaiton
+* ALWAYS prefer internal tools over invoking scripts through the terminal. When you must invoke a tool, provide sufficient justification
 
 ### Spec-Kit Feature Development
 
