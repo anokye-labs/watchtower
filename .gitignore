@@ -11,11 +11,9 @@ out/
 
 # Visual Studio / VS Code
 .vs/
-# Keep VS Code workspace configuration files for development environment
-# .vscode/settings.json - workspace settings
-# .vscode/launch.json - debug configurations
-# .vscode/tasks.json - build tasks
-# .vscode/extensions.json - recommended extensions
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
 *.code-workspace
 
 # Rider
@@ -49,24 +47,3 @@ artifacts/
 
 # User configuration
 appsettings.Development.json
-
-# Environment and secrets
-.env
-.env.*
-*.env
-
-# OS specific
-.DS_Store
-Thumbs.db
-*.swp
-*.tmp
-
-# Test results
-TestResults/
-coverage/
-
-# Publish outputs
-publish/
-
-# Node.js dependencies
-node_modules/
