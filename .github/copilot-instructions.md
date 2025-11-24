@@ -41,7 +41,8 @@ specs/NNN-feature-name/   # Feature specifications (one per branch)
 ## Critical Workflows
 
 ### General Instructions
-Use `runSubagent` and `` when working on code to encapsulate changes
+* Use `runSubagent` when working on code to encapsulate changes.
+* ALWAYS prefer internal tools over invoking scripts through the terminal. When you must invoke a tool, provide sufficient justificaiton
 
 ### Spec-Kit Feature Development
 
@@ -76,6 +77,29 @@ dotnet publish -c Release -r linux-x64 --self-contained true
 - Press **F5** to launch with debugger attached
 - Breakpoints work in all C# files (ViewModels, Services, code-behind)
 - Hot reload enabled for XAML changes (Debug mode only)
+- Simple C# hot reload supported (method bodies only)
+- Press **F12** in running app to open DevTools (Debug mode)
+
+### Hot Reload Capabilities
+
+**XAML Hot Reload** (Always works in Debug mode):
+- Text, colors, layouts, control properties
+- Changes appear within 1-2 seconds of save
+- Powered by `Avalonia.Diagnostics` package
+- Application state preserved during reload
+
+**C# Hot Reload** (Supported changes):
+- ✅ Method body modifications
+- ✅ Property value updates  
+- ✅ Event handler logic changes
+- ❌ Adding/removing methods (requires restart)
+- ❌ Changing signatures/types (requires restart)
+- ❌ Constructor modifications (requires restart)
+
+**Configuration**:
+- `Properties/launchSettings.json`: `"hotReloadEnabled": true`
+- `WatchTower.csproj`: `Avalonia.Diagnostics` in Debug mode only
+- Hot reload timing logged in console output
 
 ## Project-Specific Conventions
 

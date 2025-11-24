@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "WatchTower": {
+      "commandName": "Project",
+      "hotReloadEnabled": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

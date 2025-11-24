@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/WatchTower/bin/Debug/net10.0/win-x64/WatchTower.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/WatchTower",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Run (without debugging)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/WatchTower/bin/Debug/net10.0/win-x64/WatchTower.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/WatchTower",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "enableStepFiltering": false,
+      "justMyCode": false
+    }
+  ]
+}
