@@ -40,6 +40,9 @@ specs/NNN-feature-name/   # Feature specifications (one per branch)
 
 ## Critical Workflows
 
+### General Instructions
+Use `runSubagent` and `` when working on code to encapsulate changes
+
 ### Spec-Kit Feature Development
 
 The project uses a structured workflow with PowerShell scripts in `.specify/scripts/powershell/`:
