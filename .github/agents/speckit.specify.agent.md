@@ -1,6 +1,5 @@
 ---
 description: Create or update the feature specification from a natural language feature description.
-tools: ['edit', 'read', 'search', 'web', 'deepwiki/*', 'microsoft-docs/*', 'Azure MCP/search', 'git/*']
 handoffs: 
   - label: Build Technical Plan
     agent: speckit.plan

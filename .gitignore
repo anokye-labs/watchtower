@@ -67,3 +67,6 @@ coverage/
 
 # Publish outputs
 publish/
+
+# Node.js dependencies
+node_modules/

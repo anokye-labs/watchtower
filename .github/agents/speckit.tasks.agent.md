@@ -1,6 +1,5 @@
 ---
 description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
-tools: ['edit', 'read', 'search', 'shell', 'deepwiki/*', 'microsoft-docs/*', 'Azure MCP/search']
 handoffs: 
   - label: Analyze For Consistency
     agent: speckit.analyze
