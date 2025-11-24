@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"dotnet-agent": {
+			"type": "stdio",
+			"command": "dotnet-agent",
+			"args": [
+				"mcp"
+			]
+		}
+	},
+	"inputs": []
+}
