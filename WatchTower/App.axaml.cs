@@ -24,7 +24,7 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            desktop.MainWindow = new Views.MainWindow();
             logger.LogInformation("Main window created");
         }
 
