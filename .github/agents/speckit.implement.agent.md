@@ -1,6 +1,6 @@
 ---
 description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
-tools: ['edit', 'execute', 'read', 'search', 'shell', 'agents', 'Azure MCP/search', 'todo']
+tools: ['launch/runTests', 'edit', 'execute', 'read', 'search', 'shell', 'deepwiki/*', 'microsoft-docs/*', 'agents', 'dotnet-agent/*', 'todo']
 ---
 
 ## User Input
