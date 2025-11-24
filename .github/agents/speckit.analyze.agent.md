@@ -1,5 +1,6 @@
 ---
 description: Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation.
+tools: ['launch', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'execute/testFailure', 'read/readFile', 'search', 'web', 'shell', 'deepwiki/*', 'microsoft-docs/*', 'agents', 'Azure MCP/search', 'todo']
 ---
 
 ## User Input
