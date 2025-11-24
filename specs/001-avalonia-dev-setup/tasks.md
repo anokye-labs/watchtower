@@ -30,11 +30,11 @@ This is a desktop application with the following structure:
 
 **Purpose**: Project initialization and basic structure
 
-- [X] T001 Create WatchTower project directory with standard Avalonia structure (WatchTower/, Views/, ViewModels/, Models/, Services/, Assets/)
-- [X] T002 Create WatchTower.csproj targeting net10.0 with Avalonia packages (Avalonia 11.x, Avalonia.Desktop, Avalonia.Diagnostics)
-- [X] T003 [P] Create .vscode directory with placeholder files for launch.json, tasks.json, settings.json, extensions.json
-- [X] T004 [P] Create .config directory for configuration files
-- [X] T005 Create .gitignore file for .NET/Avalonia projects (bin/, obj/, .vs/, *.user files)
+- [ ] T001 Create WatchTower project directory with standard Avalonia structure (WatchTower/, Views/, ViewModels/, Models/, Services/, Assets/)
+- [ ] T002 Create WatchTower.csproj targeting net10.0 with Avalonia packages (Avalonia 11.x, Avalonia.Desktop, Avalonia.Diagnostics)
+- [ ] T003 [P] Create .vscode directory with placeholder files for launch.json, tasks.json, settings.json, extensions.json
+- [ ] T004 [P] Create .config directory for configuration files
+- [ ] T005 Create .gitignore file for .NET/Avalonia projects (bin/, obj/, .vs/, *.user files)
 
 ---
 
@@ -44,12 +44,12 @@ This is a desktop application with the following structure:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T006 Implement Program.cs entry point with Avalonia AppBuilder configuration and .NET 10 compatibility
-- [X] T007 Create App.axaml with basic application-level styles and resources
-- [X] T008 Implement App.axaml.cs with application initialization and lifetime configuration
-- [X] T009 [P] Create Services/LoggingService.cs with configurable logging levels (minimal/normal/verbose)
-- [X] T010 [P] Create appsettings.json in WatchTower/ with default logging configuration (normal level)
-- [X] T011 Configure self-contained publish in WatchTower.csproj (PublishSingleFile=true, SelfContained=true, RuntimeIdentifiers: win-x64, osx-x64, linux-x64)
+- [ ] T006 Implement Program.cs entry point with Avalonia AppBuilder configuration and .NET 10 compatibility
+- [ ] T007 Create App.axaml with basic application-level styles and resources
+- [ ] T008 Implement App.axaml.cs with application initialization and lifetime configuration
+- [ ] T009 [P] Create Services/LoggingService.cs with configurable logging levels (minimal/normal/verbose)
+- [ ] T010 [P] Create appsettings.json in WatchTower/ with default logging configuration (normal level)
+- [ ] T011 Configure self-contained publish in WatchTower.csproj (PublishSingleFile=true, SelfContained=true, RuntimeIdentifiers: win-x64, osx-x64, linux-x64)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -63,13 +63,13 @@ This is a desktop application with the following structure:
 
 ### Implementation for User Story 1
 
-- [X] T012 [P] [US1] Create Views/MainWindow.axaml with window definition (Title="WatchTower", default size 800x600)
-- [X] T013 [P] [US1] Add "Hello World" TextBlock to MainWindow.axaml centered in content area
-- [X] T014 [US1] Implement Views/MainWindow.axaml.cs code-behind with window initialization
-- [X] T015 [US1] Wire up MainWindow as startup window in App.axaml.cs OnFrameworkInitializationCompleted method
-- [X] T016 [US1] Add startup logging in Program.cs (log application start, initialization milestones)
-- [X] T017 [US1] Add error handling in Program.cs for missing .NET 10 runtime with diagnostic message (FR-026, FR-008b)
-- [X] T018 [US1] Test application launch timing - verify < 5 seconds startup (SC-001, SC-006)
+- [ ] T012 [P] [US1] Create Views/MainWindow.axaml with window definition (Title="WatchTower", default size 800x600)
+- [ ] T013 [P] [US1] Add "Hello World" TextBlock to MainWindow.axaml centered in content area
+- [ ] T014 [US1] Implement Views/MainWindow.axaml.cs code-behind with window initialization
+- [ ] T015 [US1] Wire up MainWindow as startup window in App.axaml.cs OnFrameworkInitializationCompleted method
+- [ ] T016 [US1] Add startup logging in Program.cs (log application start, initialization milestones)
+- [ ] T017 [US1] Add error handling in Program.cs for missing .NET 10 runtime with diagnostic message (FR-026, FR-008b)
+- [ ] T018 [US1] Test application launch timing - verify < 5 seconds startup (SC-001, SC-006)
 
 **Checkpoint**: At this point, application should launch with window displaying "Hello World" message
 
@@ -83,13 +83,13 @@ This is a desktop application with the following structure:
 
 ### Implementation for User Story 2
 
-- [X] T019 [P] [US2] Create .vscode/extensions.json with recommended extensions (avaloniateam.vscode-avalonia, ms-dotnettools.csharp, nromanov.dotnet-meteor, rogalmic.vscode-xml-complete)
-- [X] T020 [P] [US2] Create .vscode/launch.json with "Debug" configuration (coreclr debugger, preLaunchTask: build)
-- [X] T021 [P] [US2] Add "Run (without debugging)" configuration to .vscode/launch.json
-- [X] T022 [P] [US2] Create .vscode/tasks.json with build task (dotnet build WatchTower/WatchTower.csproj)
-- [X] T023 [P] [US2] Add clean task to .vscode/tasks.json (dotnet clean)
-- [X] T024 [P] [US2] Add run task to .vscode/tasks.json (dotnet run --project WatchTower/WatchTower.csproj)
-- [X] T025 [US2] Create .vscode/settings.json with Avalonia-specific settings and problem matcher configuration
+- [ ] T019 [P] [US2] Create .vscode/extensions.json with recommended extensions (avaloniateam.vscode-avalonia, ms-dotnettools.csharp, nromanov.dotnet-meteor, rogalmic.vscode-xml-complete)
+- [ ] T020 [P] [US2] Create .vscode/launch.json with "Debug" configuration (coreclr debugger, preLaunchTask: build)
+- [ ] T021 [P] [US2] Add "Run (without debugging)" configuration to .vscode/launch.json
+- [ ] T022 [P] [US2] Create .vscode/tasks.json with build task (dotnet build WatchTower/WatchTower.csproj)
+- [ ] T023 [P] [US2] Add clean task to .vscode/tasks.json (dotnet clean)
+- [ ] T024 [P] [US2] Add run task to .vscode/tasks.json (dotnet run --project WatchTower/WatchTower.csproj)
+- [ ] T025 [US2] Create .vscode/settings.json with Avalonia-specific settings and problem matcher configuration
 - [ ] T026 [US2] Test F5 debug launch - verify application starts with debugger attached (SC-002)
 - [ ] T027 [US2] Test breakpoint functionality - set breakpoint in code, verify execution pauses (SC-002)
 - [ ] T028 [US2] Test variable inspection and step-through debugging (SC-002)
@@ -107,13 +107,13 @@ This is a desktop application with the following structure:
 
 ### Implementation for User Story 3
 
-- [X] T030 [P] [US3] Verify Avalonia.Diagnostics package is included in WatchTower.csproj with proper configuration
-- [X] T031 [P] [US3] Create Properties/launchSettings.json with hotReloadEnabled=true for .NET Hot Reload
-- [X] T032 [P] [US3] Configure Avalonia hot reload in App.axaml.cs (enable DevTools in debug mode)
-- [X] T033 [US3] Add hot reload detection and logging in App.axaml.cs to track reload events
-- [X] T034 [US3] Implement hot reload error handler in App.axaml.cs to display syntax errors without crashing (FR-019, FR-027, FR-029)
-- [X] T035 [US3] Add notification mechanism for when restart is required (complex logic changes per FR-020b, FR-020c)
-- [X] T036 [US3] Update logging to capture hot reload events and timing
+- [ ] T030 [P] [US3] Verify Avalonia.Diagnostics package is included in WatchTower.csproj with proper configuration
+- [ ] T031 [P] [US3] Create Properties/launchSettings.json with hotReloadEnabled=true for .NET Hot Reload
+- [ ] T032 [P] [US3] Configure Avalonia hot reload in App.axaml.cs (enable DevTools in debug mode)
+- [ ] T033 [US3] Add hot reload detection and logging in App.axaml.cs to track reload events
+- [ ] T034 [US3] Implement hot reload error handler in App.axaml.cs to display syntax errors without crashing (FR-019, FR-027, FR-029)
+- [ ] T035 [US3] Add notification mechanism for when restart is required (complex logic changes per FR-020b, FR-020c)
+- [ ] T036 [US3] Update logging to capture hot reload events and timing
 - [ ] T037 [US3] Test XAML hot reload - modify MainWindow.axaml content, verify < 2 second update (SC-003, SC-004, FR-017)
 - [ ] T038 [US3] Test simple C# hot reload - modify method body in MainWindow.axaml.cs, verify hot reload works (FR-020a)
 - [ ] T039 [US3] Test complex C# change - add new method, verify restart notification appears (FR-020b, FR-020c)
@@ -132,10 +132,10 @@ This is a desktop application with the following structure:
 
 ### Implementation for User Story 4
 
-- [X] T042 [P] [US4] Document command-line build command in specs/001-avalonia-dev-setup/quickstart.md
-- [X] T043 [P] [US4] Document command-line run command in quickstart.md
-- [X] T044 [P] [US4] Document self-contained publish commands for each platform (win-x64, osx-x64, linux-x64) in quickstart.md
-- [X] T045 [US4] Test dotnet build from command line - verify successful compilation (SC-008, SC-006)
+- [ ] T042 [P] [US4] Document command-line build command in specs/001-avalonia-dev-setup/quickstart.md
+- [ ] T043 [P] [US4] Document command-line run command in quickstart.md
+- [ ] T044 [P] [US4] Document self-contained publish commands for each platform (win-x64, osx-x64, linux-x64) in quickstart.md
+- [ ] T045 [US4] Test dotnet build from command line - verify successful compilation (SC-008, SC-006)
 - [ ] T046 [US4] Test dotnet run from command line - verify application launches (SC-008)
 - [ ] T047 [US4] Test self-contained publish for Windows - verify single executable created (FR-008, FR-008a, FR-008c)
 - [ ] T048 [US4] Test build error reporting - introduce syntax error, verify clear error messages with file locations (FR-024)
@@ -149,13 +149,13 @@ This is a desktop application with the following structure:
 
 **Purpose**: Improvements that affect multiple user stories and final documentation
 
-- [X] T050 [P] Create comprehensive quickstart.md with prerequisites, setup steps, development workflow, troubleshooting (covers all user stories)
-- [X] T051 [P] Create README.md in repository root with project overview and getting started link
-- [X] T052 [P] Update .github/copilot-instructions.md with Avalonia 11.x, .NET 10, MVVM, hot reload info
-- [X] T053 [P] Add inline code comments to Program.cs explaining initialization flow
-- [X] T054 [P] Add inline code comments to App.axaml.cs explaining hot reload configuration
-- [X] T055 [P] Add inline code comments to Services/LoggingService.cs explaining configurable logging
-- [X] T056 [P] Document logging configuration options in appsettings.json (add comments)
+- [ ] T050 [P] Create comprehensive quickstart.md with prerequisites, setup steps, development workflow, troubleshooting (covers all user stories)
+- [ ] T051 [P] Create README.md in repository root with project overview and getting started link
+- [ ] T052 [P] Update .github/copilot-instructions.md with Avalonia 11.x, .NET 10, MVVM, hot reload info
+- [ ] T053 [P] Add inline code comments to Program.cs explaining initialization flow
+- [ ] T054 [P] Add inline code comments to App.axaml.cs explaining hot reload configuration
+- [ ] T055 [P] Add inline code comments to Services/LoggingService.cs explaining configurable logging
+- [ ] T056 [P] Document logging configuration options in appsettings.json (add comments)
 - [ ] T057 Verify all success criteria are met - run through SC-001 to SC-012 validation checklist
 - [ ] T058 Test cross-platform - verify application builds and runs on Windows (if not primary development OS)
 - [ ] T059 Test cross-platform - verify application builds and runs on macOS (if available)
