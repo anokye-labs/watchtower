@@ -3,7 +3,8 @@
 **Feature Branch**: `002-federated-mcp-proxy`  
 **Created**: 2025-11-28  
 **Status**: Draft  
-**Input**: Build a reusable, open-source MCP Proxy that aggregates embedded MCP handlers from multiple Avalonia applications, enabling agents to iteratively develop and test any Avalonia app through a single unified interface.
+**Source Document**: [Federated Avalonia MCP Proxy Platform.md](../Federated%20Avalonia%20MCP%20Proxy%20Platform.md)  
+**Goal**: Build a reusable, open-source MCP Proxy that aggregates embedded MCP handlers from multiple Avalonia applications, enabling agents to iteratively develop and test any Avalonia app through a single unified interface.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -137,7 +138,7 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 
 - What happens when an agent calls a tool for an app that just disconnected? The proxy returns an error indicating the app is no longer available, with guidance to check if the app is running.
 
-- How does the system handle two apps with the same name? The proxy rejects duplicate registrations and requires unique app identifiers. First-connected app retains the name.
+- How does the system handle two apps with the same name? The proxy rejects duplicate registrations and requires unique app identifiers. Applications should use stable, unique identifiers (e.g., `MyApp-Development`, `MyApp-v2.1.0`) rather than generic names. When a duplicate is detected, the proxy returns an error with guidance to use a unique identifier.
 
 - What happens when a tool call times out? The proxy returns a timeout error after a configurable period (default: 30 seconds) without blocking other operations.
 
@@ -164,7 +165,7 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 - **FR-008**: Proxy MUST route tool calls to the correct application handler based on the namespace prefix.
 - **FR-009**: Proxy MUST detect and report application connections and disconnections in real-time.
 - **FR-010**: Proxy MUST update the tool catalog dynamically when applications connect or disconnect.
-- **FR-011**: Proxy MUST expose a single MCP interface (stdio) to agent clients.
+- **FR-011**: Proxy MUST expose a single MCP interface (stdio) to agent clients, separate from the app-to-proxy transport layer (FR-012 to FR-014).
 
 **Transport Layer**
 
