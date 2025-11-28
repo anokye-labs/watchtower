@@ -32,7 +32,8 @@
 ## Notes
 
 - Specification derived from the "Federated Avalonia MCP Proxy Platform.md" vision document
-- All 7 user stories are independently testable with clear acceptance scenarios
+- All 8 user stories are independently testable with clear acceptance scenarios (P0-P3 priorities)
+- User Story 0 (P0) establishes the foundational embedded MCP library integration with WatchTower
 - 21 functional requirements cover core library, proxy server, transport layer, discovery, and error handling
 - 13 success criteria provide measurable outcomes across functional, operational, and development experience dimensions
 - Edge cases address disconnection, duplicate names, timeouts, rapid reconnection, and handler crashes

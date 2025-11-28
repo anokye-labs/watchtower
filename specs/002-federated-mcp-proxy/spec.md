@@ -8,6 +8,28 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
+### User Story 0 - Embedded MCP Library Integration with WatchTower (Priority: P0)
+
+As a developer building the federated MCP proxy platform, I want to first create the embedded MCP library and integrate it directly with WatchTower, so that I can validate the core MCP tool functionality before building the proxy federation layer.
+
+**Why this priority**: This is the foundational building block. Before we can federate multiple applications through a proxy, we must first prove that a single Avalonia application can expose MCP tools reliably. WatchTower serves as the first test case to validate the embedded handler design, standard tools implementation, and headless/GUI compatibility.
+
+**Independent Test**: Can be fully tested by embedding the MCP library in WatchTower, running WatchTower with the embedded handler, and having an agent connect directly to WatchTower's MCP interface to invoke tools like `CaptureScreenshot` and `GetElementTree`. Delivers immediate value by validating the core MCP integration pattern before adding proxy complexity.
+
+**Acceptance Scenarios**:
+
+1. **Given** the embedded MCP library exists as a reusable package, **When** a developer adds it to WatchTower's dependencies and initializes it in the application startup, **Then** WatchTower exposes standard MCP tools (`ClickElement`, `TypeText`, `CaptureScreenshot`, `GetElementTree`, `FindElement`, `WaitForElement`).
+
+2. **Given** WatchTower is running with the embedded MCP handler in GUI mode, **When** an agent connects directly to WatchTower's MCP interface and calls `CaptureScreenshot`, **Then** the agent receives a valid screenshot of the current window.
+
+3. **Given** WatchTower is running with the embedded MCP handler in headless mode, **When** an agent calls `GetElementTree`, **Then** the agent receives a complete hierarchical representation of all UI elements.
+
+4. **Given** WatchTower is running with the embedded MCP handler, **When** an agent calls `ClickElement` at a valid coordinate, **Then** the click is processed and the UI responds appropriately.
+
+5. **Given** the embedded MCP library is integrated with WatchTower, **When** a developer defines a custom tool (e.g., `ResetAppState`), **Then** the custom tool appears in the MCP tool catalog alongside the standard tools.
+
+---
+
 ### User Story 1 - Single Connection to Multiple Apps (Priority: P1)
 
 As an AI agent (Claude, GitHub Copilot, etc.), I want to connect to a single MCP server that provides access to all running Avalonia applications, so that I can interact with any Avalonia app without managing multiple server connections or context-switching between different tool sets.
@@ -176,7 +198,7 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 
 **Discovery & Configuration**
 
-- **FR-016**: Proxy MUST read application endpoints from a configuration file (`.mcpproxy.json`).
+- **FR-016**: Proxy MUST read application endpoints from a configuration file.
 - **FR-017**: Applications MUST register with the proxy automatically when they start.
 - **FR-018**: Applications MUST unregister from the proxy when they shut down gracefully.
 
@@ -227,7 +249,7 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 ## Assumptions
 
 - .NET 10 provides stable support for the required MCP protocol implementation.
-- Avalonia's headless platform (Skia renderer) supports all required screenshot and UI inspection operations.
+- Avalonia's headless platform supports all required screenshot and UI inspection operations.
 - Applications run on the same machine as the proxy in typical development scenarios.
 - Agent clients (Claude, GitHub Copilot) support standard MCP protocol via stdio.
 - TCP localhost connections provide sufficient performance for local development (sub-millisecond latency).
