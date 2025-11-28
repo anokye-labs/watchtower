@@ -1,5 +1,7 @@
 # WatchTower - AI Agent Instructions
 
+* Prefer built-in tools and tasks where available over running terminal commands. Always check if there is a task in tasks.json for common operations before using CLI commands.
+
 ## Project Architecture
 
 **WatchTower** is a cross-platform desktop application built with **Avalonia UI** (.NET 10) following strict **MVVM pattern** with dependency injection. The project uses a **specification-driven development workflow** (Spec-Kit) where features begin as specs, evolve into plans, and decompose into tasks.
@@ -41,7 +43,9 @@ specs/NNN-feature-name/   # Feature specifications (one per branch)
 ## Critical Workflows
 
 ### General Instructions
-Use `runSubagent` and `` when working on code to encapsulate changes
+* Use `runSubagent` when working on code to encapsulate changes.
+* ALWAYS prefer internal tools and tasks over invoking scripts through the terminal. 
+* When you must invoke a tool, provide sufficient justification.
 
 ### Spec-Kit Feature Development
 

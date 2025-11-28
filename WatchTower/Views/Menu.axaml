@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:WatchTower.ViewModels"
+             x:Class="WatchTower.Views.Menu">
+    
+    <Menu Background="#2D2D30" Foreground="White">
+        <!-- File Menu -->
+        <MenuItem Header="_File">
+            <MenuItem Header="_New File" InputGesture="Ctrl+N"/>
+            <MenuItem Header="_Open File..." InputGesture="Ctrl+O"/>
+            <Separator/>
+            <MenuItem Header="_Save" InputGesture="Ctrl+S"/>
+            <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S"/>
+            <Separator/>
+            <MenuItem Header="E_xit" InputGesture="Alt+F4"/>
+        </MenuItem>
+
+        <!-- Edit Menu -->
+        <MenuItem Header="_Edit">
+            <MenuItem Header="_Undo" InputGesture="Ctrl+Z"/>
+            <MenuItem Header="_Redo" InputGesture="Ctrl+Y"/>
+            <Separator/>
+            <MenuItem Header="Cu_t" InputGesture="Ctrl+X"/>
+            <MenuItem Header="_Copy" InputGesture="Ctrl+C"/>
+            <MenuItem Header="_Paste" InputGesture="Ctrl+V"/>
+        </MenuItem>
+
+        <!-- View Menu -->
+        <MenuItem Header="_View">
+        </MenuItem>
+
+        <!-- Window Menu -->
+        <MenuItem Header="_Window">
+            <MenuItem Header="_New Window"/>
+            <Separator/>
+            <MenuItem Header="_Close Window" InputGesture="Alt+F4"/>
+        </MenuItem>
+    </Menu>
+</UserControl>

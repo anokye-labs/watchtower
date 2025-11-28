@@ -6,6 +6,15 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }
+    },
+    "WatchTower-Watch": {
+      "commandName": "Project",
+      "hotReloadEnabled": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "DOTNET_WATCH": "1",
+        "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
+      }
     }
   }
 }

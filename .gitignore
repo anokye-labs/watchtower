@@ -76,5 +76,18 @@ build/
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Test results
+TestResults/
+coverage/
+
+# Publish outputs
+publish/

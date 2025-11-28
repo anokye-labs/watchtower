@@ -38,6 +38,192 @@
       ],
       "problemMatcher": "$msCompile",
       "dependsOn": "build"
+    },
+    {
+      "label": "watch",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/WatchTower/WatchTower.csproj",
+        "--non-interactive"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/WatchTower",
+        "env": {
+          "DOTNET_ENVIRONMENT": "Development",
+          "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
+        }
+      },
+      "problemMatcher": {
+        "owner": "dotnet-watch",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.*)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^dotnet watch .* (Building|Started|Restart requested).*$",
+          "endsPattern": "^dotnet watch .* (Started|Exited|Waiting for).*$"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build"
+    },
+    {
+      "label": "watch-verbose",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/WatchTower/WatchTower.csproj",
+        "--non-interactive",
+        "--verbose"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/WatchTower",
+        "env": {
+          "DOTNET_ENVIRONMENT": "Development",
+          "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
+        }
+      },
+      "problemMatcher": {
+        "owner": "dotnet-watch-verbose",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.*)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^dotnet watch .* (Building|Started|Restart requested).*$",
+          "endsPattern": "^dotnet watch .* (Started|Exited|Waiting for).*$"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build"
+    },
+    {
+      "label": "check-prerequisites",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.specify/scripts/powershell/check-prerequisites.ps1",
+        "-Json",
+        "-RequireTasks",
+        "-IncludeTasks"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "create-new-feature",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.specify/scripts/powershell/create-new-feature.ps1",
+        "-Json",
+        "${input:featureDescription}"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "update-agent-context",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.specify/scripts/powershell/update-agent-context.ps1"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "update-agent-context-specific",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.specify/scripts/powershell/update-agent-context.ps1",
+        "-AgentType",
+        "${input:agentType}"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "featureDescription",
+      "type": "promptString",
+      "description": "Enter feature description (e.g., 'Add user authentication system')"
+    },
+    {
+      "id": "agentType",
+      "type": "pickString",
+      "description": "Select agent type to update",
+      "options": [
+        "claude",
+        "gemini",
+        "copilot",
+        "cursor-agent",
+        "qwen",
+        "opencode",
+        "codex",
+        "windsurf",
+        "kilocode",
+        "auggie",
+        "roo",
+        "codebuddy",
+        "amp",
+        "shai",
+        "q"
+      ],
+      "default": "copilot"
     }
   ]
 }

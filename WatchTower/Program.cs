@@ -1,7 +1,9 @@
 ﻿using Avalonia;
+using Avalonia.Win32;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace WatchTower;
 

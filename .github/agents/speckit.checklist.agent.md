@@ -1,6 +1,5 @@
 ---
 description: Generate a custom checklist for the current feature based on user requirements.
-tools: ['read', 'edit', 'search', 'shell']
 ---
 
 ## Checklist Purpose: "Unit Tests for English"
