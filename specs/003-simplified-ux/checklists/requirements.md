@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Simplified WatchTower UX
+# Specification Quality Checklist: Simplified Watchtower UX
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2025-11-29  

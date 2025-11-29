@@ -1,10 +1,10 @@
-# Feature Specification: Simplified WatchTower UX
+# Feature Specification: Simplified Watchtower UX
 
 **Feature Branch**: `003-simplified-ux`  
 **Created**: 2025-11-29  
 **Status**: Draft  
 **Source Document**: specs/vision.md  
-**Goal**: Design a barebones, self-contained UX for WatchTower that replaces the complex dock library approach with a simpler fixed-panel layout
+**Goal**: Design a barebones, self-contained UX for Watchtower that replaces the complex dock library approach with a simpler fixed-panel layout
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -12,13 +12,13 @@
 
 As a developer, I want to see all my active AI agent sessions at a glance so I can understand what each agent is doing without switching between multiple terminal windows.
 
-**Why this priority**: This is the core value proposition of WatchTower—unified visibility across the agentverse. Without this, users have no reason to use the application.
+**Why this priority**: This is the core value proposition of Watchtower—unified visibility across the agentverse. Without this, users have no reason to use the application.
 
 **Independent Test**: Can be fully tested by launching the application with mock agent data and verifying the session list displays agent names, statuses, and current activity summaries.
 
 **Acceptance Scenarios**:
 
-1. **Given** the application is running, **When** the user opens WatchTower, **Then** they see a list of configured agents with their current status (active, idle, disconnected)
+1. **Given** the application is running, **When** the user opens Watchtower, **Then** they see a list of configured agents with their current status (active, idle, disconnected)
 2. **Given** multiple agents are running, **When** an agent changes status, **Then** the status indicator updates in real-time without user intervention
 3. **Given** the session list is visible, **When** the user clicks on an agent, **Then** that agent's conversation becomes the active view
 
@@ -42,9 +42,9 @@ As a developer, I want to read the full conversation with a selected agent so I 
 
 ### User Story 3 - Send Message to Agent (Priority: P1)
 
-As a developer, I want to send messages to a selected agent using a command input so I can direct the agent's work without leaving WatchTower.
+As a developer, I want to send messages to a selected agent using a command input so I can direct the agent's work without leaving Watchtower.
 
-**Why this priority**: Two-way communication is essential for agent coordination. Without the ability to send messages, WatchTower is only a viewer, not a control center.
+**Why this priority**: Two-way communication is essential for agent coordination. Without the ability to send messages, Watchtower is only a viewer, not a control center.
 
 **Independent Test**: Can be fully tested by typing a message in the input area and verifying it is sent to the selected agent and appears in the conversation.
 
@@ -74,7 +74,7 @@ As a developer, I want to quickly switch between different agent conversations u
 
 ### User Story 5 - Persist Window Layout (Priority: P3)
 
-As a developer, I want the application to remember my window size and position so I don't have to re-arrange it every time I start WatchTower.
+As a developer, I want the application to remember my window size and position so I don't have to re-arrange it every time I start Watchtower.
 
 **Why this priority**: Quality-of-life feature that improves user experience over time but is not essential for core functionality.
 
