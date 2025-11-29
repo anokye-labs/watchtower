@@ -39,6 +39,15 @@ This guide explains how to integrate the MCP embedded handler into an Avalonia a
 }
 ```
 
+> **Security Note**: Generate a cryptographically secure secret using:
+> ```bash
+> # Linux/macOS
+> openssl rand -base64 32
+> # PowerShell
+> [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+> ```
+> Store secrets securely - consider using environment variables or a secrets manager in production.
+
 ### 3. Register in App.axaml.cs
 
 ```csharp
@@ -87,6 +96,15 @@ Register application-specific tools:
 ```csharp
 public class WatchTowerMcpHandler
 {
+    // Static schema - parsed once at class initialization for efficiency
+    private static readonly JsonElement ResetAppStateSchema = 
+        JsonSerializer.SerializeToElement(new
+        {
+            type = "object",
+            properties = new { },
+            required = Array.Empty<string>()
+        });
+
     public WatchTowerMcpHandler(IMcpEmbeddedService mcpService)
     {
         // Register custom tool (FR-003)
@@ -94,13 +112,7 @@ public class WatchTowerMcpHandler
         {
             Name = "ResetAppState",
             Description = "Reset WatchTower to initial state",
-            InputSchema = JsonDocument.Parse("""
-                {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            """).RootElement
+            InputSchema = ResetAppStateSchema
         }, async (args, ct) =>
         {
             // Your reset logic here

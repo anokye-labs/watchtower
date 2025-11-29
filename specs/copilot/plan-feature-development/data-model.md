@@ -237,6 +237,8 @@ Parser and builder for hierarchical element paths (FR-031-032).
 ```csharp
 namespace WatchTower.Mcp.Embedded.Models;
 
+using System.Text.RegularExpressions;
+
 /// <summary>
 /// Parses and builds hierarchical element paths.
 /// Format: "ParentType[index]/ChildType[index]"
