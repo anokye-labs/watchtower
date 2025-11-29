@@ -1,4 +1,4 @@
-# Watch-Tower: Vision Document
+# Watchtower: Vision Document
 
 ## The World Is Changing
 
@@ -37,21 +37,21 @@ We're missing:
 - ❌ **Constitutional governance** ensuring consistency
 - ❌ **Human-in-the-loop interfaces** for meaningful oversight
 
-Watch-Tower is this missing layer.
+Watchtower is this missing layer.
 
 ---
 
 ## The Vision
 
-### Watch-Tower: Your Personal Agent Control Center
+### Watchtower: Your Personal Agent Control Center
 
-Watch-Tower is a **conversational GUI for coordinating AI coding agents**—your single interface for orchestrating Claude Code, Aider, OpenCode, GitHub Copilot, or whatever mix of agents works for you.
+Watchtower is a **conversational GUI for coordinating AI coding agents**—your single interface for orchestrating Claude Code, Aider, OpenCode, GitHub Copilot, or whatever mix of agents works for you.
 
 It doesn't replace your agents. It doesn't force uniformity. It's simply the **command center** through which you harness your personal agentverse.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Watch-Tower                                              ─ □ ×    │
+│  Watchtower                                              ─ □ ×    │
 ├──────────┬──────────────────────────────────────────┬───────────────┤
 │          │                                          │               │
 │ AGENTS   │  ACTIVE SESSION: Claude Code             │  ARTIFACTS    │
@@ -78,7 +78,7 @@ It doesn't replace your agents. It doesn't force uniformity. It's simply the **c
 
 ### 1. Protocol-Native, Not Proprietary
 
-Watch-Tower speaks the languages agents already understand:
+Watchtower speaks the languages agents already understand:
 
 | Protocol | Use Case |
 |----------|----------|
@@ -91,7 +91,7 @@ No vendor lock-in. No forced migration. Use what works.
 
 ### 2. Human-in-the-Loop by Design
 
-Agents are powerful but not infallible. Watch-Tower ensures humans remain in control:
+Agents are powerful but not infallible. Watchtower ensures humans remain in control:
 
 - **Visibility**: See what every agent is thinking, doing, changing
 - **Intervention**: Pause, redirect, or cancel any operation
@@ -144,7 +144,7 @@ The tenth agent to touch this codebase benefits from what the first nine learned
 
 ### Scenario 1: Monitoring Everything
 
-Open Watch-Tower and see your agent ecosystem at a glance:
+Open Watchtower and see your agent ecosystem at a glance:
 
 ```
 ACTIVE SESSIONS
@@ -177,7 +177,7 @@ Not everything needs orchestration. Quick tasks get quick treatment:
 [Claude] ✓ No security issues found. Error messages don't leak sensitive info.
 ```
 
-Watch-Tower calls the CLI, passes your prompt, captures output. Simple things stay simple.
+Watchtower calls the CLI, passes your prompt, captures output. Simple things stay simple.
 
 ### Scenario 3: Multi-Agent Workflows
 
@@ -207,7 +207,7 @@ stages:
     approval: human
 ```
 
-Watch-Tower orchestrates the handoffs. You see the full pipeline. Intervene at any stage.
+Watchtower orchestrates the handoffs. You see the full pipeline. Intervene at any stage.
 
 ### Scenario 4: Context Injection
 
@@ -215,10 +215,10 @@ Your agents need to know things. Feed them context:
 
 ```
 > /context add PR #142 "Authentication Refactor"
-[Watch-Tower] Added PR context. Available to all agents.
+[Watchtower] Added PR context. Available to all agents.
 
 > /context add @file:docs/auth-spec.md
-[Watch-Tower] Added file context.
+[Watchtower] Added file context.
 
 > @claude given this context, what's missing from the implementation?
 [Claude] Comparing spec to PR... I see three gaps:
@@ -235,7 +235,7 @@ Context flows to agents automatically based on your rules.
 
 ### Design Philosophy
 
-Watch-Tower's interface follows these principles:
+Watchtower's interface follows these principles:
 
 **1. Calm Confidence**
 No flashing alerts. No anxiety-inducing dashboards. Clean typography, subtle status indicators, information density that respects your attention.
@@ -251,7 +251,7 @@ Power users live on the keyboard. Full command palette. Vim-style navigation. Qu
 
 ### Panel Architecture
 
-Watch-Tower uses a VSCode-style docking layout:
+Watchtower uses a VSCode-style docking layout:
 
 | Panel | Purpose |
 |-------|---------|
@@ -286,7 +286,7 @@ Natural language when you want it. Structured commands when you need precision.
 
 ### Built on Avalonia
 
-Watch-Tower is built with Avalonia UI for true cross-platform capability:
+Watchtower is built with Avalonia UI for true cross-platform capability:
 
 - **Windows, macOS, Linux** — identical experience
 - **High performance** — Skia rendering, sub-second startup
@@ -300,7 +300,7 @@ Modular adapter system for agent integration:
 
 ```
 ┌─────────────────────────────────────────┐
-│           Watch-Tower Core              │
+│           Watchtower Core              │
 ├─────────────────────────────────────────┤
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐   │
 │  │   ACP   │ │   MCP   │ │  CLI    │   │
@@ -319,7 +319,7 @@ Add new agents by implementing the adapter interface. No core changes required.
 ### State Architecture
 
 ```
-Watch-Tower State
+Watchtower State
 ├── Sessions[]           # Active agent conversations
 │   ├── agent_id
 │   ├── messages[]
@@ -373,11 +373,11 @@ All state changes are events. Full audit trail. Time-travel debugging.
 
 ### The Bigger Picture
 
-Watch-Tower is the **interface to your agentverse**—but the agentverse is still emerging.
+Watchtower is the **interface to your agentverse**—but the agentverse is still emerging.
 
 As agents become more capable, the need for coordination grows. As protocols mature, integration becomes easier. As trust develops, autonomy increases.
 
-Watch-Tower adapts:
+Watchtower adapts:
 
 - **Today**: Active monitoring, frequent intervention
 - **Tomorrow**: Approval gates at key decisions
@@ -407,27 +407,27 @@ Avalonia enables beautiful, performant cross-platform UIs. .NET provides robust 
 
 ---
 
-## What Watch-Tower Is Not
+## What Watchtower Is Not
 
-**Not an agent**: Watch-Tower coordinates agents; it doesn't replace them. Your agents do the work. Watch-Tower provides the interface.
+**Not an agent**: Watchtower coordinates agents; it doesn't replace them. Your agents do the work. Watchtower provides the interface.
 
-**Not a model router**: This isn't about picking the cheapest model for each query. Use whatever agents and models you prefer. Watch-Tower is agnostic.
+**Not a model router**: This isn't about picking the cheapest model for each query. Use whatever agents and models you prefer. Watchtower is agnostic.
 
-**Not a workflow engine**: While Watch-Tower supports multi-agent workflows, it's not trying to be Apache Airflow. The focus is conversational coordination, not enterprise orchestration.
+**Not a workflow engine**: While Watchtower supports multi-agent workflows, it's not trying to be Apache Airflow. The focus is conversational coordination, not enterprise orchestration.
 
-**Not a replacement for VS Code**: Watch-Tower manages agent conversations, not file editing. Use it alongside your editor, not instead of it.
+**Not a replacement for VS Code**: Watchtower manages agent conversations, not file editing. Use it alongside your editor, not instead of it.
 
 ---
 
 ## The Invitation
 
-Watch-Tower is built on a simple belief: **the future of software development is multi-agent, and humans need interfaces to remain in control**.
+Watchtower is built on a simple belief: **the future of software development is multi-agent, and humans need interfaces to remain in control**.
 
-If you share this belief—if you're juggling agents and wishing for better—Watch-Tower is for you.
+If you share this belief—if you're juggling agents and wishing for better—Watchtower is for you.
 
 The agentverse is vast. Your agents are capable. What's been missing is the control center.
 
-Welcome to Watch-Tower.
+Welcome to Watchtower.
 
 ---
 
@@ -451,4 +451,4 @@ Welcome to Watch-Tower.
 
 ---
 
-*Watch-Tower: See everything. Coordinate anything. Control what matters.*
+*Watchtower: See everything. Coordinate anything. Control what matters.*

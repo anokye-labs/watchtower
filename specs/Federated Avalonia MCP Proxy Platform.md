@@ -24,7 +24,7 @@ Agents (Claude, GitHub Copilot, etc.) cannot reliably interact with Avalonia app
 
 **Build a reusable, open-source MCP Proxy that aggregates embedded MCP handlers from multiple Avalonia applications, enabling agents to iteratively develop and test any Avalonia app through a single unified interface.**
 
-The proxy is a **standalone, general-purpose tool** that any team can deploy to interact with any Avalonia applications in their environment. Watch-Tower is simply the **first client application** using this proxy.
+The proxy is a **standalone, general-purpose tool** that any team can deploy to interact with any Avalonia applications in their environment. Watchtower is simply the **first client application** using this proxy.
 
 **Result:** Agents can interact with Avalonia apps (any Avalonia apps) as naturally as they interact with APIs or filesystems—via unified, discoverable tools.
 
@@ -91,7 +91,7 @@ Independent, reusable MCP server that:
 
 Agent sees one connection. Proxy transparently routes to correct app.
 
-**Key:** The proxy is NOT Watch-Tower-specific. Any team can deploy it to interact with their Avalonia apps.
+**Key:** The proxy is NOT Watchtower-specific. Any team can deploy it to interact with their Avalonia apps.
 
 ### 3.3 Transport Abstraction
 
@@ -111,8 +111,8 @@ Proxy handles transport selection transparently. Apps don't care how they connec
 
 - **Agent asks proxy:** "What tools are available?"
 - **Proxy responds:** Unified list from all connected apps (with app source tagged)
-- **Agent calls tool:** "Execute `ClickElement` on `Watch-Tower`"
-- **Proxy routes:** Sends to Watch-Tower's embedded handler, gets result, returns to agent
+- **Agent calls tool:** "Execute `ClickElement` on `Watchtower`"
+- **Proxy routes:** Sends to Watchtower's embedded handler, gets result, returns to agent
 
 
 ### 4.2 App Tagging \& Namespace Isolation
@@ -172,18 +172,18 @@ Proxy enables the feedback loop.
 
 ### 5.2 Runtime Interaction (Iterative Development)
 
-**Scenario:** Agent is helping developer build Watch-Tower's UI
+**Scenario:** Agent is helping developer build Watchtower's UI
 
 1. **Agent:** "Show me the current state of the main window"
-2. **Proxy:** Calls `GetElementTree` on Watch-Tower handler
-3. **Watch-Tower:** Returns UI tree (buttons, fields, etc.)
+2. **Proxy:** Calls `GetElementTree` on Watchtower handler
+3. **Watchtower:** Returns UI tree (buttons, fields, etc.)
 4. **Agent:** "I see a login button at (100, 50). Click it."
-5. **Proxy:** Routes `ClickElement(100, 50)` to Watch-Tower
+5. **Proxy:** Routes `ClickElement(100, 50)` to Watchtower
 6. **Agent:** "Take a screenshot"
-7. **Proxy:** Routes `CaptureScreenshot` to Watch-Tower, returns image
+7. **Proxy:** Routes `CaptureScreenshot` to Watchtower, returns image
 8. **Agent:** "I notice the button color is wrong. Let me modify the code..."
 9. **Developer:** Edits XAML/C\#
-10. **Developer:** Rebuilds and restarts Watch-Tower
+10. **Developer:** Rebuilds and restarts Watchtower
 11. **Proxy:** Detects reconnection, updates tool list
 12. **Agent:** "Let me check the button color again..." → loops
 
@@ -197,7 +197,7 @@ Proxy enables the feedback loop.
 Apps:
   - Name: WatchTower
     Endpoint: tcp://localhost:5000
-    Description: Main Watch-Tower application
+    Description: Main Watchtower application
   
   - Name: AdminTool
     Endpoint: tcp://localhost:5001
@@ -234,16 +234,16 @@ Proxy:
 
 **Result:** One line. Proxy discovers all configured apps and exposes their tools.
 
-### 6.3 Watch-Tower as Client (Not Special)
+### 6.3 Watchtower as Client (Not Special)
 
-Watch-Tower is an Avalonia app that:
+Watchtower is an Avalonia app that:
 
 - Embeds the MCP handler (like any other app)
 - Runs in its own process
 - Connects to proxy like any other app
 - Is developed/tested via agent interaction through the proxy
 
-**Key:** Watch-Tower is built WITH the proxy, not the other way around. The proxy is used to develop Watch-Tower.
+**Key:** Watchtower is built WITH the proxy, not the other way around. The proxy is used to develop Watchtower.
 
 ***
 
@@ -258,7 +258,7 @@ Shared by any Avalonia app that wants MCP capabilities:
 - DI extensions for easy integration
 - Headless + GUI mode detection
 
-**Used by:** Watch-Tower, any other Avalonia apps
+**Used by:** Watchtower, any other Avalonia apps
 
 ### Layer 2: Proxy (`Avalonia.McpProxy`)
 
@@ -272,7 +272,7 @@ Standalone, general-purpose tool:
 
 **Used by:** Any team with Avalonia apps
 
-### Layer 3: Application (Watch-Tower)
+### Layer 3: Application (Watchtower)
 
 Example/primary application built with the core library:
 
@@ -398,9 +398,9 @@ Each app controls its own capabilities. If it wants to expose different tools in
 - Live app discovery
 
 
-### Phase 3: Watch-Tower Integration (Weeks 11-13)
+### Phase 3: Watchtower Integration (Weeks 11-13)
 
-- Embed core library in Watch-Tower
+- Embed core library in Watchtower
 - Test iterative development via agent
 - Demonstrate proxy usage pattern
 
@@ -417,7 +417,7 @@ Each app controls its own capabilities. If it wants to expose different tools in
 ## 13. Project Structure
 
 ```
-watch-tower-repo/
+Watchtower-repo/
 ├── src/
 │   ├── Avalonia.Mcp.Core/           # ← Reusable core library
 │   │   ├── McpAgentTools.cs
@@ -432,7 +432,7 @@ watch-tower-repo/
 │   └── WatchTower/                  # ← Application that USES the core library + proxy
 │       ├── App.xaml.cs
 │       ├── MainWindow.xaml
-│       └── WatchTowerMcpTools.cs    # Custom tools for Watch-Tower
+│       └── WatchTowerMcpTools.cs    # Custom tools for Watchtower
 │
 ├── docs/
 │   ├── proxy-architecture.md
@@ -448,7 +448,7 @@ watch-tower-repo/
 
 - Core library is published to NuGet (others use it)
 - Proxy is published as `dnx` tool to NuGet (others use it)
-- Watch-Tower is example/primary app (built with core library, tested via proxy)
+- Watchtower is example/primary app (built with core library, tested via proxy)
 
 ***
 
@@ -517,7 +517,7 @@ watch-tower-repo/
 
 **Build a reusable, open-source Avalonia MCP Proxy that enables agents to interact with any Avalonia applications through a single unified interface.**
 
-The proxy is a **standalone tool** deployable by any team. Watch-Tower is the **first application** demonstrating its power—built and tested entirely through agent interaction via the proxy.
+The proxy is a **standalone tool** deployable by any team. Watchtower is the **first application** demonstrating its power—built and tested entirely through agent interaction via the proxy.
 
 **Result:** Agents become natural partners in Avalonia application development, providing real-time feedback and suggestions as developers build.
 

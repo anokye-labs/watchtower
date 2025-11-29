@@ -40,11 +40,11 @@ As an AI agent (Claude, GitHub Copilot, etc.), I want to connect to a single MCP
 
 **Acceptance Scenarios**:
 
-1. **Given** the MCP proxy is running and Watch-Tower is connected with its embedded handler, **When** an agent connects to the proxy and requests available tools, **Then** the agent receives a unified list of tools prefixed with "WatchTower:" (e.g., `WatchTower:ClickElement`, `WatchTower:CaptureScreenshot`).
+1. **Given** the MCP proxy is running and Watchtower is connected with its embedded handler, **When** an agent connects to the proxy and requests available tools, **Then** the agent receives a unified list of tools prefixed with "WatchTower:" (e.g., `WatchTower:ClickElement`, `WatchTower:CaptureScreenshot`).
 
-2. **Given** multiple Avalonia apps (Watch-Tower, AdminTool, DataService) are connected to the proxy, **When** an agent lists available tools, **Then** the agent sees tools from all apps organized by namespace (e.g., `WatchTower:*`, `AdminTool:*`, `DataService:*`) without ambiguity.
+2. **Given** multiple Avalonia apps (Watchtower, AdminTool, DataService) are connected to the proxy, **When** an agent lists available tools, **Then** the agent sees tools from all apps organized by namespace (e.g., `WatchTower:*`, `AdminTool:*`, `DataService:*`) without ambiguity.
 
-3. **Given** an agent has discovered tools from the proxy, **When** the agent calls `WatchTower:ClickElement(100, 50)`, **Then** the proxy routes the call to Watch-Tower's handler, executes the click, and returns the result to the agent.
+3. **Given** an agent has discovered tools from the proxy, **When** the agent calls `WatchTower:ClickElement(100, 50)`, **Then** the proxy routes the call to Watchtower's handler, executes the click, and returns the result to the agent.
 
 ---
 
@@ -58,11 +58,11 @@ As an AI agent helping a developer build an Avalonia app, I want to inspect the 
 
 **Acceptance Scenarios**:
 
-1. **Given** Watch-Tower is running and connected to the proxy, **When** an agent calls `WatchTower:GetElementTree`, **Then** the agent receives a hierarchical representation of all UI elements including their types, positions, properties, and accessibility information.
+1. **Given** Watchtower is running and connected to the proxy, **When** an agent calls `WatchTower:GetElementTree`, **Then** the agent receives a hierarchical representation of all UI elements including their types, positions, properties, and accessibility information.
 
-2. **Given** Watch-Tower is running in GUI mode, **When** an agent calls `WatchTower:CaptureScreenshot`, **Then** the agent receives a visual capture of the current window state within 200ms.
+2. **Given** Watchtower is running in GUI mode, **When** an agent calls `WatchTower:CaptureScreenshot`, **Then** the agent receives a visual capture of the current window state within 200ms.
 
-3. **Given** Watch-Tower is running in headless mode (no display), **When** an agent calls `WatchTower:CaptureScreenshot`, **Then** the agent still receives a valid visual capture rendered via the headless platform.
+3. **Given** Watchtower is running in headless mode (no display), **When** an agent calls `WatchTower:CaptureScreenshot`, **Then** the agent still receives a valid visual capture rendered via the headless platform.
 
 ---
 
@@ -76,11 +76,11 @@ As an AI agent, I want to interact with Avalonia applications by clicking elemen
 
 **Acceptance Scenarios**:
 
-1. **Given** Watch-Tower displays a login form, **When** an agent calls `WatchTower:TypeText("username@example.com")` on the email field, **Then** the text appears in the input field.
+1. **Given** Watchtower displays a login form, **When** an agent calls `WatchTower:TypeText("username@example.com")` on the email field, **Then** the text appears in the input field.
 
-2. **Given** Watch-Tower displays a "Submit" button at coordinates (200, 150), **When** an agent calls `WatchTower:ClickElement(200, 150)`, **Then** the button is activated and the form submission process begins.
+2. **Given** Watchtower displays a "Submit" button at coordinates (200, 150), **When** an agent calls `WatchTower:ClickElement(200, 150)`, **Then** the button is activated and the form submission process begins.
 
-3. **Given** Watch-Tower has a search field, **When** an agent calls `WatchTower:FindElement("SearchBox")`, **Then** the agent receives the element's position and properties for subsequent interaction.
+3. **Given** Watchtower has a search field, **When** an agent calls `WatchTower:FindElement("SearchBox")`, **Then** the agent receives the element's position and properties for subsequent interaction.
 
 4. **Given** an agent needs to wait for a loading indicator to disappear, **When** the agent calls `WatchTower:WaitForElement("LoadingSpinner", timeout: 5000)` with visibility=false, **Then** the call returns when the element is no longer visible or times out.
 
@@ -96,11 +96,11 @@ As an AI agent, I want to see applications connect and disconnect in real-time, 
 
 **Acceptance Scenarios**:
 
-1. **Given** the proxy is running with no apps connected, **When** Watch-Tower starts and connects its embedded handler, **Then** the proxy immediately updates its tool catalog and agents see Watch-Tower's tools.
+1. **Given** the proxy is running with no apps connected, **When** Watchtower starts and connects its embedded handler, **Then** the proxy immediately updates its tool catalog and agents see Watchtower's tools.
 
-2. **Given** Watch-Tower is connected and an agent is using its tools, **When** Watch-Tower shuts down, **Then** the proxy removes Watch-Tower's tools from the catalog and agents receive appropriate errors if they try to call those tools.
+2. **Given** Watchtower is connected and an agent is using its tools, **When** Watchtower shuts down, **Then** the proxy removes Watchtower's tools from the catalog and agents receive appropriate errors if they try to call those tools.
 
-3. **Given** a developer rebuilds and restarts Watch-Tower during a development session, **When** the new instance connects, **Then** the agent's tool list updates to reflect any new or changed tools without agent intervention.
+3. **Given** a developer rebuilds and restarts Watchtower during a development session, **When** the new instance connects, **Then** the agent's tool list updates to reflect any new or changed tools without agent intervention.
 
 ---
 
@@ -114,9 +114,9 @@ As a developer working with an AI agent, I want the agent to inspect my app, sug
 
 **Acceptance Scenarios**:
 
-1. **Given** an agent has inspected Watch-Tower and identified a button with incorrect styling, **When** the developer modifies the code and rebuilds, **Then** the agent can capture a new screenshot and confirm the styling is corrected.
+1. **Given** an agent has inspected Watchtower and identified a button with incorrect styling, **When** the developer modifies the code and rebuilds, **Then** the agent can capture a new screenshot and confirm the styling is corrected.
 
-2. **Given** Watch-Tower crashes during testing, **When** the developer fixes the bug and restarts, **Then** the agent can resume interaction without any manual reconfiguration.
+2. **Given** Watchtower crashes during testing, **When** the developer fixes the bug and restarts, **Then** the agent can resume interaction without any manual reconfiguration.
 
 3. **Given** an agent is helping test a new feature, **When** the feature is complete, **Then** the agent can document all the interactions it performed and their results for future reference.
 
@@ -128,15 +128,15 @@ As an Avalonia application developer, I want to expose domain-specific tools bey
 
 **Why this priority**: Custom tools extend the platform beyond basic UI testing into domain-specific automation. While valuable, basic UI tools must work first.
 
-**Independent Test**: Can be fully tested by implementing a custom `ResetAppState` tool in Watch-Tower and having an agent invoke it. Delivers value by enabling domain-specific automation.
+**Independent Test**: Can be fully tested by implementing a custom `ResetAppState` tool in Watchtower and having an agent invoke it. Delivers value by enabling domain-specific automation.
 
 **Acceptance Scenarios**:
 
-1. **Given** Watch-Tower exposes a custom `WatchTower:ResetAppState` tool, **When** an agent calls this tool, **Then** the application returns to its initial state for consistent test starting points.
+1. **Given** Watchtower exposes a custom `WatchTower:ResetAppState` tool, **When** an agent calls this tool, **Then** the application returns to its initial state for consistent test starting points.
 
-2. **Given** Watch-Tower exposes `WatchTower:SetTestData(scenarioName)`, **When** an agent calls this with "HighVolumeAlerts", **Then** the application loads a predefined dataset for testing that scenario.
+2. **Given** Watchtower exposes `WatchTower:SetTestData(scenarioName)`, **When** an agent calls this with "HighVolumeAlerts", **Then** the application loads a predefined dataset for testing that scenario.
 
-3. **Given** an agent queries available tools, **When** Watch-Tower has both standard and custom tools, **Then** the agent sees all tools with appropriate descriptions and parameter information.
+3. **Given** an agent queries available tools, **When** Watchtower has both standard and custom tools, **Then** the agent sees all tools with appropriate descriptions and parameter information.
 
 ---
 
@@ -150,7 +150,7 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 
 **Acceptance Scenarios**:
 
-1. **Given** a CI/CD pipeline with no display environment, **When** the proxy and Watch-Tower start in headless mode, **Then** all tool calls succeed including screenshot capture (rendered via headless platform).
+1. **Given** a CI/CD pipeline with no display environment, **When** the proxy and Watchtower start in headless mode, **Then** all tool calls succeed including screenshot capture (rendered via headless platform).
 
 2. **Given** a headless test run completes, **When** results are collected, **Then** screenshots and element trees are available for test reporting and debugging.
 
