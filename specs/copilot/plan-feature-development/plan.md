@@ -67,7 +67,7 @@ WatchTower/                           # Existing Avalonia application
 │       └── WatchTowerMcpHandler.cs   # App-specific MCP tool registration
 └── Models/
 
-WatchTower.Mcp.Embedded/              # New: Reusable embedded MCP library
+Avalonia.Mcp/                         # New: Reusable embedded MCP library
 ├── Services/
 │   ├── IMcpEmbeddedService.cs        # Core service interface
 │   ├── McpEmbeddedService.cs         # Embedded handler implementation
@@ -94,17 +94,20 @@ WatchTower.Mcp.Embedded/              # New: Reusable embedded MCP library
     ├── ElementInfo.cs                # UI element representation
     └── ElementPath.cs                # FR-031-033: Hierarchical path
 
-WatchTower.Mcp.Proxy/                 # New: MCP Proxy Server
+Avalonia.Mcp.Proxy/                   # New: MCP Proxy Server
 ├── Services/
 │   ├── IMcpProxyService.cs           # Proxy service interface
 │   ├── McpProxyService.cs            # FR-006-010: Tool aggregation & routing
 │   ├── IApplicationRegistry.cs       # App registration interface
-│   ├── ApplicationRegistry.cs        # FR-017-018: App lifecycle
+│   ├── ApplicationRegistry.cs        # FR-017-018: App lifecycle via process discovery
 │   ├── IToolCatalog.cs               # Aggregated tools interface
 │   └── ToolCatalog.cs                # FR-007: Namespaced tool catalog
+├── Discovery/
+│   ├── IProcessScanner.cs            # Process environment variable scanner
+│   └── ProcessScanner.cs             # Discovers apps via AVALONIA_MCP_ENDPOINT env var
 ├── Transport/
 │   ├── StdioMcpServer.cs             # FR-011: Agent-facing stdio interface
-│   └── AppConnectionListener.cs      # App-to-proxy listener
+│   └── AppConnectionManager.cs       # App connection management
 ├── Security/
 │   ├── IAuthenticationService.cs     # FR-022-025: Authentication
 │   └── SharedSecretAuthService.cs    # Token-based auth
@@ -112,7 +115,7 @@ WatchTower.Mcp.Proxy/                 # New: MCP Proxy Server
 │   └── ProxyConfiguration.cs         # FR-016: Config file loading
 └── Program.cs                        # Proxy entry point
 
-WatchTower.Mcp.Tests/                 # Test projects
+Avalonia.Mcp.Tests/                   # Test projects
 ├── Unit/
 │   ├── Embedded/
 │   └── Proxy/
@@ -123,7 +126,7 @@ WatchTower.Mcp.Tests/                 # Test projects
     └── McpProtocolTests.cs
 ```
 
-**Structure Decision**: Multi-project solution following .NET conventions. The embedded library (`WatchTower.Mcp.Embedded`) is a reusable NuGet-style package that any Avalonia app can reference. The proxy (`WatchTower.Mcp.Proxy`) is a standalone console application. WatchTower serves as the first integration target per User Story 0.
+**Structure Decision**: Multi-project solution following .NET conventions. The embedded library (`Avalonia.Mcp`) is a reusable NuGet-style package that any Avalonia app can reference. The proxy (`Avalonia.Mcp.Proxy`) is a standalone console application that discovers running apps by scanning process environment variables. WatchTower serves as the first integration target per User Story 0.
 
 ## Complexity Tracking
 

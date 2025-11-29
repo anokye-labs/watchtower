@@ -23,7 +23,7 @@ This guide explains how to integrate the MCP embedded handler into an Avalonia a
 
 ```xml
 <!-- In your .csproj file -->
-<PackageReference Include="WatchTower.Mcp.Embedded" Version="1.0.0" />
+<PackageReference Include="Avalonia.Mcp" Version="1.0.0" />
 ```
 
 ### 2. Configure appsettings.json
@@ -33,8 +33,8 @@ This guide explains how to integrate the MCP embedded handler into an Avalonia a
   "McpEmbedded": {
     "AppId": "WatchTower",
     "SharedSecret": "YOUR_SHARED_SECRET_BASE64",
-    "ProxyEndpoint": "tcp://localhost:5100",
-    "EnableHeadless": true
+    "EnableHeadless": true,
+    "AdvertiseEndpoint": true
   }
 }
 ```
@@ -51,7 +51,7 @@ This guide explains how to integrate the MCP embedded handler into an Avalonia a
 ### 3. Register in App.axaml.cs
 
 ```csharp
-using WatchTower.Mcp.Embedded;
+using Avalonia.Mcp;
 
 public override void OnFrameworkInitializationCompleted()
 {
@@ -63,14 +63,14 @@ public override void OnFrameworkInitializationCompleted()
     // Build service provider
     var provider = services.BuildServiceProvider();
     
-    // Start MCP handler after app initialization
+    // Start MCP handler - sets AVALONIA_MCP_ENDPOINT env var for proxy discovery
     provider.GetRequiredService<IMcpEmbeddedService>().StartAsync();
     
     base.OnFrameworkInitializationCompleted();
 }
 ```
 
-**That's it!** Your Avalonia app now exposes standard MCP tools.
+**That's it!** Your Avalonia app now exposes standard MCP tools and will be automatically discovered by the proxy.
 
 ---
 
@@ -134,11 +134,14 @@ public class WatchTowerMcpHandler
 
 ```bash
 # From solution root
-dotnet run --project WatchTower.Mcp.Proxy
+dotnet run --project Avalonia.Mcp.Proxy
 
 # Or use published executable
-./WatchTower.Mcp.Proxy
+./Avalonia.Mcp.Proxy
 ```
+
+The proxy automatically discovers running Avalonia apps by scanning process environment variables 
+for `AVALONIA_MCP_ENDPOINT`.
 
 ### Proxy Configuration (appsettings.json)
 
@@ -148,10 +151,7 @@ dotnet run --project WatchTower.Mcp.Proxy
     "SharedSecret": "YOUR_SHARED_SECRET_BASE64",
     "TokenExpiry": "00:30:00",
     "ToolTimeout": "00:00:30",
-    "AppTransport": {
-      "Type": "Tcp",
-      "Endpoint": "0.0.0.0:5100"
-    }
+    "DiscoveryScanInterval": "00:00:05"
   },
   "Logging": {
     "LogLevel": {
@@ -172,8 +172,8 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "watchtower-proxy": {
-      "command": "/path/to/WatchTower.Mcp.Proxy",
+    "avalonia-mcp-proxy": {
+      "command": "/path/to/Avalonia.Mcp.Proxy",
       "args": [],
       "env": {
         "MCP_AUTH_TOKEN": "YOUR_AUTH_TOKEN"
@@ -190,8 +190,8 @@ Configure MCP server in VS Code settings:
 ```json
 {
   "mcp.servers": {
-    "watchtower-proxy": {
-      "command": "/path/to/WatchTower.Mcp.Proxy",
+    "avalonia-mcp-proxy": {
+      "command": "/path/to/Avalonia.Mcp.Proxy",
       "args": []
     }
   }
@@ -251,21 +251,23 @@ AppBuilder.Configure<App>()
 
 ## Multiple Apps (User Story 1)
 
-Connect multiple apps to the same proxy:
+The proxy automatically discovers multiple apps running with `AVALONIA_MCP_ENDPOINT` env var:
 
 ```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   WatchTower    │     │    AdminTool    │     │   DataService   │
 │  (AppId: WT)    │     │  (AppId: Admin) │     │  (AppId: Data)  │
+│  AVALONIA_MCP_  │     │  AVALONIA_MCP_  │     │  AVALONIA_MCP_  │
+│  ENDPOINT=...   │     │  ENDPOINT=...   │     │  ENDPOINT=...   │
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                       │
-         │    tcp://localhost:5100                       │
+         │     Proxy scans process env vars              │
          └───────────────────────┼───────────────────────┘
                                  │
                         ┌────────┴────────┐
                         │    MCP Proxy    │
-                        │  (stdio to      │
-                        │   AI agents)    │
+                        │ (discovers apps │
+                        │  via env vars)  │
                         └────────┬────────┘
                                  │
                         ┌────────┴────────┐
@@ -286,11 +288,12 @@ Agent sees tools:
 
 ## Troubleshooting
 
-### App Not Connecting to Proxy
+### App Not Being Discovered
 
-1. Check proxy is running: `netstat -an | grep 5100`
-2. Verify shared secrets match in both configs
-3. Check proxy logs for authentication failures
+1. Check app has `AdvertiseEndpoint: true` in config
+2. Verify `AVALONIA_MCP_ENDPOINT` env var is set in app process
+3. Check proxy logs for discovery scan results
+4. Verify shared secrets match in both configs
 
 ### Screenshots Return Empty
 

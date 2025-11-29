@@ -17,7 +17,7 @@ This document defines the data models for the Federated Avalonia MCP Proxy Platf
 Base model for all MCP protocol communication (JSON-RPC 2.0).
 
 ```csharp
-namespace WatchTower.Mcp.Embedded.Protocol;
+namespace Avalonia.Mcp.Protocol;
 
 /// <summary>
 /// Base MCP message following JSON-RPC 2.0 format.
@@ -81,7 +81,7 @@ public record McpError
 Schema for tool metadata exposed in `tools/list` response.
 
 ```csharp
-namespace WatchTower.Mcp.Embedded.Protocol;
+namespace Avalonia.Mcp.Protocol;
 
 /// <summary>
 /// Tool definition following MCP tools/list schema.
@@ -163,7 +163,7 @@ public record ImageContent : ToolContent
 Representation of UI elements from accessibility tree (FR-033).
 
 ```csharp
-namespace WatchTower.Mcp.Embedded.Models;
+namespace Avalonia.Mcp.Models;
 
 /// <summary>
 /// Hierarchical representation of a UI element from the accessibility tree.
@@ -235,7 +235,7 @@ public record ElementBounds
 Parser and builder for hierarchical element paths (FR-031-032).
 
 ```csharp
-namespace WatchTower.Mcp.Embedded.Models;
+namespace Avalonia.Mcp.Models;
 
 using System.Text.RegularExpressions;
 
@@ -293,7 +293,7 @@ public record ElementPathSegment
 Record of a connected application in the proxy (Key Entity from spec).
 
 ```csharp
-namespace WatchTower.Mcp.Proxy.Models;
+namespace Avalonia.Mcp.Proxy.Models;
 
 /// <summary>
 /// Registration record for a connected Avalonia application.
@@ -322,9 +322,9 @@ public record ApplicationRegistration
     public required DateTimeOffset ConnectedAt { get; init; }
     
     /// <summary>
-    /// Timestamp of last successful communication.
+    /// Timestamp of last successful tool call (used to detect stale connections).
     /// </summary>
-    public DateTimeOffset? LastHeartbeat { get; init; }
+    public DateTimeOffset? LastActivity { get; init; }
     
     /// <summary>
     /// Tools exposed by this application.
@@ -366,7 +366,7 @@ public enum ConnectionStatus
 Aggregated tool entry with namespace prefix (Key Entity from spec).
 
 ```csharp
-namespace WatchTower.Mcp.Proxy.Models;
+namespace Avalonia.Mcp.Proxy.Models;
 
 /// <summary>
 /// Entry in the aggregated tool catalog with namespace prefix.
@@ -404,7 +404,7 @@ public record ToolCatalogEntry
 Configuration for transport layer connections (Key Entity from spec).
 
 ```csharp
-namespace WatchTower.Mcp.Embedded.Transport;
+namespace Avalonia.Mcp.Transport;
 
 /// <summary>
 /// Configuration for transport connections.
@@ -430,11 +430,6 @@ public record TransportConfiguration
     /// Read/write timeout for operations.
     /// </summary>
     public TimeSpan OperationTimeout { get; init; } = TimeSpan.FromSeconds(30);
-    
-    /// <summary>
-    /// Interval for heartbeat messages (0 to disable).
-    /// </summary>
-    public TimeSpan HeartbeatInterval { get; init; } = TimeSpan.FromSeconds(15);
 }
 
 /// <summary>
@@ -462,7 +457,7 @@ public enum TransportType
 Token for shared secret authentication (FR-022-025).
 
 ```csharp
-namespace WatchTower.Mcp.Proxy.Security;
+namespace Avalonia.Mcp.Security;
 
 /// <summary>
 /// Authentication token for proxy/app/agent communication.
@@ -516,10 +511,11 @@ public record AuthenticationToken
 
 ### ProxyConfiguration
 
-Proxy server configuration from appsettings.json (FR-016).
+Proxy server configuration. The proxy discovers running applications by scanning process environment 
+variables for `AVALONIA_MCP_ENDPOINT` which contains the embedded MCP endpoint information.
 
 ```csharp
-namespace WatchTower.Mcp.Proxy.Configuration;
+namespace Avalonia.Mcp.Configuration;
 
 /// <summary>
 /// Proxy server configuration.
@@ -542,14 +538,32 @@ public record ProxyConfiguration
     public TimeSpan ToolTimeout { get; init; } = TimeSpan.FromSeconds(30);
     
     /// <summary>
-    /// Transport configuration for app connections.
+    /// Interval for scanning processes for MCP endpoints.
     /// </summary>
-    public required TransportConfiguration AppTransport { get; init; }
+    public TimeSpan DiscoveryScanInterval { get; init; } = TimeSpan.FromSeconds(5);
     
     /// <summary>
     /// Debounce interval for tool catalog updates (FR-Edge Case).
     /// </summary>
     public TimeSpan CatalogDebounce { get; init; } = TimeSpan.FromMilliseconds(500);
+}
+
+/// <summary>
+/// Environment variable-based endpoint advertisement.
+/// Applications set this in their process environment to be discovered by the proxy.
+/// Format: "transport://endpoint" (e.g., "tcp://localhost:5001", "pipe://MyApp.Mcp")
+/// </summary>
+public static class McpEnvironment
+{
+    /// <summary>
+    /// Environment variable name for MCP endpoint advertisement.
+    /// </summary>
+    public const string EndpointVariable = "AVALONIA_MCP_ENDPOINT";
+    
+    /// <summary>
+    /// Environment variable name for application identifier.
+    /// </summary>
+    public const string AppIdVariable = "AVALONIA_MCP_APP_ID";
 }
 
 /// <summary>
@@ -568,16 +582,30 @@ public record EmbeddedConfiguration
     public required string SharedSecret { get; init; }
     
     /// <summary>
-    /// Proxy endpoint to connect to.
+    /// Transport type for the embedded endpoint.
     /// </summary>
-    public required string ProxyEndpoint { get; init; }
+    public TransportType Transport { get; init; } = TransportType.Tcp;
+    
+    /// <summary>
+    /// Port or pipe name for the embedded endpoint (0 = auto-assign).
+    /// </summary>
+    public int Port { get; init; } = 0;
     
     /// <summary>
     /// Whether to enable headless mode support.
     /// </summary>
     public bool EnableHeadless { get; init; } = true;
+    
+    /// <summary>
+    /// Whether to advertise endpoint via environment variable for proxy discovery.
+    /// </summary>
+    public bool AdvertiseEndpoint { get; init; } = true;
 }
 ```
+
+**Discovery Pattern**: The proxy acts like a debugger, scanning running processes for the 
+`AVALONIA_MCP_ENDPOINT` environment variable. Applications that want to be discovered set this 
+variable with their endpoint information when starting the embedded MCP handler.
 
 ---
 
@@ -640,20 +668,20 @@ public record EmbeddedConfiguration
 ```text
                     ┌─────────────────────┐
                     │                     │
-    app connects    │                     │  app unregisters
+   proxy discovers  │                     │  process exits
         │           ▼                     │       │
         │    ┌─────────────┐              │       │
         └───►│  Connected  │──────────────┼───────┘
              └──────┬──────┘              │
                     │                     │
-     heartbeat      │  connection lost    │
-        timeout     │       │             │
+     process not    │  connection lost    │
+       found        │       │             │
                     │       ▼             │
                     │ ┌─────────────┐     │
                     │ │ Disconnected│◄────┘
                     │ └──────┬──────┘
                     │        │
-                    │        │ app reconnects
+                    │        │ process rediscovered
                     │        ▼
                     │ ┌─────────────┐
                     └─┤ Reconnecting│
