@@ -168,6 +168,8 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 
 - What happens if the embedded handler crashes but the app continues running? The proxy detects the broken connection and marks the app as unavailable. The app's heartbeat mechanism should detect this and attempt reconnection.
 
+- What happens when system resources are exhausted (too many apps or concurrent tool calls)? The proxy implements graceful degradation: new connections receive backpressure signals, tool calls queue with visible wait times, and the system logs warnings about resource constraints without hard failures.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -207,6 +209,28 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 - **FR-019**: Proxy MUST return meaningful error messages when tool calls fail.
 - **FR-020**: Proxy MUST handle application crashes gracefully without affecting other connected applications.
 - **FR-021**: Proxy MUST implement configurable timeouts for tool calls (default: 30 seconds).
+
+**Security**
+
+- **FR-022**: Proxy and applications MUST authenticate using a shared secret token stored in configuration files.
+- **FR-023**: Agent connections MUST provide the shared secret during initial handshake.
+- **FR-024**: Application registrations MUST include the shared secret for validation.
+- **FR-025**: Failed authentication attempts MUST be logged and rejected with appropriate error messages.
+
+**Observability**
+
+- **FR-026**: Proxy MUST implement structured logging with JSON-formatted output including timestamps, log levels, and contextual information.
+- **FR-027**: Log verbosity MUST be configurable via appsettings.json with levels: Debug, Information, Warning, Error.
+- **FR-028**: Proxy MUST log connection events (app connect/disconnect), authentication attempts, tool call routing, and errors.
+- **FR-029**: Each log entry for tool calls MUST include: timestamp, application identifier, tool name, execution duration, and result status.
+- **FR-030**: Embedded handlers MUST support the same structured logging configuration for consistency across the platform.
+
+**Element Identification**
+
+- **FR-031**: Tools that locate UI elements (FindElement, WaitForElement) MUST support hierarchical path-based identification using accessibility tree paths.
+- **FR-032**: Hierarchical paths MUST use format: "ParentType[index]/ChildType[index]" (e.g., "MainWindow/Panel[0]/Button[2]").
+- **FR-033**: GetElementTree MUST return sufficient metadata (element type, index within parent, accessibility properties) to construct valid hierarchical paths.
+- **FR-034**: Coordinate-based interaction tools (ClickElement, TypeText) MUST accept X/Y pixel positions for cases where hierarchical paths are impractical.
 
 ### Key Entities
 
@@ -255,6 +279,15 @@ As a DevOps engineer, I want to run Avalonia apps and the MCP proxy in headless 
 - TCP localhost connections provide sufficient performance for local development (sub-millisecond latency).
 - Named Pipes are available on Windows for secure inter-process communication.
 
+## Clarifications
+
+### Session 2025-11-28
+
+- Q: The spec describes a proxy that aggregates tools from multiple applications, allowing agents to control any connected app. However, there's no security model defined for scenarios where sensitive operations are exposed. What security model should be used? → A: Shared secret token - proxy and apps share a configuration-file-based secret; agents authenticate once per session
+- Q: The spec includes performance targets and error handling but doesn't specify what observability features the proxy should provide for debugging connection issues, performance problems, or tool execution failures in production. What logging/observability approach should be used? → A: Structured logging with configurable verbosity - JSON-formatted logs with levels (Debug/Info/Warning/Error), configurable via appsettings.json, optimized for localhost development scenarios
+- Q: The spec describes federating tools from multiple applications but doesn't specify limits on how many apps can connect simultaneously or how many concurrent tool calls the proxy should handle. What scalability limits should be enforced? → A: Unlimited - no explicit limits, rely on system resources and implement graceful degradation
+- Q: The spec mentions tools like FindElement and WaitForElement that locate UI elements, but doesn't specify what identification strategy should be used (e.g., element names, IDs, visual coordinates, accessibility properties). What element identification approach should be used? → A: Full accessibility tree path - use hierarchical paths like "MainWindow/Panel[0]/Button[2]" for precise targeting
+
 ## Non-Goals
 
 The following are explicitly out of scope for this feature:
@@ -266,4 +299,3 @@ The following are explicitly out of scope for this feature:
 - Multi-app state orchestration (apps remain independent)
 - Profile-based access control (security is app-level responsibility)
 - Mobile or non-desktop platform support
-- Authentication/authorization at the proxy level
