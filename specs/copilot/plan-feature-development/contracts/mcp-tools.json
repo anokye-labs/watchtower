@@ -1,0 +1,423 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tools Schema",
+  "description": "Schema definitions for Federated Avalonia MCP Proxy Platform tools",
+  "version": "1.0.0",
+  "definitions": {
+    "ToolDefinition": {
+      "type": "object",
+      "description": "Tool definition following MCP protocol specification",
+      "required": ["name", "description", "inputSchema"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tool name, optionally namespaced as AppName:ToolName",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*(:?[A-Za-z][A-Za-z0-9_]*)?$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of tool functionality",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "inputSchema": {
+          "$ref": "#/definitions/JsonSchema"
+        }
+      }
+    },
+    "JsonSchema": {
+      "type": "object",
+      "description": "JSON Schema for tool parameters",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["object"]
+        },
+        "properties": {
+          "type": "object"
+        },
+        "required": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "ToolResult": {
+      "type": "object",
+      "description": "Result of tool execution",
+      "required": ["content"],
+      "properties": {
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ToolContent" }
+        },
+        "isError": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "ToolContent": {
+      "oneOf": [
+        { "$ref": "#/definitions/TextContent" },
+        { "$ref": "#/definitions/ImageContent" }
+      ]
+    },
+    "TextContent": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string" }
+      }
+    },
+    "ImageContent": {
+      "type": "object",
+      "required": ["type", "data", "mimeType"],
+      "properties": {
+        "type": { "const": "image" },
+        "data": {
+          "type": "string",
+          "description": "Base64-encoded image data"
+        },
+        "mimeType": {
+          "type": "string",
+          "enum": ["image/png", "image/jpeg"]
+        }
+      }
+    },
+    "ElementInfo": {
+      "type": "object",
+      "description": "UI element information from accessibility tree",
+      "required": ["type", "index", "bounds", "path"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Control type name (e.g., Button, TextBox)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Automation name/label"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index among siblings of same type"
+        },
+        "bounds": {
+          "$ref": "#/definitions/ElementBounds"
+        },
+        "path": {
+          "type": "string",
+          "description": "Hierarchical path from root",
+          "pattern": "^[A-Za-z]+(\\[[0-9]+\\])?(/[A-Za-z]+(\\[[0-9]+\\])?)*$"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ElementInfo" }
+        }
+      }
+    },
+    "ElementBounds": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0 },
+        "y": { "type": "number", "minimum": 0 },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    }
+  },
+  "tools": {
+    "ClickElement": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "X coordinate in pixels"
+          },
+          "y": {
+            "type": "number",
+            "description": "Y coordinate in pixels"
+          },
+          "button": {
+            "type": "string",
+            "enum": ["left", "right", "middle"],
+            "default": "left",
+            "description": "Mouse button to click"
+          }
+        },
+        "required": ["x", "y"]
+      },
+      "description": "Click at specified coordinates in the application window"
+    },
+    "TypeText": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to type into the focused element"
+          },
+          "clearFirst": {
+            "type": "boolean",
+            "default": false,
+            "description": "Clear existing text before typing"
+          }
+        },
+        "required": ["text"]
+      },
+      "description": "Type text into the currently focused input element"
+    },
+    "CaptureScreenshot": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["png", "jpeg"],
+            "default": "png",
+            "description": "Image format for the screenshot"
+          },
+          "quality": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 90,
+            "description": "JPEG quality (ignored for PNG)"
+          }
+        }
+      },
+      "description": "Capture a screenshot of the current application window"
+    },
+    "GetElementTree": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "maxDepth": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 10,
+            "description": "Maximum depth of tree traversal"
+          },
+          "includeHidden": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include hidden/collapsed elements"
+          }
+        }
+      },
+      "description": "Get hierarchical representation of all UI elements"
+    },
+    "FindElement": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Hierarchical path (e.g., MainWindow/Panel[0]/Button[2])"
+          },
+          "name": {
+            "type": "string",
+            "description": "Element name/label to search for"
+          },
+          "type": {
+            "type": "string",
+            "description": "Control type to filter by"
+          }
+        },
+        "anyOf": [
+          { "required": ["path"] },
+          { "required": ["name"] }
+        ]
+      },
+      "description": "Find a UI element by path or name"
+    },
+    "WaitForElement": {
+      "$ref": "#/definitions/ToolDefinition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Hierarchical path to wait for"
+          },
+          "name": {
+            "type": "string",
+            "description": "Element name to wait for"
+          },
+          "visible": {
+            "type": "boolean",
+            "default": true,
+            "description": "Wait for element to be visible (false = wait for hidden)"
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 60000,
+            "default": 5000,
+            "description": "Timeout in milliseconds"
+          }
+        },
+        "anyOf": [
+          { "required": ["path"] },
+          { "required": ["name"] }
+        ]
+      },
+      "description": "Wait for an element to appear or disappear"
+    }
+  },
+  "protocol": {
+    "initialize": {
+      "description": "Initialize MCP session with authentication",
+      "request": {
+        "type": "object",
+        "required": ["protocolVersion", "capabilities", "clientInfo"],
+        "properties": {
+          "protocolVersion": {
+            "type": "string",
+            "description": "MCP protocol version"
+          },
+          "capabilities": {
+            "type": "object",
+            "description": "Client capabilities"
+          },
+          "clientInfo": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" }
+            }
+          },
+          "authToken": {
+            "type": "string",
+            "description": "Authentication token (FR-023)"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "protocolVersion": { "type": "string" },
+          "capabilities": { "type": "object" },
+          "serverInfo": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "tools/list": {
+      "description": "List all available tools",
+      "request": {
+        "type": "object",
+        "properties": {}
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/ToolDefinition" }
+          }
+        }
+      }
+    },
+    "tools/call": {
+      "description": "Execute a tool",
+      "request": {
+        "type": "object",
+        "required": ["name", "arguments"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name (optionally namespaced)"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Tool arguments matching inputSchema"
+          }
+        }
+      },
+      "response": {
+        "$ref": "#/definitions/ToolResult"
+      }
+    },
+    "notifications/tools/list_changed": {
+      "description": "Notification when tool list changes (app connect/disconnect)",
+      "params": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  },
+  "appToProxy": {
+    "register": {
+      "description": "Application registration with proxy (FR-017)",
+      "request": {
+        "type": "object",
+        "required": ["appId", "tools", "authToken"],
+        "properties": {
+          "appId": {
+            "type": "string",
+            "description": "Unique application identifier",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "tools": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/ToolDefinition" },
+            "description": "Tools exposed by this application"
+          },
+          "authToken": {
+            "type": "string",
+            "description": "Authentication token (FR-024)"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "sessionId": { "type": "string" }
+        }
+      }
+    },
+    "unregister": {
+      "description": "Application unregistration (FR-018)",
+      "request": {
+        "type": "object",
+        "required": ["appId", "sessionId"],
+        "properties": {
+          "appId": { "type": "string" },
+          "sessionId": { "type": "string" }
+        }
+      }
+    },
+    "heartbeat": {
+      "description": "Heartbeat to maintain connection",
+      "request": {
+        "type": "object",
+        "required": ["appId", "sessionId"],
+        "properties": {
+          "appId": { "type": "string" },
+          "sessionId": { "type": "string" }
+        }
+      }
+    }
+  }
+}
