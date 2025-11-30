@@ -6,6 +6,12 @@
 **Source Document**: specs/vision.md  
 **Goal**: Design a barebones, self-contained UX for Watchtower that replaces the complex dock library approach with a simpler fixed-panel layout
 
+## Clarifications
+
+### Session 2025-11-30
+
+- Q: How should agent credentials and conversation data be protected? → A: No encryption; all data stored plaintext (developer machine, trusted environment). Implementation must be modular to allow security enhancements later.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - View Active Agent Sessions (Priority: P1)
@@ -135,6 +141,15 @@ As a developer, I want the application to remember my window size and position s
 #### Window Management
 - **FR-020**: Application MUST persist window size and position between sessions
 - **FR-021**: Application MUST detect and handle invalid saved positions (off-screen recovery)
+
+### Non-Functional Requirements
+
+#### Security & Data Storage
+- **NFR-001**: All data (credentials, conversation history) MAY be stored as plaintext on local filesystem (trusted developer environment assumption)
+- **NFR-002**: Data storage implementation MUST be modular with clear interfaces to enable future security enhancements (encryption, secure credential storage) without architectural changes
+
+#### Modularity & Extensibility
+- **NFR-003**: All major subsystems (storage, agent communication, UI panels) MUST be implemented behind interfaces to allow swapping implementations
 
 ### Key Entities
 
