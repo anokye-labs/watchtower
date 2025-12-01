@@ -14,6 +14,7 @@
 - Q: How should agent status transitions be modeled? → A: Flexible model; any status transition allowed. UI reflects whatever state the agent adapter reports without enforcing a strict state machine.
 - Q: How should agent connection failures be handled? → A: Manual retry; show error state per-agent, user clicks to retry connection.
 - Q: What level of observability/logging should the application provide? → A: Structured JSON-formatted logs for potential integration with log aggregation tools.
+- Q: Should there be a limit on conversation history retention? → A: No limit; keep all history and rely on UI virtualization for performance.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -161,6 +162,10 @@ As a developer, I want the application to remember my window size and position s
 #### Observability
 - **NFR-004**: Application MUST emit structured JSON-formatted logs for potential integration with log aggregation tools
 - **NFR-005**: Log output MUST support configurable verbosity levels (debug, info, warning, error)
+
+#### Data Retention
+- **NFR-006**: Conversation history MUST be retained indefinitely with no automatic deletion or limits
+- **NFR-007**: UI MUST use virtualization to maintain performance regardless of conversation history size
 
 ### Key Entities
 
