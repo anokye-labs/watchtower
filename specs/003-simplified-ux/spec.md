@@ -12,6 +12,7 @@
 
 - Q: How should agent credentials and conversation data be protected? → A: No encryption; all data stored plaintext (developer machine, trusted environment). Implementation must be modular to allow security enhancements later.
 - Q: How should agent status transitions be modeled? → A: Flexible model; any status transition allowed. UI reflects whatever state the agent adapter reports without enforcing a strict state machine.
+- Q: How should agent connection failures be handled? → A: Manual retry; show error state per-agent, user clicks to retry connection.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -105,6 +106,8 @@ As a developer, I want the application to remember my window size and position s
   - The message shows an error indicator with option to retry
 - What happens when the conversation history is extremely long (10,000+ messages)?
   - The application loads messages incrementally (virtualized list) to maintain performance
+- What happens when an agent connection fails during startup or reconnection?
+  - The agent shows an error state with a manual retry button; no automatic retry attempts
 
 ## Requirements *(mandatory)*
 
@@ -119,6 +122,7 @@ As a developer, I want the application to remember my window size and position s
 - **FR-004**: Agent list MUST display all configured agents with their name and status indicator
 - **FR-005**: Status indicators MUST use distinct visual cues (color, icon) for: active, idle, and disconnected states
 - **FR-005a**: Agent status transitions MUST be flexible; UI reflects whatever state the agent adapter reports without enforcing a strict state machine
+- **FR-005b**: Agent connection failures MUST display an error state with a manual retry action; no automatic reconnection attempts
 - **FR-006**: Agent list MUST highlight the currently selected agent
 - **FR-007**: Agent list MUST support single-click selection to switch the active conversation
 
