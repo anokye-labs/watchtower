@@ -1,9 +1,7 @@
 {
   "recommendations": [
     "avaloniateam.vscode-avalonia",
-    "ms-dotnettools.csharp",
-    "nromanov.dotnet-meteor",
-    "rogalmic.vscode-xml-complete"
+    "ms-dotnettools.csharp"
   ],
   "unwantedRecommendations": []
 }
