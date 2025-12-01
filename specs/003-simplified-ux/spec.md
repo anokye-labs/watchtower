@@ -11,6 +11,7 @@
 ### Session 2025-11-30
 
 - Q: How should agent credentials and conversation data be protected? → A: No encryption; all data stored plaintext (developer machine, trusted environment). Implementation must be modular to allow security enhancements later.
+- Q: How should agent status transitions be modeled? → A: Flexible model; any status transition allowed. UI reflects whatever state the agent adapter reports without enforcing a strict state machine.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -117,6 +118,7 @@ As a developer, I want the application to remember my window size and position s
 #### Agent List Panel
 - **FR-004**: Agent list MUST display all configured agents with their name and status indicator
 - **FR-005**: Status indicators MUST use distinct visual cues (color, icon) for: active, idle, and disconnected states
+- **FR-005a**: Agent status transitions MUST be flexible; UI reflects whatever state the agent adapter reports without enforcing a strict state machine
 - **FR-006**: Agent list MUST highlight the currently selected agent
 - **FR-007**: Agent list MUST support single-click selection to switch the active conversation
 
@@ -153,7 +155,7 @@ As a developer, I want the application to remember my window size and position s
 
 ### Key Entities
 
-- **Agent**: Represents a connected AI coding agent. Key attributes: unique identifier, display name, connection status, current activity description
+- **Agent**: Represents a connected AI coding agent. Key attributes: unique identifier, display name, connection status (flexible model—any state reported by adapter is valid), current activity description
 - **Message**: A single communication unit in a conversation. Key attributes: content, sender type (user or agent), timestamp, delivery status
 - **Session**: An active conversation with an agent. Key attributes: associated agent, ordered list of messages, connection state
 
