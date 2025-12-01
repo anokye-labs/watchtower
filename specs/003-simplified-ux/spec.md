@@ -13,6 +13,7 @@
 - Q: How should agent credentials and conversation data be protected? → A: No encryption; all data stored plaintext (developer machine, trusted environment). Implementation must be modular to allow security enhancements later.
 - Q: How should agent status transitions be modeled? → A: Flexible model; any status transition allowed. UI reflects whatever state the agent adapter reports without enforcing a strict state machine.
 - Q: How should agent connection failures be handled? → A: Manual retry; show error state per-agent, user clicks to retry connection.
+- Q: What level of observability/logging should the application provide? → A: Structured JSON-formatted logs for potential integration with log aggregation tools.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -156,6 +157,10 @@ As a developer, I want the application to remember my window size and position s
 
 #### Modularity & Extensibility
 - **NFR-003**: All major subsystems (storage, agent communication, UI panels) MUST be implemented behind interfaces to allow swapping implementations
+
+#### Observability
+- **NFR-004**: Application MUST emit structured JSON-formatted logs for potential integration with log aggregation tools
+- **NFR-005**: Log output MUST support configurable verbosity levels (debug, info, warning, error)
 
 ### Key Entities
 
