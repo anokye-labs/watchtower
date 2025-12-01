@@ -20,7 +20,7 @@
 			"command": "npx",
 			"args": [
 				"tsx",
-				"${workspaceFolder}/tools/mcp-server/src/index.ts"
+				"${workspaceFolder}/tools/fal.ai-mcp-server/src/index.ts"
 			]
 		}
 	},

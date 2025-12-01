@@ -1,5 +1,5 @@
 {
-  "name": "watchtower-mcp-server",
+  "name": "watchtower-fal-ai-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for WatchTower repository tools",
   "type": "module",
