@@ -14,6 +14,13 @@ Professional IDE-style docking interface built with Avalonia UI (.NET 10) follow
 - 💾 Auto-save layout persistence across sessions
 - ⌨️ Menu bar with keyboard shortcuts (Ctrl+B, Ctrl+`, F11, etc.)
 
+✅ **Game Controller Support** - Cross-platform gamepad input
+- 🎮 Xbox, PlayStation, and generic USB controller support
+- 🔘 Standard button mapping (A/B/X/Y, D-Pad, triggers, analog sticks)
+- 📡 Event-based input handling (button press/release)
+- 🔌 Hot-plug detection (connect/disconnect events)
+- 🎯 Foundation ready for UI navigation and custom bindings
+
 Built on [Dock.Avalonia](https://github.com/wieslawsoltes/Dock) for native docking capabilities.
 
 ## Quick Start
@@ -92,4 +99,5 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 
 - [Avalonia Docs](https://docs.avaloniaui.net/)
 - [Project Instructions](.github/copilot-instructions.md)
+- [Game Controller Support](docs/game-controller-support.md)
 - [Specs](specs/)

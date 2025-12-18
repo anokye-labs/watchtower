@@ -2,9 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:WatchTower.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
-        Title="WatchTower"
+        x:DataType="vm:MainWindowViewModel"
+        Title="WatchTower - Game Controller Demo"
         Width="800" Height="600"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
@@ -19,11 +21,78 @@
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
         
-        <Grid>
-            <TextBlock Text="Hello World"
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="0"
+                       Text="Game Controller Support"
                        FontSize="32"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center" />
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" />
+
+            <!-- Status Info -->
+            <StackPanel Grid.Row="2" Spacing="10">
+                <TextBlock Text="{Binding StatusText}"
+                           FontSize="18"
+                           HorizontalAlignment="Center" />
+                
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="20">
+                    <TextBlock Text="Last Button Pressed:" FontSize="14" />
+                    <TextBlock Text="{Binding LastButtonPressed}" 
+                               FontSize="14" 
+                               FontWeight="Bold" />
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="20">
+                    <TextBlock Text="Total Button Presses:" FontSize="14" />
+                    <TextBlock Text="{Binding ButtonPressCount}" 
+                               FontSize="14" 
+                               FontWeight="Bold" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Event Log -->
+            <Border Grid.Row="4"
+                    Background="#20FFFFFF"
+                    CornerRadius="8"
+                    Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0"
+                               Text="Event Log"
+                               FontSize="16"
+                               FontWeight="Bold" />
+                    
+                    <ScrollViewer Grid.Row="2">
+                        <ItemsControl ItemsSource="{Binding ControllerEvents}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" 
+                                               FontFamily="Consolas,Courier New"
+                                               FontSize="12"
+                                               Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
     </Panel>
 </Window>

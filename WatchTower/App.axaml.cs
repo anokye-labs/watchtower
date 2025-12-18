@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WatchTower.Services;
+using WatchTower.ViewModels;
 
 namespace WatchTower;
 
@@ -32,6 +33,9 @@ public partial class App : Application
         services.AddSingleton(sp => 
             sp.GetRequiredService<LoggingService>().CreateLogger<GameControllerService>());
         
+        // Register ViewModels
+        services.AddTransient<MainWindowViewModel>();
+        
         _serviceProvider = services.BuildServiceProvider();
         
         // Initialize services
@@ -51,8 +55,12 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new Views.MainWindow();
-            logger.LogInformation("Main window created");
+            var mainWindow = new Views.MainWindow
+            {
+                DataContext = _serviceProvider.GetRequiredService<MainWindowViewModel>()
+            };
+            desktop.MainWindow = mainWindow;
+            logger.LogInformation("Main window created with game controller support");
             
             // Cleanup on exit
             desktop.Exit += (s, e) =>
