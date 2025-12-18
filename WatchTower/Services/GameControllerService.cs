@@ -56,8 +56,8 @@ public class GameControllerService : IGameControllerService
 
             _initialized = true;
             
-            // Start update timer (60 Hz polling)
-            _updateTimer = new Timer(OnTimerUpdate, null, TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
+            // Start update timer (30 Hz polling - adequate for mock implementation)
+            _updateTimer = new Timer(OnTimerUpdate, null, TimeSpan.FromMilliseconds(33), TimeSpan.FromMilliseconds(33));
             
             return true;
         }

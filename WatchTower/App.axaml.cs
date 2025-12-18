@@ -25,13 +25,14 @@ public partial class App : Application
         
         // Register logging service
         services.AddSingleton<LoggingService>();
-        services.AddSingleton<ILogger>(sp => 
-            sp.GetRequiredService<LoggingService>().CreateLogger<App>());
         
         // Register game controller service
-        services.AddSingleton<IGameControllerService, GameControllerService>();
-        services.AddSingleton(sp => 
-            sp.GetRequiredService<LoggingService>().CreateLogger<GameControllerService>());
+        services.AddSingleton<IGameControllerService>(sp => 
+        {
+            var loggingService = sp.GetRequiredService<LoggingService>();
+            var logger = loggingService.CreateLogger<GameControllerService>();
+            return new GameControllerService(logger);
+        });
         
         // Register ViewModels
         services.AddTransient<MainWindowViewModel>();
@@ -39,7 +40,8 @@ public partial class App : Application
         _serviceProvider = services.BuildServiceProvider();
         
         // Initialize services
-        var logger = _serviceProvider.GetRequiredService<ILogger>();
+        var loggingService = _serviceProvider.GetRequiredService<LoggingService>();
+        var logger = loggingService.CreateLogger<App>();
         logger.LogInformation("Application initialization completed");
         
         // Initialize game controller service
