@@ -1,14 +1,16 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WatchTower.Services;
+using WatchTower.ViewModels;
 
 namespace WatchTower;
 
 public partial class App : Application
 {
-    private LoggingService? _loggingService;
+    private ServiceProvider? _serviceProvider;
 
     public override void Initialize()
     {
@@ -17,15 +19,37 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // Initialize logging service
-        _loggingService = new LoggingService();
-        var logger = _loggingService.CreateLogger<App>();
+        // Setup dependency injection
+        var services = new ServiceCollection();
+        
+        // Register logging service
+        var loggingService = new LoggingService();
+        services.AddSingleton(loggingService);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        services.AddSingleton<ILoggerFactory>(loggingService.GetType()
+            .GetField("_loggerFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
+            .GetValue(loggingService) as ILoggerFactory ?? LoggerFactory.Create(builder => builder.AddConsole()));
+        
+        // Register services
+        services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
+        
+        // Register ViewModels
+        services.AddTransient<MainWindowViewModel>();
+        
+        // Build service provider
+        _serviceProvider = services.BuildServiceProvider();
+        
+        var logger = _serviceProvider.GetRequiredService<ILogger<App>>();
         logger.LogInformation("Application initialization completed");
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new Views.MainWindow();
-            logger.LogInformation("Main window created");
+            var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+            desktop.MainWindow = new Views.MainWindow
+            {
+                DataContext = viewModel
+            };
+            logger.LogInformation("Main window created with ViewModel");
         }
 
         base.OnFrameworkInitializationCompleted();

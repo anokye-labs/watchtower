@@ -2,9 +2,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
+        xmlns:vm="using:WatchTower.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
-        Title="WatchTower"
+        x:DataType="vm:MainWindowViewModel"
+        Title="WatchTower - AdaptiveCard Display Engine"
         Width="800" Height="600"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
@@ -19,11 +22,14 @@
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
         
-        <Grid>
-            <TextBlock Text="Hello World"
-                       FontSize="32"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center" />
+        <Grid Margin="20">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                         VerticalScrollBarVisibility="Auto">
+                <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
+                                    MaxWidth="600"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top" />
+            </ScrollViewer>
         </Grid>
     </Panel>
 </Window>
