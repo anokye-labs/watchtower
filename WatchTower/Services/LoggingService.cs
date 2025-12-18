@@ -49,6 +49,14 @@ public class LoggingService
     }
 
     /// <summary>
+    /// Gets the configuration instance.
+    /// </summary>
+    public IConfiguration GetConfiguration()
+    {
+        return _configuration;
+    }
+
+    /// <summary>
     /// Gets the configured log level from appsettings.json.
     /// Defaults to Information (normal) if not configured.
     /// </summary>
