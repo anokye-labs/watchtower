@@ -66,6 +66,8 @@ public class MainWindowViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsOverlayVisible));
                 OnPropertyChanged(nameof(IsRichTextMode));
                 OnPropertyChanged(nameof(IsVoiceMode));
+                OnPropertyChanged(nameof(IsEventLogVisible));
+                OnPropertyChanged(nameof(IsInputOverlayVisible));
             }
         }
     }
@@ -95,6 +97,17 @@ public class MainWindowViewModel : ViewModelBase
     public bool IsVoiceMode => CurrentInputMode == InputOverlayMode.Voice;
 
     /// <summary>
+    /// Gets whether the event log overlay is visible.
+    /// </summary>
+    public bool IsEventLogVisible => CurrentInputMode == InputOverlayMode.EventLog;
+
+    /// <summary>
+    /// Gets whether the input overlay (Rich Text or Voice) is visible.
+    /// Used to control the bottom-sliding panel visibility.
+    /// </summary>
+    public bool IsInputOverlayVisible => CurrentInputMode == InputOverlayMode.RichText || CurrentInputMode == InputOverlayMode.Voice;
+
+    /// <summary>
     /// Command to show the rich-text input overlay.
     /// </summary>
     public ICommand ShowRichTextInputCommand { get; }
@@ -113,6 +126,11 @@ public class MainWindowViewModel : ViewModelBase
     /// Command to submit the input.
     /// </summary>
     public ICommand SubmitInputCommand { get; }
+
+    /// <summary>
+    /// Command to toggle the event log overlay.
+    /// </summary>
+    public ICommand ToggleEventLogCommand { get; }
 
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
@@ -134,6 +152,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowVoiceInputCommand = new RelayCommand(ShowVoiceInput);
         CloseOverlayCommand = new RelayCommand(CloseOverlay);
         SubmitInputCommand = new RelayCommand(SubmitInput);
+        ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
 
         UpdateStatus();
         
@@ -234,5 +253,17 @@ public class MainWindowViewModel : ViewModelBase
         // TODO: Process the input (will be implemented in future features)
         // For now, just close the overlay after submission
         CloseOverlay();
+    }
+
+    private void ToggleEventLog()
+    {
+        if (CurrentInputMode == InputOverlayMode.EventLog)
+        {
+            CurrentInputMode = InputOverlayMode.None;
+        }
+        else
+        {
+            CurrentInputMode = InputOverlayMode.EventLog;
+        }
     }
 }

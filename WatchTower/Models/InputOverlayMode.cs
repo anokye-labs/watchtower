@@ -18,5 +18,10 @@ public enum InputOverlayMode
     /// <summary>
     /// Voice-based input overlay is shown.
     /// </summary>
-    Voice
+    Voice,
+    
+    /// <summary>
+    /// Event log overlay is shown.
+    /// </summary>
+    EventLog
 }
