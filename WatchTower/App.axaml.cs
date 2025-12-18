@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -27,29 +26,23 @@ public partial class App : Application
         // Setup dependency injection
         var services = new ServiceCollection();
         
-        // Register logging service
-        services.AddSingleton<LoggingService>();
-        
-        // Register configuration
+        // Register logging service and expose ILoggerFactory
         var loggingService = new LoggingService();
-        var configuration = loggingService.GetConfiguration();
-        services.AddSingleton<IConfiguration>(configuration);
+        services.AddSingleton(loggingService);
+        services.AddSingleton(loggingService.LoggerFactory);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
         
-        // Register game controller service
-        services.AddSingleton<IGameControllerService>(sp => 
-        {
-            var logger = loggingService.CreateLogger<GameControllerService>();
-            var config = sp.GetRequiredService<IConfiguration>();
-            return new GameControllerService(logger, config);
-        });
+        // Register services
+        services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
+        services.AddSingleton<IGameControllerService, GameControllerService>();
         
         // Register ViewModels
         services.AddTransient<MainWindowViewModel>();
         
+        // Build service provider
         _serviceProvider = services.BuildServiceProvider();
         
-        // Initialize services
-        var logger = loggingService.CreateLogger<App>();
+        var logger = _serviceProvider.GetRequiredService<ILogger<App>>();
         logger.LogInformation("Application initialization completed");
         
         // Initialize game controller service
@@ -74,15 +67,15 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var mainWindow = new Views.MainWindow
+            var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+            desktop.MainWindow = new Views.MainWindow
             {
-                DataContext = _serviceProvider.GetRequiredService<MainWindowViewModel>()
+                DataContext = viewModel
             };
-            desktop.MainWindow = mainWindow;
-            logger.LogInformation("Main window created with game controller support");
+            logger.LogInformation("Main window created with ViewModel");
             
-            // Cleanup on exit
-            desktop.Exit += (s, e) =>
+            // Dispose service provider when application shuts down
+            desktop.ShutdownRequested += (s, e) =>
             {
                 _gamepadPollTimer?.Stop();
                 _gameControllerService?.Dispose();

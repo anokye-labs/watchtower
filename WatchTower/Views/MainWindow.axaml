@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
         xmlns:vm="using:WatchTower.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
@@ -29,16 +30,21 @@
                 <RowDefinition Height="20" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <!-- Title -->
-            <TextBlock Grid.Row="0"
-                       Text="Game Controller Support"
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                       Text="Game Controller Support &amp; Adaptive Cards"
                        FontSize="32"
                        FontWeight="Bold"
                        HorizontalAlignment="Center" />
 
-            <!-- Status Info -->
-            <StackPanel Grid.Row="2" Spacing="10">
+            <!-- Left Panel: Game Controller -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Spacing="10">
                 <TextBlock Text="{Binding StatusText}"
                            FontSize="18"
                            HorizontalAlignment="Center" />
@@ -62,8 +68,21 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- Right Panel: Adaptive Card -->
+            <Border Grid.Row="2" Grid.Column="2"
+                    Background="#20FFFFFF"
+                    CornerRadius="8"
+                    Padding="10">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                             VerticalScrollBarVisibility="Auto">
+                    <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Top" />
+                </ScrollViewer>
+            </Border>
+
             <!-- Event Log -->
-            <Border Grid.Row="4"
+            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
                     Background="#20FFFFFF"
                     CornerRadius="8"
                     Padding="10">

@@ -1,27 +1,6 @@
 # WatchTower
 
-Professional IDE-style docking interface built with Avalonia UI (.NET 10) following MVVM architecture.
-
-## Features
-
-✅ **Professional Docking System** - Fully functional IDE-style panel management
-- 🎯 Default 3-panel layout (Explorer, Document Area, Terminal)
-- 📏 Resizable panels with splitter controls
-- 🔄 Drag-and-drop panel rearrangement
-- 🪟 Floating windows for multi-monitor workflows
-- 📑 Tabbed panel groups for space efficiency
-- ✂️ Split views for side-by-side documents
-- 💾 Auto-save layout persistence across sessions
-- ⌨️ Menu bar with keyboard shortcuts (Ctrl+B, Ctrl+`, F11, etc.)
-
-✅ **Game Controller Support** - Cross-platform gamepad input
-- 🎮 Xbox, PlayStation, and generic USB controller support
-- 🔘 Standard button mapping (A/B/X/Y, D-Pad, triggers, analog sticks)
-- 📡 Event-based input handling (button press/release)
-- 🔌 Hot-plug detection (connect/disconnect events)
-- 🎯 Foundation ready for UI navigation and custom bindings
-
-Built on [Dock.Avalonia](https://github.com/wieslawsoltes/Dock) for native docking capabilities.
+Avalonia UI application (.NET 10) built with MVVM architecture.
 
 ## Quick Start
 

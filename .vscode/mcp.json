@@ -1,20 +1,5 @@
 {
 	"servers": {
-		"dotnet-agent": {
-			"type": "stdio",
-			"command": "dotnet-agent",
-			"args": [
-				"mcp"
-			]
-		},
-		"fal-ai": {
-			"command": "uvx",
-			"args": ["fal-ai-mcp-server"],
-			"env": {
-				"FAL_KEY": "2518e1c8-d888-4a4f-9a19-fc3117e98433:28185c6e9345b5f4ff03de9e01565437",
-				"SAVE_MEDIA_DIR": "S:\\watchtower\\.fal-ai"
-			}
-		},
 		"watchtower-tools": {
 			"type": "stdio",
 			"command": "npx",
