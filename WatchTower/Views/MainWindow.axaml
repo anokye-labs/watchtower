@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:WatchTower.ViewModels"
+        xmlns:converters="using:WatchTower.Converters"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -53,7 +54,6 @@
         <Grid IsVisible="{Binding IsOverlayVisible}">
             <!-- Semi-transparent backdrop -->
             <Border Background="#CC000000" 
-                    IsVisible="{Binding IsOverlayVisible}"
                     Tapped="OnBackdropTapped"/>
             
             <!-- Input Panel Container -->
@@ -84,7 +84,7 @@
                                 <MultiBinding StringFormat="{}{0} Input">
                                     <Binding Path="IsRichTextMode">
                                         <Binding.Converter>
-                                            <vm:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
+                                            <converters:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
                                         </Binding.Converter>
                                     </Binding>
                                 </MultiBinding>

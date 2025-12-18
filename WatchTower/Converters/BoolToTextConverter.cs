@@ -2,7 +2,7 @@ using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 
-namespace WatchTower.ViewModels;
+namespace WatchTower.Converters;
 
 /// <summary>
 /// Converts a boolean value to a specific text string.
