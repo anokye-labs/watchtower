@@ -52,9 +52,26 @@ public partial class MainWindow : Window
         {
             _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _previousViewModel = null;
-        }
+        KeyDown += OnKeyDown;
+
+        // Cleanup subscriptions when the window is closed
+        Closed += OnWindowClosed;
     }
 
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        // Unsubscribe from window-level events to avoid potential memory leaks
+        DataContextChanged -= OnDataContextChanged;
+        KeyDown -= OnKeyDown;
+        Closed -= OnWindowClosed;
+
+        // Ensure we detach from the last ViewModel as well
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _previousViewModel = null;
+        }
+    }
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         // Unsubscribe from previous ViewModel to prevent memory leaks
