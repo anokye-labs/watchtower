@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System;
 using System.IO;
 
 namespace WatchTower.Services;
@@ -24,13 +23,18 @@ public class LoggingService
 
         // Create logger factory with configured log level
         var logLevel = GetConfiguredLogLevel();
-        _loggerFactory = LoggerFactory.Create(builder =>
+        _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
         {
             builder
                 .SetMinimumLevel(logLevel)
                 .AddConsole();
         });
     }
+
+    /// <summary>
+    /// Gets the ILoggerFactory for registering in DI container.
+    /// </summary>
+    public ILoggerFactory LoggerFactory => _loggerFactory;
 
     /// <summary>
     /// Creates a logger for the specified type.
@@ -46,6 +50,14 @@ public class LoggingService
     public ILogger CreateLogger(string categoryName)
     {
         return _loggerFactory.CreateLogger(categoryName);
+    }
+
+    /// <summary>
+    /// Gets the configuration instance.
+    /// </summary>
+    public IConfiguration GetConfiguration()
+    {
+        return _configuration;
     }
 
     /// <summary>

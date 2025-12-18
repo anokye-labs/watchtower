@@ -2,13 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
         xmlns:vm="using:WatchTower.ViewModels"
         xmlns:converters="using:WatchTower.Converters"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="WatchTower"
-        Width="800" Height="600"
+        WindowState="FullScreen"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True">
@@ -23,31 +24,106 @@
         </ExperimentalAcrylicBorder>
         
         <!-- Main Content -->
-        <Grid>
+        <Grid Margin="20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            
-            <!-- Test buttons to invoke input mechanisms -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="20">
-                <Button Content="Rich Text Input" 
-                        Command="{Binding ShowRichTextInputCommand}"
-                        Margin="5"
-                        Padding="15,8"/>
-                <Button Content="Voice Input" 
-                        Command="{Binding ShowVoiceInputCommand}"
-                        Margin="5"
-                        Padding="15,8"/>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                       Text="Game Controller Support &amp; Adaptive Cards"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" />
+
+            <!-- Left Panel: Game Controller -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Spacing="10">
+                <TextBlock Text="{Binding StatusText}"
+                           FontSize="18"
+                           HorizontalAlignment="Center" />
+                
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="20">
+                    <TextBlock Text="Last Button Pressed:" FontSize="14" />
+                    <TextBlock Text="{Binding LastButtonPressed}" 
+                               FontSize="14" 
+                               FontWeight="Bold" />
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="20">
+                    <TextBlock Text="Total Button Presses:" FontSize="14" />
+                    <TextBlock Text="{Binding ButtonPressCount}" 
+                               FontSize="14" 
+                               FontWeight="Bold" />
+                </StackPanel>
+                
+                <!-- Test buttons to invoke input mechanisms -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,10,20,0" Spacing="10">
+                    <Button Content="Rich Text Input" 
+                            Command="{Binding ShowRichTextInputCommand}"
+                            Padding="15,8"/>
+                    <Button Content="Voice Input" 
+                            Command="{Binding ShowVoiceInputCommand}"
+                            Padding="15,8"/>
+                </StackPanel>
             </StackPanel>
-            
-            <TextBlock Grid.Row="1"
-                       Text="WatchTower - Click a button above to test the input overlay"
-                       FontSize="24"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       TextWrapping="Wrap"
-                       Margin="40"/>
+
+            <!-- Right Panel: Adaptive Card -->
+            <Border Grid.Row="2" Grid.Column="2"
+                    Background="#20FFFFFF"
+                    CornerRadius="8"
+                    Padding="10">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                             VerticalScrollBarVisibility="Auto">
+                    <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Top" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- Event Log -->
+            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                    Background="#20FFFFFF"
+                    CornerRadius="8"
+                    Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0"
+                               Text="Event Log"
+                               FontSize="16"
+                               FontWeight="Bold" />
+                    
+                    <ScrollViewer Grid.Row="2">
+                        <ItemsControl ItemsSource="{Binding ControllerEvents}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" 
+                                               FontFamily="Consolas,Courier New"
+                                               FontSize="12"
+                                               Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
         
         <!-- Input Overlay -->

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace WatchTower.ViewModels;
 
 /// <summary>
-/// Base class for ViewModels implementing INotifyPropertyChanged.
+/// Base class for all ViewModels, implementing INotifyPropertyChanged.
 /// </summary>
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
@@ -13,7 +13,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
     /// <summary>
     /// Raises the PropertyChanged event for the specified property.
     /// </summary>
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
@@ -24,7 +24,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
     /// <returns>True if the value was changed, false otherwise.</returns>
     protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (Equals(field, value))
+        if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
             return false;
 
         field = value;
