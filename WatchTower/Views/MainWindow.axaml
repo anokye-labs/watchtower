@@ -26,6 +26,8 @@
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="20" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="20" />
@@ -45,7 +47,7 @@
                        HorizontalAlignment="Center" />
 
             <!-- FluentIcon Demo Panel -->
-            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         Spacing="10">
@@ -57,7 +59,7 @@
             </StackPanel>
 
             <!-- Left Panel: Game Controller -->
-            <StackPanel Grid.Row="2" Grid.Column="0" Spacing="10">
+            <StackPanel Grid.Row="4" Grid.Column="0" Spacing="10">
                 <TextBlock Text="{Binding StatusText}"
                            FontSize="18"
                            HorizontalAlignment="Center" />
@@ -82,7 +84,7 @@
             </StackPanel>
 
             <!-- Right Panel: Adaptive Card -->
-            <Border Grid.Row="2" Grid.Column="2"
+            <Border Grid.Row="4" Grid.Column="2"
                     Background="#20FFFFFF"
                     CornerRadius="8"
                     Padding="10">
@@ -95,7 +97,7 @@
             </Border>
 
             <!-- Event Log -->
-            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+            <Border Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3"
                     Background="#20FFFFFF"
                     CornerRadius="8"
                     Padding="10">

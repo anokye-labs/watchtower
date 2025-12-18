@@ -96,7 +96,6 @@ The FluentIcons package includes hundreds of symbols from the Fluent UI System I
 For a complete list of available icons and their names, refer to:
 - [Fluent UI System Icons Repository](https://github.com/microsoft/fluentui-system-icons)
 - [FluentIcons.Avalonia Documentation](https://github.com/davidxuang/FluentIcons)
-- [Interactive Icon Gallery](http://avaloniaui.github.io/icons.html) (if available)
 
 ## Example Implementation
 
