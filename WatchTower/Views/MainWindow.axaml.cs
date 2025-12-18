@@ -131,7 +131,7 @@ public partial class MainWindow : Window
                     _overlayTransform.Y = SlideDistanceY;
                     
                     // Update easing for slide up
-                    if (_overlayTransitions[0] is DoubleTransition transition)
+                    if (_overlayTransitions.Count > 0 && _overlayTransitions[0] is DoubleTransition transition)
                     {
                         transition.Easing = new CubicEaseOut();
                     }
@@ -148,7 +148,7 @@ public partial class MainWindow : Window
                 else
                 {
                     // Update easing for slide down
-                    if (_overlayTransitions[0] is DoubleTransition transition)
+                    if (_overlayTransitions.Count > 0 && _overlayTransitions[0] is DoubleTransition transition)
                     {
                         transition.Easing = new CubicEaseIn();
                     }
@@ -194,7 +194,7 @@ public partial class MainWindow : Window
                     _eventLogTransform.X = -slideDistance;
                     
                     // Update easing for slide in
-                    if (_eventLogTransitions[0] is DoubleTransition transition)
+                    if (_eventLogTransitions.Count > 0 && _eventLogTransitions[0] is DoubleTransition transition)
                     {
                         transition.Easing = new CubicEaseOut();
                     }
@@ -204,7 +204,7 @@ public partial class MainWindow : Window
                 else
                 {
                     // Update easing for slide out
-                    if (_eventLogTransitions[0] is DoubleTransition transition)
+                    if (_eventLogTransitions.Count > 0 && _eventLogTransitions[0] is DoubleTransition transition)
                     {
                         transition.Easing = new CubicEaseIn();
                     }

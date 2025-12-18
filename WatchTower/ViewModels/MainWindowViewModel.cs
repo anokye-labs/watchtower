@@ -83,10 +83,7 @@ public class MainWindowViewModel : ViewModelBase
             if (SetProperty(ref _inputText, value))
             {
                 // Notify Submit command that CanExecute may have changed
-                if (SubmitInputCommand is RelayCommand cmd)
-                {
-                    cmd.RaiseCanExecuteChanged();
-                }
+                SubmitInputCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -135,7 +132,7 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>
     /// Command to submit the input.
     /// </summary>
-    public ICommand SubmitInputCommand { get; }
+    public RelayCommand SubmitInputCommand { get; }
 
     /// <summary>
     /// Command to toggle the event log overlay.
