@@ -241,7 +241,7 @@ public unsafe class GameControllerService : IGameControllerService
             _previousButtonStates[instanceId][button] = isPressed;
         }
 
-        // Update guide button separately (not in enum)
+        // Update guide button
         var guidePressed = _sdl.GameControllerGetButton(controller, Silk.NET.SDL.GameControllerButton.Guide) == 1;
         state.ButtonStates[GameControllerButton.Guide] = guidePressed;
         bool wasGuidePrevPressed = _previousButtonStates[instanceId].TryGetValue(GameControllerButton.Guide, out var guidePrev) && guidePrev;
@@ -256,14 +256,15 @@ public unsafe class GameControllerService : IGameControllerService
         _previousButtonStates[instanceId][GameControllerButton.Guide] = guidePressed;
 
         // Update analog stick states with dead zone processing
+        // Note: SDL Y-axis is inverted (positive = down), so we negate for standard convention (positive = up)
         short leftX = _sdl.GameControllerGetAxis(controller, GameControllerAxis.Leftx);
         short leftY = _sdl.GameControllerGetAxis(controller, GameControllerAxis.Lefty);
         short rightX = _sdl.GameControllerGetAxis(controller, GameControllerAxis.Rightx);
         short rightY = _sdl.GameControllerGetAxis(controller, GameControllerAxis.Righty);
 
         const float maxAxisValue = 32767f;
-        var (lx, ly) = ApplyRadialDeadZone(leftX / maxAxisValue, leftY / maxAxisValue);
-        var (rx, ry) = ApplyRadialDeadZone(rightX / maxAxisValue, rightY / maxAxisValue);
+        var (lx, ly) = ApplyRadialDeadZone(leftX / maxAxisValue, -leftY / maxAxisValue);
+        var (rx, ry) = ApplyRadialDeadZone(rightX / maxAxisValue, -rightY / maxAxisValue);
 
         state.LeftStickX = lx;
         state.LeftStickY = ly;
