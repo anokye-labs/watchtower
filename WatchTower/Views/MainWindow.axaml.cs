@@ -197,38 +197,53 @@ public partial class MainWindow : Window
                 if (_eventLogTransitions == null)
                 {
                     _eventLogTransitions = new Transitions
+
+                // Ensure we have a reusable DoubleTransition for the X translate
+                if (_eventLogPanel.Transitions == null)
+                {
+                    _eventLogPanel.Transitions = new Transitions();
+                }
+
+                var transitions = _eventLogPanel.Transitions;
+                DoubleTransition? slideTransition = null;
+
+                // Try to find an existing DoubleTransition for TranslateTransform.XProperty
+                for (int i = 0; i < transitions.Count; i++)
+                {
+                    if (transitions[i] is DoubleTransition dt &&
+                        dt.Property == TranslateTransform.XProperty)
                     {
-                        new DoubleTransition
-                        {
-                            Property = TranslateTransform.XProperty,
-                            Duration = TimeSpan.FromMilliseconds(300),
-                            Easing = new CubicEaseOut()
-                        }
+                        slideTransition = dt;
+                        break;
+                    }
+                }
+
+                // Create and add it if it doesn't exist yet
+                if (slideTransition == null)
+                {
+                    slideTransition = new DoubleTransition
+                    {
+                        Property = TranslateTransform.XProperty,
+                        Duration = TimeSpan.FromMilliseconds(300),
+                        Easing = new CubicEaseOut()
                     };
-                    _eventLogPanel.Transitions = _eventLogTransitions;
+                    transitions.Add(slideTransition);
                 }
                 
                 if (vm.IsEventLogVisible)
                 {
                     // Start off-screen to the left
                     _eventLogTransform.X = -slideDistance;
-                    
-                    // Update easing for slide in
-                    if (_eventLogTransitions.Count > 0 && _eventLogTransitions[0] is DoubleTransition transition)
-                    {
-                        transition.Easing = new CubicEaseOut();
-                    }
-                    
+
+                    // Animate slide in from left
+                    slideTransition.Easing = new CubicEaseOut();
+
                     _eventLogTransform.X = 0.0;
                 }
                 else
                 {
-                    // Update easing for slide out
-                    if (_eventLogTransitions.Count > 0 && _eventLogTransitions[0] is DoubleTransition transition)
-                    {
-                        transition.Easing = new CubicEaseIn();
-                    }
-                    
+                    // Animate slide out to the left
+                    slideTransition.Easing = new CubicEaseIn();
                     _eventLogTransform.X = -slideDistance;
                 }
             }
