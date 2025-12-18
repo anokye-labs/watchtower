@@ -264,7 +264,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool CanSubmitInput()
     {
         // Only allow submission if InputText is not empty (for Rich Text mode)
-        return !string.IsNullOrWhiteSpace(InputText) || CurrentInputMode == InputOverlayMode.Voice;
+        return !string.IsNullOrWhiteSpace(InputText);
     }
 
     private void SubmitInput()
