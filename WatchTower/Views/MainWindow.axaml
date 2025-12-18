@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
         xmlns:vm="using:WatchTower.ViewModels"
+        xmlns:fluent="using:FluentIcons.Avalonia.Fluent"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -42,6 +43,18 @@
                        FontSize="32"
                        FontWeight="Bold"
                        HorizontalAlignment="Center" />
+
+            <!-- FluentIcon Demo Panel -->
+            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="10">
+                <fluent:SymbolIcon Symbol="Settings" FontSize="20" />
+                <TextBlock Text="Fluent Icons Demo:" FontSize="14" VerticalAlignment="Center" />
+                <fluent:SymbolIcon Symbol="Calendar" FontSize="20" />
+                <fluent:SymbolIcon Symbol="AppsList" FontSize="20" />
+                <fluent:SymbolIcon Symbol="ChevronRight" FontSize="20" />
+            </StackPanel>
 
             <!-- Left Panel: Game Controller -->
             <StackPanel Grid.Row="2" Grid.Column="0" Spacing="10">
