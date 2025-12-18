@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using AdaptiveCards;
 using Microsoft.Extensions.Logging;
 using WatchTower.Models;
@@ -8,7 +9,8 @@ using WatchTower.Services;
 namespace WatchTower.ViewModels;
 
 /// <summary>
-/// ViewModel for the main window, demonstrating game controller integration and Adaptive Card display.
+/// ViewModel for the main application window.
+/// Manages the input overlay state, game controller integration, and Adaptive Card display.
 /// </summary>
 public class MainWindowViewModel : ViewModelBase
 {
@@ -19,6 +21,8 @@ public class MainWindowViewModel : ViewModelBase
     private string _lastButtonPressed = "None";
     private int _buttonPressCount = 0;
     private AdaptiveCard? _currentCard;
+    private InputOverlayMode _currentInputMode = InputOverlayMode.None;
+    private string _inputText = string.Empty;
 
     public string StatusText
     {
@@ -49,6 +53,92 @@ public class MainWindowViewModel : ViewModelBase
         set => SetProperty(ref _currentCard, value);
     }
 
+    /// <summary>
+    /// Gets or sets the current input overlay mode.
+    /// </summary>
+    public InputOverlayMode CurrentInputMode
+    {
+        get => _currentInputMode;
+        set
+        {
+            if (SetProperty(ref _currentInputMode, value))
+            {
+                OnPropertyChanged(nameof(IsOverlayVisible));
+                OnPropertyChanged(nameof(IsRichTextMode));
+                OnPropertyChanged(nameof(IsVoiceMode));
+                OnPropertyChanged(nameof(IsEventLogVisible));
+                OnPropertyChanged(nameof(IsInputOverlayVisible));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the text entered in the rich-text input.
+    /// </summary>
+    public string InputText
+    {
+        get => _inputText;
+        set
+        {
+            if (SetProperty(ref _inputText, value))
+            {
+                // Notify Submit command that CanExecute may have changed
+                SubmitInputCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether any overlay is currently visible.
+    /// </summary>
+    public bool IsOverlayVisible => CurrentInputMode != InputOverlayMode.None;
+
+    /// <summary>
+    /// Gets whether the rich-text input mode is active.
+    /// </summary>
+    public bool IsRichTextMode => CurrentInputMode == InputOverlayMode.RichText;
+
+    /// <summary>
+    /// Gets whether the voice input mode is active.
+    /// </summary>
+    public bool IsVoiceMode => CurrentInputMode == InputOverlayMode.Voice;
+
+    /// <summary>
+    /// Gets whether the event log overlay is visible.
+    /// </summary>
+    public bool IsEventLogVisible => CurrentInputMode == InputOverlayMode.EventLog;
+
+    /// <summary>
+    /// Gets whether the input overlay (Rich Text or Voice) is visible.
+    /// Used to control the bottom-sliding panel visibility.
+    /// </summary>
+    public bool IsInputOverlayVisible => CurrentInputMode == InputOverlayMode.RichText || CurrentInputMode == InputOverlayMode.Voice;
+
+    /// <summary>
+    /// Command to show the rich-text input overlay.
+    /// </summary>
+    public ICommand ShowRichTextInputCommand { get; }
+
+    /// <summary>
+    /// Command to show the voice input overlay.
+    /// </summary>
+    public ICommand ShowVoiceInputCommand { get; }
+
+    /// <summary>
+    /// Command to close the input overlay.
+    /// </summary>
+    public ICommand CloseOverlayCommand { get; }
+
+    /// <summary>
+    /// Command to submit the input.
+    /// </summary>
+    public RelayCommand SubmitInputCommand { get; }
+
+    /// <summary>
+    /// Command to toggle the event log overlay.
+    /// </summary>
+    public ICommand ToggleEventLogCommand { get; }
+
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
         IAdaptiveCardService cardService, 
@@ -63,6 +153,13 @@ public class MainWindowViewModel : ViewModelBase
         _gameControllerService.ButtonReleased += OnButtonReleased;
         _gameControllerService.ControllerConnected += OnControllerConnected;
         _gameControllerService.ControllerDisconnected += OnControllerDisconnected;
+
+        // Initialize commands
+        ShowRichTextInputCommand = new RelayCommand(ShowRichTextInput);
+        ShowVoiceInputCommand = new RelayCommand(ShowVoiceInput);
+        CloseOverlayCommand = new RelayCommand(CloseOverlay);
+        SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
+        ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
 
         UpdateStatus();
         
@@ -139,5 +236,48 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogWarning("Failed to load card from JSON");
         }
+    }
+
+    private void ShowRichTextInput()
+    {
+        InputText = string.Empty;
+        CurrentInputMode = InputOverlayMode.RichText;
+    }
+
+    private void ShowVoiceInput()
+    {
+        CurrentInputMode = InputOverlayMode.Voice;
+    }
+
+    private void CloseOverlay()
+    {
+        var previousMode = CurrentInputMode;
+        CurrentInputMode = InputOverlayMode.None;
+        
+        // Only clear input text for input modes (not EventLog)
+        if (previousMode == InputOverlayMode.RichText || previousMode == InputOverlayMode.Voice)
+        {
+            InputText = string.Empty;
+        }
+    }
+
+    private bool CanSubmitInput()
+    {
+        // Only allow submission if InputText is not empty (for Rich Text mode)
+        return !string.IsNullOrWhiteSpace(InputText);
+    }
+
+    private void SubmitInput()
+    {
+        // TODO: Process the input (will be implemented in future features)
+        // For now, just close the overlay after submission
+        CloseOverlay();
+    }
+
+    private void ToggleEventLog()
+    {
+        CurrentInputMode = CurrentInputMode == InputOverlayMode.EventLog
+            ? InputOverlayMode.None
+            : InputOverlayMode.EventLog;
     }
 }
