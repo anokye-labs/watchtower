@@ -29,7 +29,9 @@ public partial class App : Application
         // Register logging service and expose ILoggerFactory
         var loggingService = new LoggingService();
         services.AddSingleton(loggingService);
-        services.AddSingleton(loggingService.LoggerFactory);
+        services.AddSingleton<ILoggerFactory>(loggingService.LoggerFactory);
+        
+        // Register ILogger<T> using the factory
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
         
         // Register services
