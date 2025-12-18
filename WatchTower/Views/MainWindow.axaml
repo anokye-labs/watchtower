@@ -2,8 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:WatchTower.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="WatchTower"
         Width="800" Height="600"
         TransparencyLevelHint="AcrylicBlur"
@@ -19,11 +21,150 @@
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
         
+        <!-- Main Content -->
         <Grid>
-            <TextBlock Text="Hello World"
-                       FontSize="32"
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Test buttons to invoke input mechanisms -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="20">
+                <Button Content="Rich Text Input" 
+                        Command="{Binding ShowRichTextInputCommand}"
+                        Margin="5"
+                        Padding="15,8"/>
+                <Button Content="Voice Input" 
+                        Command="{Binding ShowVoiceInputCommand}"
+                        Margin="5"
+                        Padding="15,8"/>
+            </StackPanel>
+            
+            <TextBlock Grid.Row="1"
+                       Text="WatchTower - Click a button above to test the input overlay"
+                       FontSize="24"
                        HorizontalAlignment="Center"
-                       VerticalAlignment="Center" />
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="40"/>
+        </Grid>
+        
+        <!-- Input Overlay -->
+        <Grid IsVisible="{Binding IsOverlayVisible}">
+            <!-- Semi-transparent backdrop -->
+            <Border Background="#CC000000" 
+                    IsVisible="{Binding IsOverlayVisible}"
+                    Tapped="OnBackdropTapped"/>
+            
+            <!-- Input Panel Container -->
+            <Border Background="#EE1A1A1A"
+                    CornerRadius="12"
+                    BorderBrush="#4AFFFFFF"
+                    BorderThickness="1"
+                    MaxWidth="600"
+                    MaxHeight="400"
+                    Padding="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 4 #80000000">
+                
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <TextBlock FontSize="20" 
+                                   FontWeight="SemiBold"
+                                   Foreground="White">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} Input">
+                                    <Binding Path="IsRichTextMode">
+                                        <Binding.Converter>
+                                            <vm:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
+                                        </Binding.Converter>
+                                    </Binding>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <Button Content="✕" 
+                                Command="{Binding CloseOverlayCommand}"
+                                HorizontalAlignment="Right"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="#CCFFFFFF"
+                                FontSize="20"
+                                Padding="8,0"/>
+                    </Grid>
+                    
+                    <!-- Rich Text Input Panel -->
+                    <Border Grid.Row="1" 
+                            IsVisible="{Binding IsRichTextMode}"
+                            Background="#1AFFFFFF"
+                            CornerRadius="6"
+                            Padding="12">
+                        <TextBox Text="{Binding InputText}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 Watermark="Enter your text here..."
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 FontSize="14"
+                                 MinHeight="200"/>
+                    </Border>
+                    
+                    <!-- Voice Input Panel -->
+                    <Border Grid.Row="1" 
+                            IsVisible="{Binding IsVoiceMode}"
+                            Background="#1AFFFFFF"
+                            CornerRadius="6"
+                            Padding="12">
+                        <StackPanel VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center"
+                                    Spacing="16">
+                            <Ellipse Width="80" 
+                                     Height="80" 
+                                     Fill="#FF4444"
+                                     HorizontalAlignment="Center">
+                                <Ellipse.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:1"/>
+                                    </Transitions>
+                                </Ellipse.Transitions>
+                            </Ellipse>
+                            <TextBlock Text="Voice recording ready..."
+                                       FontSize="16"
+                                       HorizontalAlignment="Center"
+                                       Foreground="#CCFFFFFF"/>
+                            <TextBlock Text="(Voice recording functionality to be implemented)"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       Foreground="#88FFFFFF"
+                                       FontStyle="Italic"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="2" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Right"
+                                Spacing="8"
+                                Margin="0,16,0,0">
+                        <Button Content="Cancel" 
+                                Command="{Binding CloseOverlayCommand}"
+                                Padding="16,8"
+                                MinWidth="100"/>
+                        <Button Content="Submit" 
+                                Command="{Binding SubmitInputCommand}"
+                                Padding="16,8"
+                                MinWidth="100"
+                                Classes="accent"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
     </Panel>
 </Window>
