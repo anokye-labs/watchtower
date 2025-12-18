@@ -55,7 +55,8 @@
         <!-- Event Log Overlay (slides from left) -->
         <Grid IsVisible="{Binding IsEventLogVisible}">
             <!-- Semi-transparent backdrop -->
-            <Border Background="#CC000000" 
+            <Border Background="#CC000000"
+                    AutomationProperties.Name="Click to close the event log overlay"
                     AutomationProperties.Name="Click to close the event log overlay"
                     Tapped="OnBackdropTapped"/>
             
