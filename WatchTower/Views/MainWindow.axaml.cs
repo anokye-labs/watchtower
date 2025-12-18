@@ -15,8 +15,11 @@ namespace WatchTower.Views;
 
 public partial class MainWindow : Window
 {
+    private const double SlideDistance = 500.0;
+    
     private Border? _overlayPanel;
     private TranslateTransform? _overlayTransform;
+    private MainWindowViewModel? _previousViewModel;
 
     public MainWindow()
     {
@@ -28,9 +31,16 @@ public partial class MainWindow : Window
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        // Unsubscribe from previous ViewModel to prevent memory leaks
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
         if (DataContext is MainWindowViewModel viewModel)
         {
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            _previousViewModel = viewModel;
         }
     }
 
@@ -39,6 +49,12 @@ public partial class MainWindow : Window
         base.OnLoaded(e);
         _overlayPanel = this.FindControl<Border>("OverlayPanel");
         _overlayTransform = _overlayPanel?.RenderTransform as TranslateTransform;
+        
+        // Log warning if animation controls not found
+        if (_overlayPanel == null || _overlayTransform == null)
+        {
+            System.Diagnostics.Debug.WriteLine("Warning: Overlay animation controls not found in XAML");
+        }
     }
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -50,7 +66,7 @@ public partial class MainWindow : Window
                 if (vm.IsOverlayVisible)
                 {
                     // Start off-screen at the bottom
-                    _overlayTransform.Y = 500;
+                    _overlayTransform.Y = SlideDistance;
                     
                     // Animate slide up
                     var animation = new Animation
@@ -62,7 +78,7 @@ public partial class MainWindow : Window
                             new KeyFrame
                             {
                                 Cue = new Cue(0.0),
-                                Setters = { new Setter(TranslateTransform.YProperty, 500.0) }
+                                Setters = { new Setter(TranslateTransform.YProperty, SlideDistance) }
                             },
                             new KeyFrame
                             {
@@ -91,7 +107,7 @@ public partial class MainWindow : Window
                             new KeyFrame
                             {
                                 Cue = new Cue(1.0),
-                                Setters = { new Setter(TranslateTransform.YProperty, 500.0) }
+                                Setters = { new Setter(TranslateTransform.YProperty, SlideDistance) }
                             }
                         }
                     };
