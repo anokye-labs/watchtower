@@ -26,8 +26,9 @@ public partial class App : Application
         // Setup dependency injection
         var services = new ServiceCollection();
         
-        // Register logging service and expose ILoggerFactory
+        // Register logging service and configuration
         var loggingService = new LoggingService();
+        services.AddSingleton(loggingService.GetConfiguration());
         services.AddSingleton(loggingService);
         services.AddSingleton<ILoggerFactory>(loggingService.LoggerFactory);
         
