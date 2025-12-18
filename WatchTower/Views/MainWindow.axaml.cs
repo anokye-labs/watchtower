@@ -16,8 +16,6 @@ namespace WatchTower.Views;
 
 public partial class MainWindow : Window
 {
-    private const double SlideDistanceY = 500.0;
-    
     private Border? _overlayPanel;
     private TranslateTransform? _overlayTransform;
     private Border? _eventLogPanel;
@@ -110,6 +108,11 @@ public partial class MainWindow : Window
 
             if (_overlayPanel != null && _overlayTransform != null)
             {
+                // Calculate slide distance based on actual panel height or window height
+                var slideDistance = _overlayPanel.Bounds.Height > 0 
+                    ? _overlayPanel.Bounds.Height 
+                    : Math.Min(400, Bounds.Height * 0.6); // Fallback to max 400px or 60% of window height
+                
                 // Initialize transitions once if not already created
                 if (_overlayTransitions == null)
                 {
@@ -128,7 +131,7 @@ public partial class MainWindow : Window
                 if (vm.IsInputOverlayVisible)
                 {
                     // Start off-screen at the bottom
-                    _overlayTransform.Y = SlideDistanceY;
+                    _overlayTransform.Y = slideDistance;
                     
                     // Update easing for slide up
                     if (_overlayTransitions.Count > 0 && _overlayTransitions[0] is DoubleTransition transition)
@@ -153,7 +156,7 @@ public partial class MainWindow : Window
                         transition.Easing = new CubicEaseIn();
                     }
                     
-                    _overlayTransform.Y = SlideDistanceY;
+                    _overlayTransform.Y = slideDistance;
                 }
             }
         }
