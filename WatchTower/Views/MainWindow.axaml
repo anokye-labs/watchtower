@@ -134,15 +134,19 @@
             
             <!-- Input Panel Container -->
             <Border Background="#EE1A1A1A"
-                    CornerRadius="12"
+                    CornerRadius="12 12 0 0"
                     BorderBrush="#4AFFFFFF"
-                    BorderThickness="1"
-                    MaxWidth="600"
+                    BorderThickness="1 1 1 0"
                     MaxHeight="400"
                     Padding="24"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 4 #80000000">
+                    Margin="20,0,20,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Bottom"
+                    BoxShadow="0 -8 32 4 #80000000"
+                    Name="OverlayPanel">
+                <Border.RenderTransform>
+                    <TranslateTransform Y="0" />
+                </Border.RenderTransform>
                 
                 <Grid>
                     <Grid.RowDefinitions>
