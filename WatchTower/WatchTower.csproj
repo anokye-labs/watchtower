@@ -37,8 +37,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <AvaloniaResource Update="**\*.axaml" />
-  </ItemGroup>
-
 </Project>
