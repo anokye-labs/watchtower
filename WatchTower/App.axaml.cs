@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WatchTower.Services;
 using WatchTower.ViewModels;
+using System;
 
 namespace WatchTower;
 
@@ -22,13 +23,11 @@ public partial class App : Application
         // Setup dependency injection
         var services = new ServiceCollection();
         
-        // Register logging service
+        // Register logging service and expose ILoggerFactory
         var loggingService = new LoggingService();
         services.AddSingleton(loggingService);
+        services.AddSingleton(loggingService.LoggerFactory);
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-        services.AddSingleton<ILoggerFactory>(loggingService.GetType()
-            .GetField("_loggerFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
-            .GetValue(loggingService) as ILoggerFactory ?? LoggerFactory.Create(builder => builder.AddConsole()));
         
         // Register services
         services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
@@ -50,6 +49,12 @@ public partial class App : Application
                 DataContext = viewModel
             };
             logger.LogInformation("Main window created with ViewModel");
+            
+            // Dispose service provider when application shuts down
+            desktop.ShutdownRequested += (s, e) =>
+            {
+                _serviceProvider?.Dispose();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
