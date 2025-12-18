@@ -78,7 +78,17 @@ public class MainWindowViewModel : ViewModelBase
     public string InputText
     {
         get => _inputText;
-        set => SetProperty(ref _inputText, value);
+        set
+        {
+            if (SetProperty(ref _inputText, value))
+            {
+                // Notify Submit command that CanExecute may have changed
+                if (SubmitInputCommand is RelayCommand cmd)
+                {
+                    cmd.RaiseCanExecuteChanged();
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -151,7 +161,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowRichTextInputCommand = new RelayCommand(ShowRichTextInput);
         ShowVoiceInputCommand = new RelayCommand(ShowVoiceInput);
         CloseOverlayCommand = new RelayCommand(CloseOverlay);
-        SubmitInputCommand = new RelayCommand(SubmitInput);
+        SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
 
         UpdateStatus();
@@ -244,8 +254,20 @@ public class MainWindowViewModel : ViewModelBase
 
     private void CloseOverlay()
     {
+        var previousMode = CurrentInputMode;
         CurrentInputMode = InputOverlayMode.None;
-        InputText = string.Empty;
+        
+        // Only clear input text for input modes (not EventLog)
+        if (previousMode == InputOverlayMode.RichText || previousMode == InputOverlayMode.Voice)
+        {
+            InputText = string.Empty;
+        }
+    }
+
+    private bool CanSubmitInput()
+    {
+        // Only allow submission if InputText is not empty (for Rich Text mode)
+        return !string.IsNullOrWhiteSpace(InputText) || CurrentInputMode == InputOverlayMode.Voice;
     }
 
     private void SubmitInput()
@@ -257,13 +279,8 @@ public class MainWindowViewModel : ViewModelBase
 
     private void ToggleEventLog()
     {
-        if (CurrentInputMode == InputOverlayMode.EventLog)
-        {
-            CurrentInputMode = InputOverlayMode.None;
-        }
-        else
-        {
-            CurrentInputMode = InputOverlayMode.EventLog;
-        }
+        CurrentInputMode = CurrentInputMode == InputOverlayMode.EventLog
+            ? InputOverlayMode.None
+            : InputOverlayMode.EventLog;
     }
 }

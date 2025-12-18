@@ -56,6 +56,7 @@
         <Grid IsVisible="{Binding IsEventLogVisible}">
             <!-- Semi-transparent backdrop -->
             <Border Background="#CC000000" 
+                    AutomationProperties.Name="Click to close the event log overlay"
                     Tapped="OnBackdropTapped"/>
             
             <!-- Event Log Panel Container -->
@@ -123,6 +124,7 @@
         <Grid IsVisible="{Binding IsInputOverlayVisible}">
             <!-- Semi-transparent backdrop -->
             <Border Background="#CC000000" 
+                    AutomationProperties.Name="Click to close the input overlay"
                     Tapped="OnBackdropTapped"/>
             
             <!-- Input Panel Container -->

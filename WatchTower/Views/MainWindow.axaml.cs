@@ -23,6 +23,10 @@ public partial class MainWindow : Window
     private Border? _eventLogPanel;
     private TranslateTransform? _eventLogTransform;
     private MainWindowViewModel? _previousViewModel;
+    
+    // Reusable transitions for better performance
+    private Transitions? _overlayTransitions;
+    private Transitions? _eventLogTransitions;
 
     public MainWindow()
     {
@@ -33,6 +37,24 @@ public partial class MainWindow : Window
         
         // Subscribe to keyboard events for overlay shortcuts
         KeyDown += OnKeyDown;
+        
+        // Cleanup subscriptions when the window is closed
+        Closed += OnWindowClosed;
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        // Unsubscribe from window-level events to avoid potential memory leaks
+        DataContextChanged -= OnDataContextChanged;
+        KeyDown -= OnKeyDown;
+        Closed -= OnWindowClosed;
+
+        // Ensure we detach from the last ViewModel as well
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _previousViewModel = null;
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -88,13 +110,10 @@ public partial class MainWindow : Window
 
             if (_overlayPanel != null && _overlayTransform != null)
             {
-                if (vm.IsInputOverlayVisible)
+                // Initialize transitions once if not already created
+                if (_overlayTransitions == null)
                 {
-                    // Start off-screen at the bottom
-                    _overlayTransform.Y = SlideDistanceY;
-                    
-                    // Animate slide up using transitions
-                    _overlayPanel.Transitions = new Transitions
+                    _overlayTransitions = new Transitions
                     {
                         new DoubleTransition
                         {
@@ -103,21 +122,36 @@ public partial class MainWindow : Window
                             Easing = new CubicEaseOut()
                         }
                     };
+                    _overlayPanel.Transitions = _overlayTransitions;
+                }
+                
+                if (vm.IsInputOverlayVisible)
+                {
+                    // Start off-screen at the bottom
+                    _overlayTransform.Y = SlideDistanceY;
+                    
+                    // Update easing for slide up
+                    if (_overlayTransitions[0] is DoubleTransition transition)
+                    {
+                        transition.Easing = new CubicEaseOut();
+                    }
                     
                     _overlayTransform.Y = 0.0;
+                    
+                    // Auto-focus the TextBox when rich text mode is shown
+                    if (vm.IsRichTextMode)
+                    {
+                        var inputTextBox = this.FindControl<TextBox>("InputTextBox");
+                        inputTextBox?.Focus();
+                    }
                 }
                 else
                 {
-                    // Animate slide down using transitions
-                    _overlayPanel.Transitions = new Transitions
+                    // Update easing for slide down
+                    if (_overlayTransitions[0] is DoubleTransition transition)
                     {
-                        new DoubleTransition
-                        {
-                            Property = TranslateTransform.YProperty,
-                            Duration = TimeSpan.FromMilliseconds(300),
-                            Easing = new CubicEaseIn()
-                        }
-                    };
+                        transition.Easing = new CubicEaseIn();
+                    }
                     
                     _overlayTransform.Y = SlideDistanceY;
                 }
@@ -139,13 +173,10 @@ public partial class MainWindow : Window
                 // Use actual panel width (half window width) for slide distance
                 var slideDistance = _eventLogPanel.Bounds.Width > 0 ? _eventLogPanel.Bounds.Width : Bounds.Width / 2;
                 
-                if (vm.IsEventLogVisible)
+                // Initialize transitions once if not already created
+                if (_eventLogTransitions == null)
                 {
-                    // Start off-screen to the left
-                    _eventLogTransform.X = -slideDistance;
-                    
-                    // Animate slide in from left
-                    _eventLogPanel.Transitions = new Transitions
+                    _eventLogTransitions = new Transitions
                     {
                         new DoubleTransition
                         {
@@ -154,21 +185,29 @@ public partial class MainWindow : Window
                             Easing = new CubicEaseOut()
                         }
                     };
+                    _eventLogPanel.Transitions = _eventLogTransitions;
+                }
+                
+                if (vm.IsEventLogVisible)
+                {
+                    // Start off-screen to the left
+                    _eventLogTransform.X = -slideDistance;
+                    
+                    // Update easing for slide in
+                    if (_eventLogTransitions[0] is DoubleTransition transition)
+                    {
+                        transition.Easing = new CubicEaseOut();
+                    }
                     
                     _eventLogTransform.X = 0.0;
                 }
                 else
                 {
-                    // Animate slide out to the left
-                    _eventLogPanel.Transitions = new Transitions
+                    // Update easing for slide out
+                    if (_eventLogTransitions[0] is DoubleTransition transition)
                     {
-                        new DoubleTransition
-                        {
-                            Property = TranslateTransform.XProperty,
-                            Duration = TimeSpan.FromMilliseconds(300),
-                            Easing = new CubicEaseIn()
-                        }
-                    };
+                        transition.Easing = new CubicEaseIn();
+                    }
                     
                     _eventLogTransform.X = -slideDistance;
                 }
@@ -178,7 +217,9 @@ public partial class MainWindow : Window
 
     private void OnBackdropTapped(object? sender, RoutedEventArgs e)
     {
-        // Close overlay when backdrop is tapped
+        // Code-behind is used here for simplicity, as the backdrop is a Border element
+        // and we need to handle the Tapped event. Using a behavior or ICommand binding
+        // would add unnecessary complexity for this straightforward interaction pattern.
         if (DataContext is MainWindowViewModel viewModel)
         {
             viewModel.CloseOverlayCommand.Execute(null);
