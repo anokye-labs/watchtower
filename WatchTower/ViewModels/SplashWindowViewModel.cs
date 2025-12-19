@@ -145,7 +145,11 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
             DiagnosticMessages.Add(timestamped);
             if (ex != null && !string.IsNullOrEmpty(ex.StackTrace))
             {
-                DiagnosticMessages.Add($"  Stack: {ex.StackTrace.Split('\n')[0].Trim()}");
+                var stackLines = ex.StackTrace.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                if (stackLines.Length > 0)
+                {
+                    DiagnosticMessages.Add($"  Stack: {stackLines[0].Trim()}");
+                }
             }
             TrimDiagnosticMessages();
         });
