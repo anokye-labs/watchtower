@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
         xmlns:vm="using:WatchTower.ViewModels"
+        xmlns:fluent="using:FluentIcons.Avalonia.Fluent"
         xmlns:converters="using:WatchTower.Converters"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         x:Class="WatchTower.Views.MainWindow"
