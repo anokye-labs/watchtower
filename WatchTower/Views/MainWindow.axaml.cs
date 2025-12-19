@@ -101,17 +101,49 @@ public partial class MainWindow : Window
         {
             try
             {
-                // Try to set HostConfig if the property exists
-                var hostConfigProperty = adaptiveCardView.GetType().GetProperty("HostConfig");
-                if (hostConfigProperty != null)
+                // Create a renderer and get its default host config
+                var renderer = new AdaptiveCardRenderer();
+                var hostConfig = renderer.HostConfig;
+                
+                if (hostConfig != null)
                 {
-                    // Create a simple dark theme host config
-                    var renderer = new AdaptiveCardRenderer();
-                    var hostConfig = renderer.HostConfig;
+                    // Try to configure dark theme colors via reflection
+                    // since the API types aren't directly accessible
+                    var containerStylesProperty = hostConfig.GetType().GetProperty("ContainerStyles");
+                    if (containerStylesProperty != null)
+                    {
+                        var containerStyles = containerStylesProperty.GetValue(hostConfig);
+                        if (containerStyles != null)
+                        {
+                            // Set default container background to transparent
+                            var defaultStyleProperty = containerStyles.GetType().GetProperty("Default");
+                            if (defaultStyleProperty != null)
+                            {
+                                var defaultStyle = defaultStyleProperty.GetValue(containerStyles);
+                                if (defaultStyle != null)
+                                {
+                                    var bgColorProperty = defaultStyle.GetType().GetProperty("BackgroundColor");
+                                    bgColorProperty?.SetValue(defaultStyle, "#00000000");
+                                }
+                            }
+                            
+                            // Set emphasis container background to slightly visible
+                            var emphasisStyleProperty = containerStyles.GetType().GetProperty("Emphasis");
+                            if (emphasisStyleProperty != null)
+                            {
+                                var emphasisStyle = emphasisStyleProperty.GetValue(containerStyles);
+                                if (emphasisStyle != null)
+                                {
+                                    var bgColorProperty = emphasisStyle.GetType().GetProperty("BackgroundColor");
+                                    bgColorProperty?.SetValue(emphasisStyle, "#1AFFFFFF");
+                                }
+                            }
+                        }
+                    }
                     
-                    // Try to customize the host config for dark theme
-                    // This may or may not work depending on the API
-                    hostConfigProperty.SetValue(adaptiveCardView, hostConfig);
+                    // Try to set the HostConfig on the AdaptiveCardView
+                    var hostConfigProperty = adaptiveCardView.GetType().GetProperty("HostConfig");
+                    hostConfigProperty?.SetValue(adaptiveCardView, hostConfig);
                 }
             }
             catch (Exception ex)
