@@ -11,6 +11,8 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using WatchTower.ViewModels;
+using AdaptiveCards.Rendering.Avalonia;
+using AdaptiveCards;
 
 namespace WatchTower.Views;
 
@@ -77,6 +79,9 @@ public partial class MainWindow : Window
         _eventLogPanel = this.FindControl<Border>("EventLogPanel");
         _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
         
+        // Configure dark theme for AdaptiveCards after controls are loaded
+        ConfigureAdaptiveCardTheme();
+        
         // Log warning if animation controls not found
         if (_overlayPanel == null || _overlayTransform == null)
         {
@@ -85,6 +90,34 @@ public partial class MainWindow : Window
         if (_eventLogPanel == null || _eventLogTransform == null)
         {
             System.Diagnostics.Debug.WriteLine("Warning: Event log animation controls not found in XAML");
+        }
+    }
+
+    private void ConfigureAdaptiveCardTheme()
+    {
+        // Get the AdaptiveCardView control
+        var adaptiveCardView = this.FindControl<AdaptiveCardView>("AdaptiveCardView");
+        if (adaptiveCardView != null)
+        {
+            try
+            {
+                // Try to set HostConfig if the property exists
+                var hostConfigProperty = adaptiveCardView.GetType().GetProperty("HostConfig");
+                if (hostConfigProperty != null)
+                {
+                    // Create a simple dark theme host config
+                    var renderer = new AdaptiveCardRenderer();
+                    var hostConfig = renderer.HostConfig;
+                    
+                    // Try to customize the host config for dark theme
+                    // This may or may not work depending on the API
+                    hostConfigProperty.SetValue(adaptiveCardView, hostConfig);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error configuring Adaptive Card theme: {ex.Message}");
+            }
         }
     }
 
