@@ -107,8 +107,13 @@ public partial class MainWindow : Window
                 
                 if (hostConfig != null)
                 {
+                    // NOTE: Using reflection to configure HostConfig for dark theme
+                    // This is necessary because the AdaptiveCards library (v3.1.0) doesn't expose
+                    // a direct API for creating or modifying HostConfig in code.
+                    // If the library's internal structure changes, this code may need updates.
+                    // Tested with: Iciclecreek.AdaptiveCards.Rendering.Avalonia v1.0.4
+                    
                     // Try to configure dark theme colors via reflection
-                    // since the API types aren't directly accessible
                     var containerStylesProperty = hostConfig.GetType().GetProperty("ContainerStyles");
                     if (containerStylesProperty != null)
                     {
