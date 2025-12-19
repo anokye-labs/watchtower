@@ -53,7 +53,8 @@ public class AdaptiveCardService : IAdaptiveCardService
                     Text = "WatchTower",
                     Size = AdaptiveTextSize.ExtraLarge,
                     Weight = AdaptiveTextWeight.Bolder,
-                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center
+                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center,
+                    Color = AdaptiveTextColor.Light
                 },
                 new AdaptiveTextBlock
                 {
@@ -61,13 +62,15 @@ public class AdaptiveCardService : IAdaptiveCardService
                     Size = AdaptiveTextSize.Medium,
                     Weight = AdaptiveTextWeight.Lighter,
                     HorizontalAlignment = AdaptiveHorizontalAlignment.Center,
-                    Spacing = AdaptiveSpacing.None
+                    Spacing = AdaptiveSpacing.None,
+                    Color = AdaptiveTextColor.Light
                 },
                 new AdaptiveTextBlock
                 {
                     Text = "This demonstrates the core functionality of rendering Adaptive Cards in the WatchTower application.",
                     Wrap = true,
-                    Spacing = AdaptiveSpacing.Medium
+                    Spacing = AdaptiveSpacing.Medium,
+                    Color = AdaptiveTextColor.Light
                 },
                 new AdaptiveColumnSet
                 {
@@ -81,7 +84,8 @@ public class AdaptiveCardService : IAdaptiveCardService
                                 new AdaptiveTextBlock
                                 {
                                     Text = "Status:",
-                                    Weight = AdaptiveTextWeight.Bolder
+                                    Weight = AdaptiveTextWeight.Bolder,
+                                    Color = AdaptiveTextColor.Light
                                 }
                             }
                         },

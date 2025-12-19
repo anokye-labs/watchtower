@@ -11,6 +11,8 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using WatchTower.ViewModels;
+using AdaptiveCards.Rendering.Avalonia;
+using AdaptiveCards;
 
 namespace WatchTower.Views;
 
@@ -24,7 +26,6 @@ public partial class MainWindow : Window
     
     // Reusable transitions for better performance
     private Transitions? _overlayTransitions;
-    private Transitions? _eventLogTransitions;
 
     public MainWindow()
     {
@@ -52,26 +53,9 @@ public partial class MainWindow : Window
         {
             _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _previousViewModel = null;
-        KeyDown += OnKeyDown;
-
-        // Cleanup subscriptions when the window is closed
-        Closed += OnWindowClosed;
-    }
-
-    private void OnWindowClosed(object? sender, EventArgs e)
-    {
-        // Unsubscribe from window-level events to avoid potential memory leaks
-        DataContextChanged -= OnDataContextChanged;
-        KeyDown -= OnKeyDown;
-        Closed -= OnWindowClosed;
-
-        // Ensure we detach from the last ViewModel as well
-        if (_previousViewModel != null)
-        {
-            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-            _previousViewModel = null;
         }
     }
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         // Unsubscribe from previous ViewModel to prevent memory leaks
@@ -95,6 +79,9 @@ public partial class MainWindow : Window
         _eventLogPanel = this.FindControl<Border>("EventLogPanel");
         _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
         
+        // Configure dark theme for AdaptiveCards after controls are loaded
+        ConfigureAdaptiveCardTheme();
+        
         // Log warning if animation controls not found
         if (_overlayPanel == null || _overlayTransform == null)
         {
@@ -103,6 +90,71 @@ public partial class MainWindow : Window
         if (_eventLogPanel == null || _eventLogTransform == null)
         {
             System.Diagnostics.Debug.WriteLine("Warning: Event log animation controls not found in XAML");
+        }
+    }
+
+    private void ConfigureAdaptiveCardTheme()
+    {
+        // Get the AdaptiveCardView control
+        var adaptiveCardView = this.FindControl<AdaptiveCardView>("AdaptiveCardView");
+        if (adaptiveCardView != null)
+        {
+            try
+            {
+                // Create a renderer and get its default host config
+                var renderer = new AdaptiveCardRenderer();
+                var hostConfig = renderer.HostConfig;
+                
+                if (hostConfig != null)
+                {
+                    // NOTE: Using reflection to configure HostConfig for dark theme
+                    // This is necessary because the AdaptiveCards library (v3.1.0) doesn't expose
+                    // a direct API for creating or modifying HostConfig in code.
+                    // If the library's internal structure changes, this code may need updates.
+                    // Tested with: Iciclecreek.AdaptiveCards.Rendering.Avalonia v1.0.4
+                    
+                    // Try to configure dark theme colors via reflection
+                    var containerStylesProperty = hostConfig.GetType().GetProperty("ContainerStyles");
+                    if (containerStylesProperty != null)
+                    {
+                        var containerStyles = containerStylesProperty.GetValue(hostConfig);
+                        if (containerStyles != null)
+                        {
+                            // Set default container background to transparent
+                            var defaultStyleProperty = containerStyles.GetType().GetProperty("Default");
+                            if (defaultStyleProperty != null)
+                            {
+                                var defaultStyle = defaultStyleProperty.GetValue(containerStyles);
+                                if (defaultStyle != null)
+                                {
+                                    var bgColorProperty = defaultStyle.GetType().GetProperty("BackgroundColor");
+                                    bgColorProperty?.SetValue(defaultStyle, "#00000000");
+                                }
+                            }
+                            
+                            // Set emphasis container background to slightly visible
+                            var emphasisStyleProperty = containerStyles.GetType().GetProperty("Emphasis");
+                            if (emphasisStyleProperty != null)
+                            {
+                                var emphasisStyle = emphasisStyleProperty.GetValue(containerStyles);
+                                if (emphasisStyle != null)
+                                {
+                                    var bgColorProperty = emphasisStyle.GetType().GetProperty("BackgroundColor");
+                                    bgColorProperty?.SetValue(emphasisStyle, "#1AFFFFFF");
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Try to set the HostConfig on the AdaptiveCardView
+                    var hostConfigProperty = adaptiveCardView.GetType().GetProperty("HostConfig");
+                    hostConfigProperty?.SetValue(adaptiveCardView, hostConfig);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error configuring Adaptive Card theme: {ex.Message}");
+            }
         }
     }
 
@@ -193,11 +245,6 @@ public partial class MainWindow : Window
                 // Use actual panel width (half window width) for slide distance
                 var slideDistance = _eventLogPanel.Bounds.Width > 0 ? _eventLogPanel.Bounds.Width : Bounds.Width / 2;
                 
-                // Initialize transitions once if not already created
-                if (_eventLogTransitions == null)
-                {
-                    _eventLogTransitions = new Transitions
-
                 // Ensure we have a reusable DoubleTransition for the X translate
                 if (_eventLogPanel.Transitions == null)
                 {

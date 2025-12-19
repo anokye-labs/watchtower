@@ -40,14 +40,15 @@
 
             <!-- Adaptive Card (maximized) -->
             <Border Grid.Row="2"
-                    Background="#20FFFFFF"
+                    Background="Transparent"
                     CornerRadius="8"
                     Padding="10">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" 
                              VerticalScrollBarVisibility="Auto">
                     <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
                                         HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch" />
+                                        VerticalAlignment="Stretch"
+                                        Name="AdaptiveCardView" />
                 </ScrollViewer>
             </Border>
         </Grid>
@@ -56,7 +57,6 @@
         <Grid IsVisible="{Binding IsEventLogVisible}">
             <!-- Semi-transparent backdrop -->
             <Border Background="#CC000000"
-                    AutomationProperties.Name="Click to close the event log overlay"
                     AutomationProperties.Name="Click to close the event log overlay"
                     Tapped="OnBackdropTapped"/>
             
