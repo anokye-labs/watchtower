@@ -57,7 +57,6 @@
             <!-- Semi-transparent backdrop -->
             <Border Background="#CC000000"
                     AutomationProperties.Name="Click to close the event log overlay"
-                    AutomationProperties.Name="Click to close the event log overlay"
                     Tapped="OnBackdropTapped"/>
             
             <!-- Event Log Panel Container -->

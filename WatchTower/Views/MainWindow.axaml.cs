@@ -24,7 +24,6 @@ public partial class MainWindow : Window
     
     // Reusable transitions for better performance
     private Transitions? _overlayTransitions;
-    private Transitions? _eventLogTransitions;
 
     public MainWindow()
     {
@@ -52,26 +51,9 @@ public partial class MainWindow : Window
         {
             _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _previousViewModel = null;
-        KeyDown += OnKeyDown;
-
-        // Cleanup subscriptions when the window is closed
-        Closed += OnWindowClosed;
-    }
-
-    private void OnWindowClosed(object? sender, EventArgs e)
-    {
-        // Unsubscribe from window-level events to avoid potential memory leaks
-        DataContextChanged -= OnDataContextChanged;
-        KeyDown -= OnKeyDown;
-        Closed -= OnWindowClosed;
-
-        // Ensure we detach from the last ViewModel as well
-        if (_previousViewModel != null)
-        {
-            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-            _previousViewModel = null;
         }
     }
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         // Unsubscribe from previous ViewModel to prevent memory leaks
@@ -193,11 +175,6 @@ public partial class MainWindow : Window
                 // Use actual panel width (half window width) for slide distance
                 var slideDistance = _eventLogPanel.Bounds.Width > 0 ? _eventLogPanel.Bounds.Width : Bounds.Width / 2;
                 
-                // Initialize transitions once if not already created
-                if (_eventLogTransitions == null)
-                {
-                    _eventLogTransitions = new Transitions
-
                 // Ensure we have a reusable DoubleTransition for the X translate
                 if (_eventLogPanel.Transitions == null)
                 {
