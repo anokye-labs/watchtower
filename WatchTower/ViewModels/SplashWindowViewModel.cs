@@ -13,7 +13,7 @@ namespace WatchTower.ViewModels;
 public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 {
     private readonly DispatcherTimer _timer;
-    private DateTime _startTime;
+    private readonly DateTime _startTime;
     private string _elapsedTime = "00:00";
     private bool _isDiagnosticsVisible;
     private bool _isStartupComplete;
