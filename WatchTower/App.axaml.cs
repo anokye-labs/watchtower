@@ -58,7 +58,7 @@ public partial class App : Application
             {
                 try
                 {
-                    await ExecuteStartupAsync(splashViewModel, desktop, splashWindow);
+                    await ExecuteStartupAsync(splashViewModel, desktop, splashWindow, configuration);
                 }
                 catch (Exception ex)
                 {
@@ -84,13 +84,14 @@ public partial class App : Application
     private async Task ExecuteStartupAsync(
         SplashWindowViewModel splashViewModel,
         IClassicDesktopStyleApplicationLifetime desktop,
-        Views.SplashWindow splashWindow)
+        Views.SplashWindow splashWindow,
+        IConfiguration configuration)
     {
         try
         {
-            // Execute startup workflow
+            // Execute startup workflow with shared configuration
             var orchestrator = new StartupOrchestrator();
-            _serviceProvider = await orchestrator.ExecuteStartupAsync(splashViewModel);
+            _serviceProvider = await orchestrator.ExecuteStartupAsync(splashViewModel, configuration);
 
             if (_serviceProvider == null)
             {

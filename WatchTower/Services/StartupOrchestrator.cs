@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ namespace WatchTower.Services;
 /// </summary>
 public class StartupOrchestrator : IStartupOrchestrator
 {
-    public async Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger)
+    public async Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger, IConfiguration configuration)
     {
         try
         {
@@ -27,9 +28,11 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("Phase 2/4: Configuring dependency injection...");
             var services = new ServiceCollection();
             
-            // Register logging service and configuration
+            // Register the shared configuration
+            services.AddSingleton(configuration);
+            
+            // Register logging service (it will use the shared configuration)
             var loggingService = new LoggingService();
-            services.AddSingleton(loggingService.GetConfiguration());
             services.AddSingleton(loggingService);
             services.AddSingleton<ILoggerFactory>(loggingService.LoggerFactory);
             

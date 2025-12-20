@@ -2,12 +2,15 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System;
+using System.Collections.Specialized;
 using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
 public partial class SplashWindow : Window
 {
+    private ScrollViewer? _diagnosticsScroller;
+
     public SplashWindow()
     {
         InitializeComponent();
@@ -17,6 +20,28 @@ public partial class SplashWindow : Window
         
         // Cleanup when window closes
         Closed += OnWindowClosed;
+
+        // Setup auto-scroll for diagnostics
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        _diagnosticsScroller = this.FindControl<ScrollViewer>("DiagnosticsScroller");
+
+        if (DataContext is SplashWindowViewModel viewModel)
+        {
+            viewModel.DiagnosticMessages.CollectionChanged += OnDiagnosticMessagesChanged;
+        }
+    }
+
+    private void OnDiagnosticMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action == NotifyCollectionChangedAction.Add && _diagnosticsScroller != null)
+        {
+            // Scroll to bottom when new messages are added
+            _diagnosticsScroller.ScrollToEnd();
+        }
     }
 
     private void OnWindowClosed(object? sender, EventArgs e)
@@ -24,10 +49,12 @@ public partial class SplashWindow : Window
         // Unsubscribe from events
         KeyDown -= OnKeyDown;
         Closed -= OnWindowClosed;
+        Loaded -= OnLoaded;
 
-        // Cleanup ViewModel timer
+        // Cleanup ViewModel timer and collection change handler
         if (DataContext is SplashWindowViewModel viewModel)
         {
+            viewModel.DiagnosticMessages.CollectionChanged -= OnDiagnosticMessagesChanged;
             viewModel.Cleanup();
         }
     }

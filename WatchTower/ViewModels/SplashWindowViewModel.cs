@@ -129,7 +129,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Info(string message)
     {
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] INFO: {message}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] INFO: {message}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);
@@ -139,7 +139,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Warn(string message)
     {
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] WARN: {message}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] WARN: {message}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);
@@ -150,7 +150,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
     public void Error(string message, Exception? ex = null)
     {
         var errorDetails = ex != null ? $"{message} - {ex.GetType().Name}: {ex.Message}" : message;
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] ERROR: {errorDetails}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] ERROR: {errorDetails}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);

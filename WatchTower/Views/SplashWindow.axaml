@@ -156,7 +156,8 @@
 
                         <ScrollViewer Grid.Row="2"
                                      VerticalScrollBarVisibility="Auto"
-                                     HorizontalScrollBarVisibility="Auto">
+                                     HorizontalScrollBarVisibility="Auto"
+                                     Name="DiagnosticsScroller">
                             <ItemsControl ItemsSource="{Binding DiagnosticMessages}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
