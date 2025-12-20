@@ -20,7 +20,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isStartupFailed;
     private bool _isSlowStartup;
     private string _statusMessage = "Loading...";
-    private int _hangThresholdSeconds;
+    private readonly int _hangThresholdSeconds;
 
     public SplashWindowViewModel(int hangThresholdSeconds = 30)
     {
