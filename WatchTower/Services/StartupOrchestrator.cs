@@ -19,10 +19,9 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info($"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
             logger.Info($"Platform: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
             
-            // Phase 1: Configuration
-            logger.Info("Phase 1/4: Loading configuration...");
-            await Task.Delay(100); // Simulate work (configuration is synchronous but we add delay for demo)
-            logger.Info("Configuration loaded successfully");
+            // Phase 1: Initial preparation
+            logger.Info("Phase 1/4: Preparing services...");
+            logger.Info("Initial preparation complete");
             
             // Phase 2: Dependency Injection Setup
             logger.Info("Phase 2/4: Configuring dependency injection...");
@@ -54,7 +53,6 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("ViewModels registered");
             
             // Build service provider
-            await Task.Delay(100); // Simulate build time
             var serviceProvider = services.BuildServiceProvider();
             logger.Info("Service provider built successfully");
             
@@ -68,17 +66,14 @@ public class StartupOrchestrator : IStartupOrchestrator
             var gameControllerService = serviceProvider.GetRequiredService<IGameControllerService>();
             logger.Info("Initializing game controller service...");
             
-            await Task.Run(() =>
+            if (gameControllerService.Initialize())
             {
-                if (gameControllerService.Initialize())
-                {
-                    logger.Info("Game controller service initialized successfully");
-                }
-                else
-                {
-                    logger.Warn("Game controller service initialization failed");
-                }
-            });
+                logger.Info("Game controller service initialized successfully");
+            }
+            else
+            {
+                logger.Warn("Game controller service initialization failed");
+            }
             
             logger.Info("=== Startup Complete ===");
             return serviceProvider;

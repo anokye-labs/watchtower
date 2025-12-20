@@ -43,10 +43,12 @@ public partial class App : Application
             };
 
             // Handle exit request from splash
-            splashViewModel.ExitRequested += (s, e) =>
+            EventHandler? exitHandler = null;
+            exitHandler = (s, e) =>
             {
                 desktop.Shutdown();
             };
+            splashViewModel.ExitRequested += exitHandler;
 
             desktop.MainWindow = splashWindow;
             splashWindow.Show();
@@ -69,6 +71,7 @@ public partial class App : Application
             // Cleanup on shutdown
             desktop.ShutdownRequested += (s, e) =>
             {
+                splashViewModel.ExitRequested -= exitHandler;
                 _gamepadPollTimer?.Stop();
                 _gameControllerService?.Dispose();
                 _serviceProvider?.Dispose();
@@ -100,28 +103,20 @@ public partial class App : Application
             var logger = _serviceProvider.GetRequiredService<ILogger<App>>();
             logger.LogInformation("Application initialization completed");
 
-            // Initialize game controller service polling
+            // Start game controller service polling (service already initialized in StartupOrchestrator)
             _gameControllerService = _serviceProvider.GetRequiredService<IGameControllerService>();
-            if (_gameControllerService.Initialize())
+            
+            // Start polling timer synchronized with rendering (60 FPS)
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                logger.LogInformation("Game controller service initialized successfully");
-                
-                // Start polling timer synchronized with rendering (60 FPS)
-                await Dispatcher.UIThread.InvokeAsync(() =>
+                _gamepadPollTimer = new DispatcherTimer
                 {
-                    _gamepadPollTimer = new DispatcherTimer
-                    {
-                        Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
-                    };
-                    _gamepadPollTimer.Tick += (s, e) => _gameControllerService.Update();
-                    _gamepadPollTimer.Start();
-                    logger.LogInformation("Gamepad polling started at 60 FPS");
-                });
-            }
-            else
-            {
-                logger.LogWarning("Game controller service initialization failed");
-            }
+                    Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
+                };
+                _gamepadPollTimer.Tick += (s, e) => _gameControllerService.Update();
+                _gamepadPollTimer.Start();
+                logger.LogInformation("Gamepad polling started at 60 FPS");
+            });
 
             // Mark startup as complete
             splashViewModel.MarkStartupComplete();

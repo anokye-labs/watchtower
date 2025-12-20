@@ -56,7 +56,7 @@
                              Height="60"
                              Fill="#4AFFFFFF"
                              HorizontalAlignment="Center"
-                             IsVisible="{Binding !IsStartupComplete}"
+                             IsVisible="{Binding IsStartupRunning}"
                              Name="SpinnerEllipse">
                         <Ellipse.Styles>
                             <Style Selector="Ellipse#SpinnerEllipse">
