@@ -205,14 +205,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
         var elapsed = DateTime.Now - _startTime;
         
         // Update elapsed time display
-        if (elapsed.TotalHours >= 1)
-        {
-            ElapsedTime = elapsed.ToString(@"hh\:mm\:ss");
-        }
-        else
-        {
-            ElapsedTime = elapsed.ToString(@"mm\:ss");
-        }
+        ElapsedTime = elapsed.ToString(elapsed.TotalHours >= 1 ? @"hh\:mm\:ss" : @"mm\:ss");
         
         // Check for slow startup
         if (!IsSlowStartup && elapsed.TotalSeconds >= _hangThresholdSeconds)
