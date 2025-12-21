@@ -16,97 +16,107 @@
         Background="Transparent"
         TransparencyLevelHint="Transparent">
 
-    <!-- Root Grid: 9-slice frame layout to prevent corner distortion during animation -->
-    <Grid>
-        <!-- 9-Slice Grid for Frame Image -->
-        <!-- Frame pieces created by artist with 28px borders -->
-        <Grid IsHitTestVisible="False" ZIndex="0">
+    <!-- Root Grid: Frame with 9-slice layout -->
+    <Grid ClipToBounds="True">
+        <!-- Frame layer - 3x3 grid, all images scaled uniformly -->
+        <!-- Row/column sizes are set explicitly in code-behind based on scaled corner dimensions -->
+        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="True">
             <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>  <!-- Top edge -->
-                <RowDefinition Height="*"/>   <!-- Middle stretch -->
-                <RowDefinition Height="28"/>  <!-- Bottom edge -->
+                <RowDefinition Height="100"/>  <!-- Top row: will be set to scaled corner height -->
+                <RowDefinition Height="*"/>    <!-- Middle row: left/right edges -->
+                <RowDefinition Height="100"/>  <!-- Bottom row: will be set to scaled corner height -->
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="28"/> <!-- Left edge -->
-                <ColumnDefinition Width="*"/>  <!-- Middle stretch -->
-                <ColumnDefinition Width="28"/> <!-- Right edge -->
+                <ColumnDefinition Width="100"/> <!-- Left column: will be set to scaled corner width -->
+                <ColumnDefinition Width="*"/>   <!-- Center column -->
+                <ColumnDefinition Width="100"/> <!-- Right column: will be set to scaled corner width -->
             </Grid.ColumnDefinitions>
-
-            <!-- Top-Left Corner (28x28, fixed) -->
-            <Image Grid.Row="0" Grid.Column="0" 
+            
+            <!-- DEBUG: Red borders for each cell -->
+            <Border Grid.Row="0" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="0" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="0" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="1" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="1" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="1" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="2" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="2" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
+            <Border Grid.Row="2" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
+            
+            <!-- Row 0: Top-Left Corner, Top Edge, Top-Right Corner -->
+            
+            <Image Name="TopLeftCorner"
+                   Grid.Row="0" Grid.Column="0"
                    Source="avares://WatchTower/Assets/Frame/top-left.png"
-                   Stretch="None"/>
-
-            <!-- Top Edge (tiles horizontally) -->
-            <Border Grid.Row="0" Grid.Column="1">
-                <Border.Background>
-                    <ImageBrush Source="avares://WatchTower/Assets/Frame/top.png" 
-                               TileMode="Tile" 
-                               Stretch="None"
-                               AlignmentX="Left"
-                               AlignmentY="Top"/>
-                </Border.Background>
+                   Stretch="Fill"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"/>
+            
+            <Border Grid.Row="0" Grid.Column="1" Name="TopEdgeBorder" ClipToBounds="True">
+                <Image Name="TopEdge"
+                       Source="avares://WatchTower/Assets/Frame/top.png"
+                       Stretch="Fill"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"/>
             </Border>
-
-            <!-- Top-Right Corner (28x28, fixed) -->
-            <Image Grid.Row="0" Grid.Column="2" 
+            
+            <Image Name="TopRightCorner"
+                   Grid.Row="0" Grid.Column="2"
                    Source="avares://WatchTower/Assets/Frame/top-right.png"
-                   Stretch="None"/>
-
-            <!-- Left Edge (tiles vertically) -->
-            <Border Grid.Row="1" Grid.Column="0">
-                <Border.Background>
-                    <ImageBrush Source="avares://WatchTower/Assets/Frame/left.png" 
-                               TileMode="Tile" 
-                               Stretch="None"
-                               AlignmentX="Left"
-                               AlignmentY="Top"/>
-                </Border.Background>
+                   Stretch="Fill"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Top"/>
+            
+            <!-- Row 1: Left Edge, (center is empty), Right Edge -->
+            
+            <Border Grid.Row="1" Grid.Column="0" Name="LeftEdgeBorder" ClipToBounds="True">
+                <Image Name="LeftEdge"
+                       Source="avares://WatchTower/Assets/Frame/left.png"
+                       Stretch="Fill"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"/>
             </Border>
-
-            <!-- Center (transparent, no image) -->
-            <!-- Content area is handled by the Border element below with 28px margin -->
-
-            <!-- Right Edge (tiles vertically) -->
-            <Border Grid.Row="1" Grid.Column="2">
-                <Border.Background>
-                    <ImageBrush Source="avares://WatchTower/Assets/Frame/right.png" 
-                               TileMode="Tile" 
-                               Stretch="None"
-                               AlignmentX="Left"
-                               AlignmentY="Top"/>
-                </Border.Background>
+            
+            <!-- Center cell is transparent - content goes here -->
+            
+            <Border Grid.Row="1" Grid.Column="2" Name="RightEdgeBorder" ClipToBounds="True">
+                <Image Name="RightEdge"
+                       Source="avares://WatchTower/Assets/Frame/right.png"
+                       Stretch="Fill"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Right"/>
             </Border>
-
-            <!-- Bottom-Left Corner (28x28, fixed) -->
-            <Image Grid.Row="2" Grid.Column="0" 
+            
+            <!-- Row 2: Bottom-Left Corner, Bottom Edge, Bottom-Right Corner -->
+            
+            <Image Name="BottomLeftCorner"
+                   Grid.Row="2" Grid.Column="0"
                    Source="avares://WatchTower/Assets/Frame/bottom-left.png"
-                   Stretch="None"/>
-
-            <!-- Bottom Edge (tiles horizontally) -->
-            <Border Grid.Row="2" Grid.Column="1">
-                <Border.Background>
-                    <ImageBrush Source="avares://WatchTower/Assets/Frame/bottom.png" 
-                               TileMode="Tile" 
-                               Stretch="None"
-                               AlignmentX="Left"
-                               AlignmentY="Top"/>
-                </Border.Background>
+                   Stretch="Fill"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Bottom"/>
+            
+            <Border Grid.Row="2" Grid.Column="1" Name="BottomEdgeBorder" ClipToBounds="True">
+                <Image Name="BottomEdge"
+                       Source="avares://WatchTower/Assets/Frame/bottom.png"
+                       Stretch="Fill"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom"/>
             </Border>
-
-            <!-- Bottom-Right Corner (28x28, fixed) -->
-            <Image Grid.Row="2" Grid.Column="2" 
+            
+            <Image Name="BottomRightCorner"
+                   Grid.Row="2" Grid.Column="2"
                    Source="avares://WatchTower/Assets/Frame/bottom-right.png"
-                   Stretch="None"/>
-        </Grid>
-
-        <!-- Content Area (inside the frame with appropriate margin) -->
-        <!-- Margin value (28) matches the frame border thickness -->
-        <Border Margin="28"
-                Name="ContentBorder"
-                ClipToBounds="True">
-            <!-- Dynamic content: Splash or Main View -->
-            <ContentControl Content="{Binding CurrentContent}"
+                   Stretch="Fill"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Bottom"/>
+            
+            <!-- Content Area - in center cell of the grid -->
+            <Border Name="ContentBorder"
+                    Grid.Row="1" Grid.Column="1"
+                    ClipToBounds="True">
+                <!-- Dynamic content: Splash or Main View -->
+                <ContentControl Content="{Binding CurrentContent}"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Name="ShellContent">
@@ -542,5 +552,6 @@
                 </ContentControl.DataTemplates>
             </ContentControl>
         </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -33,6 +33,43 @@ public partial class ShellWindow : Window
     // Overlay sizing
     private const int DefaultOverlayHeight = 400;
     private const double OverlayHeightRatio = 0.6;
+    
+    // Original frame image dimensions (pixels)
+    private const double OriginalTopLeftWidth = 1317;
+    private const double OriginalTopLeftHeight = 965;
+    private const double OriginalTopRightWidth = 1333;
+    private const double OriginalTopRightHeight = 965;
+    private const double OriginalBottomLeftWidth = 1330;
+    private const double OriginalBottomLeftHeight = 966;
+    private const double OriginalBottomRightWidth = 1337;
+    private const double OriginalBottomRightHeight = 966;
+    private const double OriginalTopEdgeWidth = 4262;
+    private const double OriginalTopEdgeHeight = 272;
+    private const double OriginalBottomEdgeWidth = 4245;
+    private const double OriginalBottomEdgeHeight = 129;
+    private const double OriginalLeftEdgeWidth = 81;
+    private const double OriginalLeftEdgeHeight = 1909;
+    private const double OriginalRightEdgeWidth = 66;
+    private const double OriginalRightEdgeHeight = 1909;
+    
+    // Fully assembled frame dimensions
+    // Width = left corner + top edge + right corner
+    private const double FullFrameWidth = OriginalTopLeftWidth + OriginalTopEdgeWidth + OriginalTopRightWidth; // 6912
+    // Height = top corner + left edge + bottom corner  
+    private const double FullFrameHeight = OriginalTopLeftHeight + OriginalLeftEdgeHeight + OriginalBottomLeftHeight; // 3840
+    
+    // Frame image references for setting Width/Height
+    private Image? _topLeftCorner;
+    private Image? _topRightCorner;
+    private Image? _bottomLeftCorner;
+    private Image? _bottomRightCorner;
+    private Image? _topEdge;
+    private Image? _bottomEdge;
+    private Image? _leftEdge;
+    private Image? _rightEdge;
+    
+    // Frame grid for setting row/column sizes
+    private Grid? _frameGrid;
 
     public ShellWindow()
     {
@@ -43,6 +80,120 @@ public partial class ShellWindow : Window
         Loaded += OnLoaded;
         Closed += OnWindowClosed;
         DataContextChanged += OnDataContextChanged;
+        
+        // Update frame scale when window size changes
+        this.GetObservable(BoundsProperty).Subscribe(_ => UpdateFrameScale());
+    }
+    
+    private void InitializeFrameElements()
+    {
+        // Get frame images
+        _topLeftCorner = this.FindControl<Image>("TopLeftCorner");
+        _topRightCorner = this.FindControl<Image>("TopRightCorner");
+        _bottomLeftCorner = this.FindControl<Image>("BottomLeftCorner");
+        _bottomRightCorner = this.FindControl<Image>("BottomRightCorner");
+        _topEdge = this.FindControl<Image>("TopEdge");
+        _bottomEdge = this.FindControl<Image>("BottomEdge");
+        _leftEdge = this.FindControl<Image>("LeftEdge");
+        _rightEdge = this.FindControl<Image>("RightEdge");
+        
+        // Get frame grid
+        _frameGrid = this.FindControl<Grid>("FrameGrid");
+    }
+    
+    /// <summary>
+    /// Calculates and applies uniform scale to all frame images based on screen size.
+    /// Scale = min(screenWidth / fullFrameWidth, screenHeight / fullFrameHeight)
+    /// </summary>
+    private void UpdateFrameScale()
+    {
+        // Initialize frame elements if not done yet
+        if (_frameGrid == null)
+        {
+            InitializeFrameElements();
+        }
+        
+        var screen = Screens.Primary;
+        if (screen == null) return;
+        
+        var screenWidth = screen.WorkingArea.Width;
+        var screenHeight = screen.WorkingArea.Height;
+        
+        // Calculate scale: pick the smaller ratio to fit the frame on screen
+        var scaleX = screenWidth / FullFrameWidth;
+        var scaleY = screenHeight / FullFrameHeight;
+        var scale = Math.Min(scaleX, scaleY);
+        
+        // Apply uniform scale to all frame elements
+        ApplyFrameScale(scale);
+    }
+    
+    /// <summary>
+    /// Applies the given scale factor to all frame images by setting explicit Width/Height.
+    /// </summary>
+    private void ApplyFrameScale(double scale)
+    {
+        // Set explicit dimensions on corner images
+        if (_topLeftCorner != null)
+        {
+            _topLeftCorner.Width = OriginalTopLeftWidth * scale;
+            _topLeftCorner.Height = OriginalTopLeftHeight * scale;
+        }
+        if (_topRightCorner != null)
+        {
+            _topRightCorner.Width = OriginalTopRightWidth * scale;
+            _topRightCorner.Height = OriginalTopRightHeight * scale;
+        }
+        if (_bottomLeftCorner != null)
+        {
+            _bottomLeftCorner.Width = OriginalBottomLeftWidth * scale;
+            _bottomLeftCorner.Height = OriginalBottomLeftHeight * scale;
+        }
+        if (_bottomRightCorner != null)
+        {
+            _bottomRightCorner.Width = OriginalBottomRightWidth * scale;
+            _bottomRightCorner.Height = OriginalBottomRightHeight * scale;
+        }
+        
+        // Set explicit dimensions on edge images
+        if (_topEdge != null)
+        {
+            _topEdge.Width = OriginalTopEdgeWidth * scale;
+            _topEdge.Height = OriginalTopEdgeHeight * scale;
+        }
+        if (_bottomEdge != null)
+        {
+            _bottomEdge.Width = OriginalBottomEdgeWidth * scale;
+            _bottomEdge.Height = OriginalBottomEdgeHeight * scale;
+        }
+        if (_leftEdge != null)
+        {
+            _leftEdge.Width = OriginalLeftEdgeWidth * scale;
+            _leftEdge.Height = OriginalLeftEdgeHeight * scale;
+        }
+        if (_rightEdge != null)
+        {
+            _rightEdge.Width = OriginalRightEdgeWidth * scale;
+            _rightEdge.Height = OriginalRightEdgeHeight * scale;
+        }
+        
+        // Set explicit row heights and column widths based on scaled corner sizes
+        if (_frameGrid != null)
+        {
+            // Calculate scaled corner dimensions
+            var scaledTopHeight = OriginalTopLeftHeight * scale;
+            var scaledBottomHeight = OriginalBottomLeftHeight * scale;
+            var scaledLeftWidth = OriginalTopLeftWidth * scale;
+            var scaledRightWidth = OriginalTopRightWidth * scale;
+            
+            // Set row heights
+            _frameGrid.RowDefinitions[0].Height = new GridLength(scaledTopHeight);
+            _frameGrid.RowDefinitions[2].Height = new GridLength(scaledBottomHeight);
+            
+            // Set column widths
+            _frameGrid.ColumnDefinitions[0].Width = new GridLength(scaledLeftWidth);
+            _frameGrid.ColumnDefinitions[2].Width = new GridLength(scaledRightWidth);
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
