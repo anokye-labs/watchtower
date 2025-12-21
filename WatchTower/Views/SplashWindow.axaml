@@ -1,0 +1,201 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:WatchTower.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        x:Class="WatchTower.Views.SplashWindow"
+        x:DataType="vm:SplashWindowViewModel"
+        Title="WatchTower"
+        Width="600"
+        Height="400"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <Border Background="#EE0A0A0A"
+            CornerRadius="12"
+            BorderBrush="#4AFFFFFF"
+            BorderThickness="1"
+            BoxShadow="0 8 32 8 #80000000">
+        <Grid>
+            <!-- Main content area -->
+            <Grid Margin="40">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Logo/Title -->
+                <StackPanel Grid.Row="0" 
+                           HorizontalAlignment="Center"
+                           Spacing="8">
+                    <TextBlock Text="WatchTower"
+                              FontSize="36"
+                              FontWeight="Bold"
+                              HorizontalAlignment="Center"
+                              Foreground="White"/>
+                </StackPanel>
+
+                <!-- Status and Spinner Area -->
+                <StackPanel Grid.Row="2"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Spacing="20">
+                    <!-- Spinner (pulsing circle) -->
+                    <Ellipse Width="60" 
+                             Height="60"
+                             Fill="#4AFFFFFF"
+                             HorizontalAlignment="Center"
+                             IsVisible="{Binding IsStartupRunning}"
+                             Name="SpinnerEllipse">
+                        <Ellipse.Styles>
+                            <Style Selector="Ellipse#SpinnerEllipse">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:1.5" 
+                                             IterationCount="Infinite"
+                                             PlaybackDirection="Alternate">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="0.2"/>
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="1.0"/>
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </Ellipse.Styles>
+                    </Ellipse>
+
+                    <!-- Success checkmark -->
+                    <Viewbox Width="60" 
+                             Height="60"
+                             HorizontalAlignment="Center"
+                             IsVisible="{Binding IsStartupComplete}">
+                        <Canvas Width="24" Height="24">
+                            <Path Fill="#4AFF4A"
+                                  Data="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/>
+                        </Canvas>
+                    </Viewbox>
+
+                    <!-- Status message -->
+                    <TextBlock Text="{Binding StatusMessage}"
+                              FontSize="16"
+                              HorizontalAlignment="Center"
+                              Foreground="White"/>
+
+                    <!-- Warning icon for slow startup -->
+                    <Border IsVisible="{Binding IsSlowStartup}"
+                            Padding="12,8"
+                            Background="#44FFA500"
+                            CornerRadius="6"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="⚠" 
+                                      FontSize="16"
+                                      Foreground="#FFFFA500"/>
+                            <TextBlock Text="Taking longer than usual"
+                                      FontSize="14"
+                                      Foreground="#FFFFA500"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Error indicator -->
+                    <Border IsVisible="{Binding IsStartupFailed}"
+                            Padding="12,8"
+                            Background="#44FF4444"
+                            CornerRadius="6"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="✕" 
+                                      FontSize="16"
+                                      Foreground="#FFFF4444"/>
+                            <TextBlock Text="See diagnostics for details"
+                                      FontSize="14"
+                                      Foreground="#FFFF4444"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Elapsed time -->
+                <TextBlock Grid.Row="4"
+                          Text="{Binding ElapsedTime}"
+                          FontSize="24"
+                          FontFamily="Consolas,Courier New"
+                          HorizontalAlignment="Center"
+                          Foreground="#AAFFFFFF"/>
+
+                <!-- Diagnostics panel (collapsible) -->
+                <Border Grid.Row="6"
+                        IsVisible="{Binding IsDiagnosticsVisible}"
+                        Background="#1AFFFFFF"
+                        CornerRadius="6"
+                        Padding="12"
+                        MaxHeight="200">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                  Text="Diagnostics"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"
+                                  Foreground="White"/>
+
+                        <ScrollViewer Grid.Row="2"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     Name="DiagnosticsScroller">
+                            <ItemsControl ItemsSource="{Binding DiagnosticMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                  FontFamily="Consolas,Courier New"
+                                                  FontSize="11"
+                                                  Foreground="#CCFFFFFF"
+                                                  TextWrapping="NoWrap"
+                                                  Margin="0,1"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Close button (top-right corner) -->
+            <Button Content="✕"
+                    Command="{Binding ExitCommand}"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,8,8,0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Foreground="#CCFFFFFF"
+                    FontSize="20"
+                    Padding="12,8"
+                    ToolTip.Tip="Exit Application"/>
+
+            <!-- Hint text -->
+            <TextBlock Text="Press 'D' for diagnostics | ESC or ✕ to exit"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,0,12"
+                      FontSize="11"
+                      Foreground="#66FFFFFF"
+                      FontStyle="Italic"/>
+        </Grid>
+    </Border>
+</Window>
