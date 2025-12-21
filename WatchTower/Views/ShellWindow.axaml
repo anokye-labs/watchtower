@@ -65,6 +65,7 @@
             </Border>
 
             <!-- Center (transparent, no image) -->
+            <!-- Content area is handled by the Border element below with 28px margin -->
 
             <!-- Right Edge (tiles vertically) -->
             <Border Grid.Row="1" Grid.Column="2">
