@@ -11,8 +11,11 @@ namespace WatchTower.ViewModels;
 /// ViewModel for the splash screen window.
 /// Implements IStartupLogger to capture and display startup diagnostics.
 /// </summary>
-public class SplashWindowViewModel : ViewModelBase, IStartupLogger
+public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
 {
+    private const int MaxDiagnosticMessages = 500;
+    private const int TimerIntervalMs = 1000;
+
     private readonly DispatcherTimer _timer;
     private readonly Stopwatch _stopwatch;
     private string _elapsedTime = "00:00";
@@ -22,6 +25,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isSlowStartup;
     private string _statusMessage = "Loading...";
     private readonly int _hangThresholdSeconds;
+    private bool _disposed;
 
     public SplashWindowViewModel(int hangThresholdSeconds = 30)
     {
@@ -38,7 +42,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
         // Timer for elapsed time and hang detection
         _timer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(100)
+            Interval = TimeSpan.FromMilliseconds(TimerIntervalMs)
         };
         _timer.Tick += OnTimerTick;
         _timer.Start();
@@ -242,11 +246,40 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     private void TrimDiagnosticMessages()
     {
-        // Keep only the last 500 messages to avoid memory issues
-        while (DiagnosticMessages.Count > 500)
+        // Keep only the last messages to avoid memory issues
+        while (DiagnosticMessages.Count > MaxDiagnosticMessages)
         {
             DiagnosticMessages.RemoveAt(0);
         }
+    }
+
+    #endregion
+
+    #region IDisposable Implementation
+
+    /// <summary>
+    /// Disposes resources used by the ViewModel.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            _timer?.Stop();
+            _stopwatch?.Stop();
+        }
+
+        _disposed = true;
     }
 
     #endregion

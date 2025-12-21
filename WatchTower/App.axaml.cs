@@ -35,6 +35,13 @@ public partial class App : Application
 
             var hangThreshold = configuration.GetValue("Startup:HangThresholdSeconds", 30);
 
+            // Validate hang threshold is within reasonable bounds
+            if (hangThreshold < 5 || hangThreshold > 300)
+            {
+                throw new InvalidOperationException(
+                    $"Startup:HangThresholdSeconds must be between 5 and 300 seconds. Current value: {hangThreshold}");
+            }
+
             // Create and show splash window immediately
             var splashViewModel = new SplashWindowViewModel(hangThreshold);
             var splashWindow = new Views.SplashWindow
@@ -72,6 +79,7 @@ public partial class App : Application
             desktop.ShutdownRequested += (s, e) =>
             {
                 splashViewModel.ExitRequested -= exitHandler;
+                splashViewModel?.Dispose();
                 _gamepadPollTimer?.Stop();
                 _gameControllerService?.Dispose();
                 _serviceProvider?.Dispose();
@@ -104,10 +112,9 @@ public partial class App : Application
             var logger = _serviceProvider.GetRequiredService<ILogger<App>>();
             logger.LogInformation("Application initialization completed");
 
-<<<<<<< HEAD
             // Start game controller service polling (service already initialized in StartupOrchestrator)
             _gameControllerService = _serviceProvider.GetRequiredService<IGameControllerService>();
-            
+
             // Start polling timer synchronized with rendering (60 FPS)
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -139,8 +146,16 @@ public partial class App : Application
                 mainWindow.Show();
                 logger.LogInformation("Main window created and shown");
 
-                // Close splash window
-                splashWindow.Close();
+                // Close splash window and dispose resources
+                try
+                {
+                    splashWindow?.Close();
+                    splashViewModel?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error closing splash window");
+                }
             });
         }
         catch (Exception ex)
