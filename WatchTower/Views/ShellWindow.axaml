@@ -16,17 +16,92 @@
         Background="Transparent"
         TransparencyLevelHint="Transparent">
 
-    <!-- Root Grid: Frame background + content -->
+    <!-- Root Grid: 9-slice frame layout to prevent corner distortion during animation -->
     <Grid>
-        <!-- Frame Background Image (stretches with window) -->
-        <Image Source="avares://WatchTower/Assets/main-frame-complete-2.svg"
-               Stretch="Fill"
-               IsHitTestVisible="False"
-               ZIndex="0"/>
+        <!-- 9-Slice Grid for Frame Image -->
+        <!-- Frame pieces created by artist with 28px borders -->
+        <Grid IsHitTestVisible="False" ZIndex="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="28"/>  <!-- Top edge -->
+                <RowDefinition Height="*"/>   <!-- Middle stretch -->
+                <RowDefinition Height="28"/>  <!-- Bottom edge -->
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="28"/> <!-- Left edge -->
+                <ColumnDefinition Width="*"/>  <!-- Middle stretch -->
+                <ColumnDefinition Width="28"/> <!-- Right edge -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Top-Left Corner (28x28, fixed) -->
+            <Image Grid.Row="0" Grid.Column="0" 
+                   Source="avares://WatchTower/Assets/Frame/top-left.png"
+                   Stretch="None"/>
+
+            <!-- Top Edge (tiles horizontally) -->
+            <Border Grid.Row="0" Grid.Column="1">
+                <Border.Background>
+                    <ImageBrush Source="avares://WatchTower/Assets/Frame/top.png" 
+                               TileMode="Tile" 
+                               Stretch="None"
+                               AlignmentX="Left"
+                               AlignmentY="Top"/>
+                </Border.Background>
+            </Border>
+
+            <!-- Top-Right Corner (28x28, fixed) -->
+            <Image Grid.Row="0" Grid.Column="2" 
+                   Source="avares://WatchTower/Assets/Frame/top-right.png"
+                   Stretch="None"/>
+
+            <!-- Left Edge (tiles vertically) -->
+            <Border Grid.Row="1" Grid.Column="0">
+                <Border.Background>
+                    <ImageBrush Source="avares://WatchTower/Assets/Frame/left.png" 
+                               TileMode="Tile" 
+                               Stretch="None"
+                               AlignmentX="Left"
+                               AlignmentY="Top"/>
+                </Border.Background>
+            </Border>
+
+            <!-- Center (transparent, no image) -->
+
+            <!-- Right Edge (tiles vertically) -->
+            <Border Grid.Row="1" Grid.Column="2">
+                <Border.Background>
+                    <ImageBrush Source="avares://WatchTower/Assets/Frame/right.png" 
+                               TileMode="Tile" 
+                               Stretch="None"
+                               AlignmentX="Left"
+                               AlignmentY="Top"/>
+                </Border.Background>
+            </Border>
+
+            <!-- Bottom-Left Corner (28x28, fixed) -->
+            <Image Grid.Row="2" Grid.Column="0" 
+                   Source="avares://WatchTower/Assets/Frame/bottom-left.png"
+                   Stretch="None"/>
+
+            <!-- Bottom Edge (tiles horizontally) -->
+            <Border Grid.Row="2" Grid.Column="1">
+                <Border.Background>
+                    <ImageBrush Source="avares://WatchTower/Assets/Frame/bottom.png" 
+                               TileMode="Tile" 
+                               Stretch="None"
+                               AlignmentX="Left"
+                               AlignmentY="Top"/>
+                </Border.Background>
+            </Border>
+
+            <!-- Bottom-Right Corner (28x28, fixed) -->
+            <Image Grid.Row="2" Grid.Column="2" 
+                   Source="avares://WatchTower/Assets/Frame/bottom-right.png"
+                   Stretch="None"/>
+        </Grid>
 
         <!-- Content Area (inside the frame with appropriate margin) -->
-        <!-- Margin value (100) should match the frame asset's inner border size -->
-        <Border Margin="100"
+        <!-- Margin value (28) matches the frame border thickness -->
+        <Border Margin="28"
                 Name="ContentBorder"
                 ClipToBounds="True">
             <!-- Dynamic content: Splash or Main View -->

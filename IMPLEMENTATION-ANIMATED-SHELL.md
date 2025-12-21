@@ -38,21 +38,21 @@ This implementation replaces the separate SplashWindow and MainWindow with a uni
 ## Frame Asset
 
 ### Current Implementation
-The implementation uses a placeholder SVG frame (`Assets/main-frame-complete-2.svg`) that provides:
-- Golden/bronze ornate corners
-- 60px border thickness
-- 100px inner margin for content
-- Decorative pattern overlay
+The implementation uses a PNG frame (`Assets/main-frame-complete-2.png`) that provides:
+- Golden/bronze ornate corners with Art Deco patterns
+- 28px border thickness
+- Transparent center for content
+- Created at 1920x1080 native resolution
 
-### Replacing with Actual Asset
-To use the actual `main-frame-complete-2.jpg` from the issue:
-1. Download the image from the issue attachments
-2. Replace `WatchTower/Assets/main-frame-complete-2.svg` with the .jpg file
-3. Update `ShellWindow.axaml` line 20 to use `.jpg` instead of `.svg`:
-   ```xml
-   <Image Source="avares://WatchTower/Assets/main-frame-complete-2.jpg"
-   ```
-4. Adjust the `Margin="100"` on line 24 to match the actual frame's inner border size
+### 9-Slice Implementation
+To prevent corner distortion during the window expansion animation, the frame is implemented using proper 9-slice layout:
+- **Frame pieces** in `Assets/Frame/` directory:
+  - 4 corner pieces (28x28px each): `top-left.png`, `top-right.png`, `bottom-left.png`, `bottom-right.png`
+  - 4 edge pieces (1-pixel strips that tile): `top.png`, `bottom.png`, `left.png`, `right.png`
+- **Layout**: 3x3 Grid where corners remain fixed and edges tile seamlessly
+- **Content margin**: 28px to match the border thickness
+
+This ensures the decorative corners maintain their detail while the edges stretch smoothly as the window animates from 70% to full-screen size.
 
 ## Testing
 
@@ -74,28 +74,36 @@ To use the actual `main-frame-complete-2.jpg` from the issue:
 
 ## Frame Layout
 
-The frame layout uses a simple Grid structure:
+The frame uses a 9-slice Grid layout for perfect scaling:
 ```
-┌─────────────────────────────────┐
-│ Frame Background (Image)        │ ← Stretches with window
-│  ┌───────────────────────────┐  │
-│  │ Content Area (100px margin)│  │
-│  │                           │  │
-│  │  Splash or Main Content   │  │
-│  │                           │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
+┌────────────────────────────────────┐
+│ ╔══════════════════════════════╗   │
+│ ║ Corner │  Top Edge  │ Corner ║   │ ← Fixed 28px
+│ ║────────┼────────────┼────────║   │
+│ ║        │            │        ║   │
+│ ║  Left  │   Content  │ Right  ║   │ ← Stretches
+│ ║  Edge  │    Area    │  Edge  ║   │
+│ ║        │            │        ║   │
+│ ║────────┼────────────┼────────║   │
+│ ║ Corner │ Bottom Edge│ Corner ║   │ ← Fixed 28px
+│ ╚══════════════════════════════╝   │
+└────────────────────────────────────┘
+     ↑          ↑          ↑
+   28px     Stretches    28px
 ```
 
-The frame image stretches uniformly, so corners remain proportional during animation.
+- **Corners** (28x28px): Fixed size, never distort
+- **Edges** (1px strips): Tile seamlessly as window resizes
+- **Center**: Transparent, holds application content
+- **Content margin**: 28px prevents overlap with frame border
 
 ## Known Limitations
 
-1. **9-Slice Stretching**: Avalonia 11.3.9 doesn't have built-in 9-slice (NineGrid) support for images. The current implementation uses `Stretch="Fill"` which may distort corners slightly. If corner distortion is unacceptable, the frame could be split into 9 separate images arranged in a Grid.
+1. **Cross-Platform**: Animation timing may vary slightly on different platforms due to rendering performance. The implementation targets 60 FPS but will adapt based on system capabilities.
 
-2. **Cross-Platform**: Animation timing may vary slightly on different platforms due to rendering performance. The implementation targets 60 FPS but will adapt based on system capabilities.
+2. **Screen Resolution**: The 70% splash size works well on most displays. On very small screens (<1024px), the splash may appear cramped. Consider adding minimum size constraints if needed.
 
-3. **Screen Resolution**: The 70% splash size works well on most displays. On very small screens (<1024px), the splash may appear cramped. Consider adding minimum size constraints if needed.
+3. **Frame Asset**: Frame created at 1920x1080 with 28px borders. The 9-slice implementation ensures it scales properly to any resolution without corner distortion.
 
 ## Architecture Compliance
 
