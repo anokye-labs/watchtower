@@ -12,7 +12,7 @@ NOTE: the FAL.AI Key is in the local .env file when creating scripts, create the
 ## Architecture & Structure
 - MVVM enforcement: ViewModels contain logic; Views only bindings/presentation; code-behind limited to initialization.
 - Service layer: business logic in Services/, injected into ViewModels via DI; ViewModels orchestrate services.
-- Directory highlights: WatchTower/ (Models, ViewModels, Views, Services, App.axaml, Program.cs, appsettings.json); .specify/ (constitution, templates, scripts); .github/agents/ (Spec-Kit agents); specs/NNN-feature-name/ (spec, plan, tasks, checklists).
+- Directory highlights: WatchTower/ (Models, ViewModels, Views, Services, App.axaml, Program.cs, appsettings.json); .specify/ (constitution, templates, scripts); specs/NNN-feature-name/ (spec, plan, tasks, checklists).
 
 ## Core Principles
 1. MVVM Architecture First.
@@ -23,7 +23,6 @@ NOTE: the FAL.AI Key is in the local .env file when creating scripts, create the
 
 ## Critical Workflows
 - General: Prefer built-in tasks/tools over CLI; justify any direct tool invocation; use runSubagent for code changes.
-- Spec-Kit flow: create-new-feature → speckit.clarify → setup-plan → speckit.tasks → speckit.analyze → speckit.implement. Always run check-prerequisites.ps1 -Json for paths/validation.
 
 ## Build & Run
 - Development build: dotnet build.
