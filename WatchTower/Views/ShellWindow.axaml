@@ -25,6 +25,7 @@
                ZIndex="0"/>
 
         <!-- Content Area (inside the frame with appropriate margin) -->
+        <!-- Margin value (100) should match the frame asset's inner border size -->
         <Border Margin="100"
                 Name="ContentBorder"
                 ClipToBounds="True">

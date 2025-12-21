@@ -23,7 +23,16 @@ public partial class ShellWindow : Window
 
     // Animation parameters
     private const int AnimationDurationMs = 800;
+    private const int AnimationBufferMs = 100; // Extra buffer after animation completes
     private const double SplashSizeRatio = 0.7; // 70% of screen size
+    
+    // Fallback dimensions if screen info unavailable
+    private const int FallbackWidth = 800;
+    private const int FallbackHeight = 600;
+    
+    // Overlay sizing
+    private const int DefaultOverlayHeight = 400;
+    private const double OverlayHeightRatio = 0.6;
 
     public ShellWindow()
     {
@@ -109,7 +118,7 @@ public partial class ShellWindow : Window
         // Calculate slide distance
         var slideDistance = overlayPanel.Bounds.Height > 0 
             ? overlayPanel.Bounds.Height 
-            : Math.Min(400, Bounds.Height * 0.6);
+            : Math.Min(DefaultOverlayHeight, Bounds.Height * OverlayHeightRatio);
 
         // Initialize transitions if not already created
         if (overlayPanel.Transitions == null || overlayPanel.Transitions.Count == 0)
@@ -363,8 +372,8 @@ public partial class ShellWindow : Window
         else
         {
             // Fallback if screen info not available
-            Width = 800;
-            Height = 600;
+            Width = FallbackWidth;
+            Height = FallbackHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
     }
@@ -443,7 +452,7 @@ public partial class ShellWindow : Window
             timer.Start();
 
             // Wait for animation to complete
-            await Task.Delay(AnimationDurationMs + 100);
+            await Task.Delay(AnimationDurationMs + AnimationBufferMs);
         });
     }
 
