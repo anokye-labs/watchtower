@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace WatchTower.Services;
@@ -13,6 +14,7 @@ public interface IStartupOrchestrator
     /// Executes the startup workflow asynchronously.
     /// </summary>
     /// <param name="logger">Logger for reporting progress and errors.</param>
+    /// <param name="configuration">Application configuration to use.</param>
     /// <returns>The configured ServiceProvider on success, null on failure.</returns>
-    Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger);
+    Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger, IConfiguration configuration);
 }

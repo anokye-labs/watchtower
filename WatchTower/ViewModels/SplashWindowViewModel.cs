@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 using Avalonia.Threading;
 using WatchTower.Services;
@@ -13,19 +14,24 @@ namespace WatchTower.ViewModels;
 public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 {
     private readonly DispatcherTimer _timer;
-    private DateTime _startTime;
+    private readonly Stopwatch _stopwatch;
     private string _elapsedTime = "00:00";
     private bool _isDiagnosticsVisible;
     private bool _isStartupComplete;
     private bool _isStartupFailed;
     private bool _isSlowStartup;
     private string _statusMessage = "Loading...";
-    private int _hangThresholdSeconds;
+    private readonly int _hangThresholdSeconds;
 
     public SplashWindowViewModel(int hangThresholdSeconds = 30)
     {
+        if (hangThresholdSeconds <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(hangThresholdSeconds), "Hang threshold must be greater than zero.");
+        }
+
         _hangThresholdSeconds = hangThresholdSeconds;
-        _startTime = DateTime.Now;
+        _stopwatch = Stopwatch.StartNew();
         
         DiagnosticMessages = new ObservableCollection<string>();
         
@@ -92,6 +98,11 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
     }
 
     /// <summary>
+    /// Whether startup is running (not complete and not failed).
+    /// </summary>
+    public bool IsStartupRunning => !IsStartupComplete && !IsStartupFailed;
+
+    /// <summary>
     /// Current status message displayed on the splash screen.
     /// </summary>
     public string StatusMessage
@@ -118,7 +129,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Info(string message)
     {
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] INFO: {message}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] INFO: {message}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);
@@ -128,7 +139,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Warn(string message)
     {
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] WARN: {message}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] WARN: {message}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);
@@ -139,7 +150,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
     public void Error(string message, Exception? ex = null)
     {
         var errorDetails = ex != null ? $"{message} - {ex.GetType().Name}: {ex.Message}" : message;
-        var timestamped = $"[{DateTime.Now:HH:mm:ss.fff}] ERROR: {errorDetails}";
+        var timestamped = $"[{DateTime.UtcNow:HH:mm:ss.fff}] ERROR: {errorDetails}";
         Dispatcher.UIThread.Post(() =>
         {
             DiagnosticMessages.Add(timestamped);
@@ -170,6 +181,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
             IsStartupComplete = true;
             StatusMessage = "Startup complete!";
             Info("Startup completed successfully");
+            OnPropertyChanged(nameof(IsStartupRunning));
         });
     }
 
@@ -185,6 +197,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
             IsSlowStartup = false;
             StatusMessage = "Startup failed";
             IsDiagnosticsVisible = true; // Auto-show diagnostics on failure
+            OnPropertyChanged(nameof(IsStartupRunning));
         });
     }
 
@@ -202,17 +215,10 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger
 
     private void OnTimerTick(object? sender, EventArgs e)
     {
-        var elapsed = DateTime.Now - _startTime;
+        var elapsed = _stopwatch.Elapsed;
         
-        // Update elapsed time display
-        if (elapsed.TotalHours >= 1)
-        {
-            ElapsedTime = elapsed.ToString(@"hh\:mm\:ss");
-        }
-        else
-        {
-            ElapsedTime = elapsed.ToString(@"mm\:ss");
-        }
+        // Update elapsed time display (24-hour format)
+        ElapsedTime = elapsed.ToString(elapsed.TotalHours >= 1 ? @"HH\:mm\:ss" : @"mm\:ss");
         
         // Check for slow startup
         if (!IsSlowStartup && elapsed.TotalSeconds >= _hangThresholdSeconds)
