@@ -19,4 +19,10 @@ public interface IAdaptiveCardService
     /// </summary>
     /// <returns>A sample AdaptiveCard.</returns>
     AdaptiveCard CreateSampleCard();
+
+    /// <summary>
+    /// Creates a dark theme HostConfig for rendering Adaptive Cards.
+    /// </summary>
+    /// <returns>A configured AdaptiveHostConfig for dark theme.</returns>
+    AdaptiveHostConfig CreateDarkHostConfig();
 }

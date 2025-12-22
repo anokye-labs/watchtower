@@ -40,6 +40,124 @@ public class AdaptiveCardService : IAdaptiveCardService
     }
 
     /// <inheritdoc/>
+    public AdaptiveHostConfig CreateDarkHostConfig()
+    {
+        _logger.LogDebug("Creating dark theme HostConfig");
+        
+        var hostConfig = new AdaptiveHostConfig
+        {
+            ContainerStyles = new ContainerStylesConfig
+            {
+                Default = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#2D2D2D",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#B0B0B0"
+                        },
+                        Dark = new FontColorConfig
+                        {
+                            Default = "#CCCCCC",
+                            Subtle = "#999999"
+                        },
+                        Light = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#EEEEEE"
+                        },
+                        Accent = new FontColorConfig
+                        {
+                            Default = "#0078D4",
+                            Subtle = "#0063B1"
+                        },
+                        Good = new FontColorConfig
+                        {
+                            Default = "#92C353",
+                            Subtle = "#7AA93C"
+                        },
+                        Warning = new FontColorConfig
+                        {
+                            Default = "#F2C811",
+                            Subtle = "#D4AA00"
+                        },
+                        Attention = new FontColorConfig
+                        {
+                            Default = "#E74856",
+                            Subtle = "#C42B1C"
+                        }
+                    }
+                },
+                Emphasis = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#3A3A3A",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#B0B0B0"
+                        }
+                    }
+                },
+                Accent = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#0078D4",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#E3E3E3"
+                        }
+                    }
+                },
+                Good = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#92C353",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#E3E3E3"
+                        }
+                    }
+                },
+                Attention = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#E74856",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#FFFFFF",
+                            Subtle = "#E3E3E3"
+                        }
+                    }
+                },
+                Warning = new ContainerStyleConfig
+                {
+                    BackgroundColor = "#F2C811",
+                    ForegroundColors = new ForegroundColorsConfig
+                    {
+                        Default = new FontColorConfig
+                        {
+                            Default = "#000000",
+                            Subtle = "#333333"
+                        }
+                    }
+                }
+            }
+        };
+
+        _logger.LogInformation("Dark theme HostConfig created successfully");
+        return hostConfig;
+    }
+
+    /// <inheritdoc/>
     public AdaptiveCard CreateSampleCard()
     {
         _logger.LogDebug("Creating sample Adaptive Card");
@@ -53,14 +171,14 @@ public class AdaptiveCardService : IAdaptiveCardService
                     Text = "WatchTower",
                     Size = AdaptiveTextSize.ExtraLarge,
                     Weight = AdaptiveTextWeight.Bolder,
-                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center
+                    HorizontalAlignment = AdaptiveHorizontalAlignment.Left
                 },
                 new AdaptiveTextBlock
                 {
                     Text = "AdaptiveCard Display Engine",
                     Size = AdaptiveTextSize.Medium,
                     Weight = AdaptiveTextWeight.Lighter,
-                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center,
+                    HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
                     Spacing = AdaptiveSpacing.None
                 },
                 new AdaptiveTextBlock

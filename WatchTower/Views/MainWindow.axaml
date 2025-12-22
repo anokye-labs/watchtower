@@ -27,26 +27,20 @@
         <!-- Main Content -->
         <Grid Margin="20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="20" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Title -->
-            <TextBlock Grid.Row="0"
-                       Text="WatchTower"
-                       FontSize="32"
-                       FontWeight="Bold"
-                       HorizontalAlignment="Center" />
-
             <!-- Adaptive Card (maximized) -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="0"
                     Background="#20FFFFFF"
                     CornerRadius="8"
-                    Padding="10">
+                    Padding="10"
+                    HorizontalAlignment="Stretch">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" 
-                             VerticalScrollBarVisibility="Auto">
-                    <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalAlignment="Stretch">
+                    <ac:AdaptiveCardView Card="{Binding CurrentCard}"
+                                        HostConfig="{Binding HostConfig}"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch" />
                 </ScrollViewer>

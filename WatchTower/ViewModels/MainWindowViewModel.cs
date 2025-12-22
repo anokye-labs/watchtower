@@ -23,6 +23,7 @@ public class MainWindowViewModel : ViewModelBase
     private AdaptiveCard? _currentCard;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
+    private AdaptiveHostConfig? _hostConfig;
 
     public string StatusText
     {
@@ -51,6 +52,15 @@ public class MainWindowViewModel : ViewModelBase
     {
         get => _currentCard;
         set => SetProperty(ref _currentCard, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the HostConfig for theming the Adaptive Card.
+    /// </summary>
+    public AdaptiveHostConfig? HostConfig
+    {
+        get => _hostConfig;
+        set => SetProperty(ref _hostConfig, value);
     }
 
     /// <summary>
@@ -162,6 +172,9 @@ public class MainWindowViewModel : ViewModelBase
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
 
         UpdateStatus();
+        
+        // Configure dark theme for Adaptive Cards
+        HostConfig = _cardService.CreateDarkHostConfig();
         
         // Load the sample card on initialization
         LoadSampleCard();
