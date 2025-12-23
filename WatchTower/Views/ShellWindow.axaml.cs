@@ -20,10 +20,16 @@ public partial class ShellWindow : Window
     private ScrollViewer? _diagnosticsScroller;
     private ShellWindowViewModel? _viewModel;
     private bool _hasAnimated;
+    private bool _isAnimating;
+    private Screen? _currentScreen;
+    private System.Threading.CancellationTokenSource? _monitorSwitchDebounce;
 
     // Animation parameters
-    private const int AnimationDurationMs = 800;
+    private const int StartupAnimationDurationMs = 1000;
+    private const int ReplayAnimationDurationMs = 1000; // Each direction for Ctrl+F5 (2000ms total)
+    private const int MonitorSwitchDurationMs = 250; // Each direction for monitor switch (500ms total)
     private const int AnimationBufferMs = 100; // Extra buffer after animation completes
+    private const int MonitorSwitchDebounceMs = 100; // Debounce delay for rapid monitor changes
     private const double SplashSizeRatio = 0.7; // 70% of screen size
     
     // Fallback dimensions if screen info unavailable
@@ -33,30 +39,6 @@ public partial class ShellWindow : Window
     // Overlay sizing
     private const int DefaultOverlayHeight = 400;
     private const double OverlayHeightRatio = 0.6;
-    
-    // Original frame image dimensions (pixels)
-    private const double OriginalTopLeftWidth = 1317;
-    private const double OriginalTopLeftHeight = 965;
-    private const double OriginalTopRightWidth = 1333;
-    private const double OriginalTopRightHeight = 965;
-    private const double OriginalBottomLeftWidth = 1330;
-    private const double OriginalBottomLeftHeight = 966;
-    private const double OriginalBottomRightWidth = 1337;
-    private const double OriginalBottomRightHeight = 966;
-    private const double OriginalTopEdgeWidth = 4262;
-    private const double OriginalTopEdgeHeight = 272;
-    private const double OriginalBottomEdgeWidth = 4245;
-    private const double OriginalBottomEdgeHeight = 129;
-    private const double OriginalLeftEdgeWidth = 81;
-    private const double OriginalLeftEdgeHeight = 1909;
-    private const double OriginalRightEdgeWidth = 66;
-    private const double OriginalRightEdgeHeight = 1909;
-    
-    // Fully assembled frame dimensions
-    // Width = left corner + top edge + right corner
-    private const double FullFrameWidth = OriginalTopLeftWidth + OriginalTopEdgeWidth + OriginalTopRightWidth; // 6912
-    // Height = top corner + left edge + bottom corner  
-    private const double FullFrameHeight = OriginalTopLeftHeight + OriginalLeftEdgeHeight + OriginalBottomLeftHeight; // 3840
     
     // Frame image references for setting Width/Height
     private Image? _topLeftCorner;
@@ -80,9 +62,13 @@ public partial class ShellWindow : Window
         Loaded += OnLoaded;
         Closed += OnWindowClosed;
         DataContextChanged += OnDataContextChanged;
+        PositionChanged += OnPositionChanged;
         
         // Update frame scale when window size changes
         this.GetObservable(BoundsProperty).Subscribe(_ => UpdateFrameScale());
+        
+        // Initialize current screen tracking
+        _currentScreen = Screens.ScreenFromWindow(this);
     }
     
     private void InitializeFrameElements()
@@ -102,8 +88,20 @@ public partial class ShellWindow : Window
     }
     
     /// <summary>
+    /// Gets the pixel size of an image from its source bitmap.
+    /// </summary>
+    private static Size GetImageSourceSize(Image? image)
+    {
+        if (image?.Source is Avalonia.Media.Imaging.Bitmap bitmap)
+        {
+            return bitmap.Size;
+        }
+        return default;
+    }
+    
+    /// <summary>
     /// Calculates and applies uniform scale to all frame images based on screen size.
-    /// Scale = min(screenWidth / fullFrameWidth, screenHeight / fullFrameHeight)
+    /// Dynamically reads image dimensions from the loaded bitmaps.
     /// </summary>
     private void UpdateFrameScale()
     {
@@ -113,16 +111,42 @@ public partial class ShellWindow : Window
             InitializeFrameElements();
         }
         
+        // Get actual image dimensions from loaded bitmaps
+        var topLeftSize = GetImageSourceSize(_topLeftCorner);
+        var topRightSize = GetImageSourceSize(_topRightCorner);
+        var topEdgeSize = GetImageSourceSize(_topEdge);
+        var leftEdgeSize = GetImageSourceSize(_leftEdge);
+        var bottomLeftSize = GetImageSourceSize(_bottomLeftCorner);
+        
+        // Validate we have valid image sizes
+        if (topLeftSize.Width == 0 || topLeftSize.Height == 0)
+        {
+            System.Diagnostics.Debug.WriteLine("UpdateFrameScale: Images not loaded yet");
+            return;
+        }
+        
+        // Calculate full frame dimensions from actual image sizes
+        // Width = left corner + top edge + right corner
+        var fullFrameWidth = topLeftSize.Width + topEdgeSize.Width + topRightSize.Width;
+        // Height = top corner + left edge + bottom corner
+        var fullFrameHeight = topLeftSize.Height + leftEdgeSize.Height + bottomLeftSize.Height;
+        
         var screen = Screens.Primary;
-        if (screen == null) return;
+        if (screen == null)
+        {
+            System.Diagnostics.Debug.WriteLine("UpdateFrameScale: No primary screen found");
+            return;
+        }
         
         var screenWidth = screen.WorkingArea.Width;
         var screenHeight = screen.WorkingArea.Height;
         
         // Calculate scale: pick the smaller ratio to fit the frame on screen
-        var scaleX = screenWidth / FullFrameWidth;
-        var scaleY = screenHeight / FullFrameHeight;
+        var scaleX = screenWidth / fullFrameWidth;
+        var scaleY = screenHeight / fullFrameHeight;
         var scale = Math.Min(scaleX, scaleY);
+        
+        System.Diagnostics.Debug.WriteLine($"UpdateFrameScale: screen={screenWidth}x{screenHeight}, frame={fullFrameWidth}x{fullFrameHeight}, scale={scale:F4}");
         
         // Apply uniform scale to all frame elements
         ApplyFrameScale(scale);
@@ -130,69 +154,87 @@ public partial class ShellWindow : Window
     
     /// <summary>
     /// Applies the given scale factor to all frame images by setting explicit Width/Height.
+    /// Reads actual dimensions from loaded image bitmaps.
     /// </summary>
     private void ApplyFrameScale(double scale)
     {
-        // Set explicit dimensions on corner images
-        if (_topLeftCorner != null)
+        System.Diagnostics.Debug.WriteLine($"ApplyFrameScale called with scale={scale:F4}");
+        
+        // Get actual image dimensions
+        var topLeftSize = GetImageSourceSize(_topLeftCorner);
+        var topRightSize = GetImageSourceSize(_topRightCorner);
+        var bottomLeftSize = GetImageSourceSize(_bottomLeftCorner);
+        var bottomRightSize = GetImageSourceSize(_bottomRightCorner);
+        var topEdgeSize = GetImageSourceSize(_topEdge);
+        var bottomEdgeSize = GetImageSourceSize(_bottomEdge);
+        var leftEdgeSize = GetImageSourceSize(_leftEdge);
+        var rightEdgeSize = GetImageSourceSize(_rightEdge);
+        
+        // Set explicit dimensions on corner images (they use Stretch=None)
+        if (_topLeftCorner != null && topLeftSize.Width > 0)
         {
-            _topLeftCorner.Width = OriginalTopLeftWidth * scale;
-            _topLeftCorner.Height = OriginalTopLeftHeight * scale;
+            _topLeftCorner.Width = topLeftSize.Width * scale;
+            _topLeftCorner.Height = topLeftSize.Height * scale;
         }
-        if (_topRightCorner != null)
+        if (_topRightCorner != null && topRightSize.Width > 0)
         {
-            _topRightCorner.Width = OriginalTopRightWidth * scale;
-            _topRightCorner.Height = OriginalTopRightHeight * scale;
+            _topRightCorner.Width = topRightSize.Width * scale;
+            _topRightCorner.Height = topRightSize.Height * scale;
         }
-        if (_bottomLeftCorner != null)
+        if (_bottomLeftCorner != null && bottomLeftSize.Width > 0)
         {
-            _bottomLeftCorner.Width = OriginalBottomLeftWidth * scale;
-            _bottomLeftCorner.Height = OriginalBottomLeftHeight * scale;
+            _bottomLeftCorner.Width = bottomLeftSize.Width * scale;
+            _bottomLeftCorner.Height = bottomLeftSize.Height * scale;
         }
-        if (_bottomRightCorner != null)
+        if (_bottomRightCorner != null && bottomRightSize.Width > 0)
         {
-            _bottomRightCorner.Width = OriginalBottomRightWidth * scale;
-            _bottomRightCorner.Height = OriginalBottomRightHeight * scale;
+            _bottomRightCorner.Width = bottomRightSize.Width * scale;
+            _bottomRightCorner.Height = bottomRightSize.Height * scale;
         }
         
         // Set explicit dimensions on edge images
-        if (_topEdge != null)
+        // Horizontal edges (top/bottom): fixed HEIGHT, width stretches to fill container
+        if (_topEdge != null && topEdgeSize.Height > 0)
         {
-            _topEdge.Width = OriginalTopEdgeWidth * scale;
-            _topEdge.Height = OriginalTopEdgeHeight * scale;
+            _topEdge.Height = topEdgeSize.Height * scale;
         }
-        if (_bottomEdge != null)
+        if (_bottomEdge != null && bottomEdgeSize.Height > 0)
         {
-            _bottomEdge.Width = OriginalBottomEdgeWidth * scale;
-            _bottomEdge.Height = OriginalBottomEdgeHeight * scale;
+            _bottomEdge.Height = bottomEdgeSize.Height * scale;
         }
-        if (_leftEdge != null)
+        
+        // Vertical edges (left/right): fixed WIDTH, height stretches to fill container
+        if (_leftEdge != null && leftEdgeSize.Width > 0)
         {
-            _leftEdge.Width = OriginalLeftEdgeWidth * scale;
-            _leftEdge.Height = OriginalLeftEdgeHeight * scale;
+            _leftEdge.Width = leftEdgeSize.Width * scale;
         }
-        if (_rightEdge != null)
+        if (_rightEdge != null && rightEdgeSize.Width > 0)
         {
-            _rightEdge.Width = OriginalRightEdgeWidth * scale;
-            _rightEdge.Height = OriginalRightEdgeHeight * scale;
+            _rightEdge.Width = rightEdgeSize.Width * scale;
         }
         
         // Set explicit row heights and column widths based on scaled corner sizes
-        if (_frameGrid != null)
+        if (_frameGrid != null && topLeftSize.Width > 0)
         {
             // Calculate scaled corner dimensions
-            var scaledTopHeight = OriginalTopLeftHeight * scale;
-            var scaledBottomHeight = OriginalBottomLeftHeight * scale;
-            var scaledLeftWidth = OriginalTopLeftWidth * scale;
-            var scaledRightWidth = OriginalTopRightWidth * scale;
+            var scaledTopHeight = topLeftSize.Height * scale;
+            var scaledBottomHeight = bottomLeftSize.Height * scale;
+            var scaledLeftWidth = topLeftSize.Width * scale;
+            var scaledRightWidth = topRightSize.Width * scale;
             
-            // Set row heights
+            System.Diagnostics.Debug.WriteLine($"ApplyFrameScale: topH={scaledTopHeight:F1}, bottomH={scaledBottomHeight:F1}, leftW={scaledLeftWidth:F1}, rightW={scaledRightWidth:F1}");
+            
+            // Set row heights (corners define the row heights)
             _frameGrid.RowDefinitions[0].Height = new GridLength(scaledTopHeight);
             _frameGrid.RowDefinitions[2].Height = new GridLength(scaledBottomHeight);
             
-            // Set column widths
+            // Set column widths (corners define the column widths)
             _frameGrid.ColumnDefinitions[0].Width = new GridLength(scaledLeftWidth);
             _frameGrid.ColumnDefinitions[2].Width = new GridLength(scaledRightWidth);
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("ApplyFrameScale: _frameGrid is null or images not loaded!");
         }
     }
 
@@ -384,6 +426,10 @@ public partial class ShellWindow : Window
             _viewModel.SplashViewModel.DiagnosticMessages.CollectionChanged += OnDiagnosticMessagesChanged;
         }
 
+        // Initialize frame elements and apply initial scale
+        InitializeFrameElements();
+        UpdateFrameScale();
+
         // Set initial splash window size if not already animated
         if (!_hasAnimated && _viewModel?.IsInSplashMode == true)
         {
@@ -407,6 +453,11 @@ public partial class ShellWindow : Window
         Loaded -= OnLoaded;
         Closed -= OnWindowClosed;
         DataContextChanged -= OnDataContextChanged;
+        PositionChanged -= OnPositionChanged;
+        
+        // Cancel any pending monitor switch debounce
+        _monitorSwitchDebounce?.Cancel();
+        _monitorSwitchDebounce?.Dispose();
 
         // Cleanup ViewModel
         if (_viewModel?.SplashViewModel != null)
@@ -418,6 +469,17 @@ public partial class ShellWindow : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        // Ctrl+F5 replays splash animation (works in any mode, but only after initial animation)
+        if (e.Key == Key.F5 && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            if (_hasAnimated && !_isAnimating)
+            {
+                _ = ReplaySplashAnimationAsync();
+            }
+            e.Handled = true;
+            return;
+        }
+        
         if (_viewModel?.IsInSplashMode == true && _viewModel.SplashViewModel != null)
         {
             var splashViewModel = _viewModel.SplashViewModel;
@@ -540,6 +602,7 @@ public partial class ShellWindow : Window
         }
 
         _hasAnimated = true;
+        _isAnimating = true;
         _viewModel?.BeginExpansionAnimation();
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -550,6 +613,7 @@ public partial class ShellWindow : Window
                 // Fallback: just maximize
                 WindowState = WindowState.Maximized;
                 _viewModel?.EndExpansionAnimation();
+                _isAnimating = false;
                 return;
             }
 
@@ -558,53 +622,238 @@ public partial class ShellWindow : Window
             var startHeight = Height;
             var startPosition = Position;
 
-            var targetWidth = workingArea.Width;
-            var targetHeight = workingArea.Height;
+            var targetWidth = (double)workingArea.Width;
+            var targetHeight = (double)workingArea.Height;
             var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
 
-            // Use manual animation with DispatcherTimer for smooth interpolation
-            var startTime = DateTime.UtcNow;
-            var timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
-            };
-
-            timer.Tick += (s, e) =>
-            {
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                var progress = Math.Min(elapsed / AnimationDurationMs, 1.0);
-                
-                // Apply cubic ease-out
-                var easedProgress = CubicEaseOut(progress);
-
-                // Interpolate width and height
-                var currentWidth = startWidth + (targetWidth - startWidth) * easedProgress;
-                var currentHeight = startHeight + (targetHeight - startHeight) * easedProgress;
-                
-                // Interpolate position
-                var currentX = startPosition.X + (int)((targetPosition.X - startPosition.X) * easedProgress);
-                var currentY = startPosition.Y + (int)((targetPosition.Y - startPosition.Y) * easedProgress);
-
-                Width = currentWidth;
-                Height = currentHeight;
-                Position = new PixelPoint(currentX, currentY);
-
-                if (progress >= 1.0)
-                {
-                    timer.Stop();
-                    
-                    // Ensure we're exactly at the target
-                    WindowState = WindowState.Maximized;
-                    
-                    _viewModel?.EndExpansionAnimation();
-                }
-            };
-
-            timer.Start();
-
-            // Wait for animation to complete
-            await Task.Delay(AnimationDurationMs + AnimationBufferMs);
+            await AnimateWindowSizeAsync(
+                startWidth, startHeight, startPosition,
+                targetWidth, targetHeight, targetPosition,
+                StartupAnimationDurationMs);
+            
+            // Ensure we're exactly at the target
+            WindowState = WindowState.Maximized;
+            
+            _viewModel?.EndExpansionAnimation();
+            _isAnimating = false;
         });
+    }
+
+    /// <summary>
+    /// Generic bidirectional window size animation helper.
+    /// </summary>
+    private async Task AnimateWindowSizeAsync(
+        double startWidth, double startHeight, PixelPoint startPosition,
+        double endWidth, double endHeight, PixelPoint endPosition,
+        int durationMs)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        var startTime = DateTime.UtcNow;
+        var timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
+        };
+
+        timer.Tick += (s, e) =>
+        {
+            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            var progress = Math.Min(elapsed / durationMs, 1.0);
+            
+            // Apply cubic ease-out
+            var easedProgress = CubicEaseOut(progress);
+
+            // Interpolate width and height
+            var currentWidth = startWidth + (endWidth - startWidth) * easedProgress;
+            var currentHeight = startHeight + (endHeight - startHeight) * easedProgress;
+            
+            // Interpolate position
+            var currentX = startPosition.X + (int)((endPosition.X - startPosition.X) * easedProgress);
+            var currentY = startPosition.Y + (int)((endPosition.Y - startPosition.Y) * easedProgress);
+
+            Width = currentWidth;
+            Height = currentHeight;
+            Position = new PixelPoint(currentX, currentY);
+
+            if (progress >= 1.0)
+            {
+                timer.Stop();
+                tcs.TrySetResult(true);
+            }
+        };
+
+        timer.Start();
+        await tcs.Task;
+    }
+
+    /// <summary>
+    /// Replays the splash animation: contracts to splash size, pauses, then expands back.
+    /// Triggered by Ctrl+F5.
+    /// </summary>
+    private async Task ReplaySplashAnimationAsync()
+    {
+        if (_isAnimating) return;
+        _isAnimating = true;
+        _viewModel?.BeginExpansionAnimation();
+
+        await Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+            if (screen == null)
+            {
+                _isAnimating = false;
+                _viewModel?.EndExpansionAnimation();
+                return;
+            }
+
+            var workingArea = screen.WorkingArea;
+            
+            // Calculate splash size (70% of screen, centered)
+            var splashWidth = workingArea.Width * SplashSizeRatio;
+            var splashHeight = workingArea.Height * SplashSizeRatio;
+            var splashLeft = workingArea.X + (int)((workingArea.Width - splashWidth) / 2);
+            var splashTop = workingArea.Y + (int)((workingArea.Height - splashHeight) / 2);
+            var splashPosition = new PixelPoint(splashLeft, splashTop);
+
+            // Store current state
+            var currentWidth = Width;
+            var currentHeight = Height;
+            var currentPosition = Position;
+            
+            // If maximized, restore first
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowState = WindowState.Normal;
+                Width = workingArea.Width;
+                Height = workingArea.Height;
+                Position = new PixelPoint(workingArea.X, workingArea.Y);
+                currentWidth = Width;
+                currentHeight = Height;
+                currentPosition = Position;
+            }
+
+            // Phase 1: Contract to splash size
+            await AnimateWindowSizeAsync(
+                currentWidth, currentHeight, currentPosition,
+                splashWidth, splashHeight, splashPosition,
+                ReplayAnimationDurationMs);
+
+            // Phase 2: Brief pause at splash size
+            await Task.Delay(200);
+
+            // Phase 3: Expand back to fullscreen
+            var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
+            await AnimateWindowSizeAsync(
+                splashWidth, splashHeight, splashPosition,
+                workingArea.Width, workingArea.Height, targetPosition,
+                ReplayAnimationDurationMs);
+
+            // Ensure we're exactly at the target
+            WindowState = WindowState.Maximized;
+            
+            _viewModel?.EndExpansionAnimation();
+            _isAnimating = false;
+        });
+    }
+
+    /// <summary>
+    /// Handles position changes to detect monitor switches.
+    /// </summary>
+    private void OnPositionChanged(object? sender, PixelPointEventArgs e)
+    {
+        // Don't check during animations
+        if (_isAnimating) return;
+        
+        var newScreen = Screens.ScreenFromWindow(this);
+        if (newScreen != null && newScreen != _currentScreen && _currentScreen != null)
+        {
+            // Monitor changed - trigger debounced animation
+            TriggerMonitorSwitchAnimation(newScreen);
+        }
+        _currentScreen = newScreen;
+    }
+
+    /// <summary>
+    /// Triggers a debounced monitor switch animation.
+    /// </summary>
+    private void TriggerMonitorSwitchAnimation(Screen newScreen)
+    {
+        // Cancel any pending debounce
+        _monitorSwitchDebounce?.Cancel();
+        _monitorSwitchDebounce?.Dispose();
+        _monitorSwitchDebounce = new System.Threading.CancellationTokenSource();
+        var token = _monitorSwitchDebounce.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(MonitorSwitchDebounceMs, token);
+                if (!token.IsCancellationRequested)
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() => OnMonitorSwitchedAsync(newScreen));
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Debounce was cancelled, ignore
+            }
+        }, token);
+    }
+
+    /// <summary>
+    /// Handles monitor switch by zooming down and back up on the new screen.
+    /// </summary>
+    private async Task OnMonitorSwitchedAsync(Screen newScreen)
+    {
+        if (_isAnimating) return;
+        _isAnimating = true;
+        _viewModel?.BeginExpansionAnimation();
+
+        var workingArea = newScreen.WorkingArea;
+        
+        // Calculate splash size for the new screen (70% of screen, centered)
+        var splashWidth = workingArea.Width * SplashSizeRatio;
+        var splashHeight = workingArea.Height * SplashSizeRatio;
+        var splashLeft = workingArea.X + (int)((workingArea.Width - splashWidth) / 2);
+        var splashTop = workingArea.Y + (int)((workingArea.Height - splashHeight) / 2);
+        var splashPosition = new PixelPoint(splashLeft, splashTop);
+
+        // Store current state
+        var currentWidth = Width;
+        var currentHeight = Height;
+        var currentPosition = Position;
+        
+        // If maximized, restore first
+        if (WindowState == WindowState.Maximized)
+        {
+            WindowState = WindowState.Normal;
+            // Use current screen dimensions as starting point
+            var prevScreen = _currentScreen ?? newScreen;
+            Width = prevScreen.WorkingArea.Width;
+            Height = prevScreen.WorkingArea.Height;
+            currentWidth = Width;
+            currentHeight = Height;
+        }
+
+        // Phase 1: Zoom down to splash size on new screen
+        await AnimateWindowSizeAsync(
+            currentWidth, currentHeight, currentPosition,
+            splashWidth, splashHeight, splashPosition,
+            MonitorSwitchDurationMs);
+
+        // Phase 2: Zoom back up to fullscreen on new screen
+        var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
+        await AnimateWindowSizeAsync(
+            splashWidth, splashHeight, splashPosition,
+            workingArea.Width, workingArea.Height, targetPosition,
+            MonitorSwitchDurationMs);
+
+        // Ensure we're exactly at the target
+        WindowState = WindowState.Maximized;
+        _currentScreen = newScreen;
+        
+        _viewModel?.EndExpansionAnimation();
+        _isAnimating = false;
     }
 
     /// <summary>
