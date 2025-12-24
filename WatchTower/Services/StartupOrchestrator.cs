@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Avalonia.Mcp.Core.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,6 +51,17 @@ public class StartupOrchestrator : IStartupOrchestrator
             
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
+            
+            // Register MCP handler
+            services.AddMcpHandler(config =>
+            {
+                config.ApplicationName = "WatchTower";
+                config.ProxyEndpoint = "tcp://localhost:5000";
+                config.AutoConnect = true;
+                config.HeadlessMode = false;
+            }, registerStandardTools: true);
+            
+            logger.Info("MCP handler registered");
             
             // Register ViewModels
             services.AddTransient<ViewModels.MainWindowViewModel>();

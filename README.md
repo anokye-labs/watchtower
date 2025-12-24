@@ -2,6 +2,30 @@
 
 Avalonia UI application (.NET 10) built with MVVM architecture.
 
+## Features
+
+- **Cross-platform**: Windows, macOS, Linux support
+- **MVVM Architecture**: Strict separation of concerns
+- **Game Controller Support**: Navigate with gamepad
+- **AI Agent Integration**: MCP (Model Context Protocol) support for AI-assisted development
+- **Adaptive Cards**: Rich UI component rendering
+
+## MCP Proxy Platform
+
+WatchTower includes the **Avalonia MCP Proxy Platform** - a reusable, open-source solution that enables AI agents (Claude, GitHub Copilot, etc.) to interact with Avalonia applications.
+
+**What it does:**
+- Allows agents to inspect UI state, click elements, type text, capture screenshots
+- Provides a unified interface for agents to work with multiple Avalonia apps
+- Enables iterative development: agent sees UI → suggests changes → developer implements → agent verifies
+
+**Components:**
+- `Avalonia.Mcp.Core` - Library for embedding MCP handlers in Avalonia apps
+- `Avalonia.McpProxy` - Standalone proxy server that federates app handlers
+- WatchTower - First app using the platform
+
+See [docs/mcp-proxy-architecture.md](docs/mcp-proxy-architecture.md) for detailed architecture.
+
 ## Quick Start
 
 ```bash
@@ -78,5 +102,6 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 
 - [Avalonia Docs](https://docs.avaloniaui.net/)
 - [Project Instructions](.github/copilot-instructions.md)
+- [MCP Proxy Architecture](docs/mcp-proxy-architecture.md)
 - [Game Controller Support](docs/game-controller-support.md)
 - [Specs](specs/)

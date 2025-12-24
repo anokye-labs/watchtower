@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "avalonia-apps": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/Avalonia.McpProxy/Avalonia.McpProxy.csproj",
+        "--",
+        "--stdio",
+        "--yes"
+      ],
+      "env": {
+        "MCP_CONFIG": ".mcpproxy.json"
+      }
+    }
+  }
+}
