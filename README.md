@@ -42,7 +42,15 @@ specs/               # Feature docs
 - `Program.cs` - Entry point
 - `App.axaml[.cs]` - App initialization
 - `Views/MainWindow.axaml` - Main UI
-- `appsettings.json` - Logging config (`"minimal"` | `"normal"` | `"verbose"`)
+- `appsettings.json` - Configuration (logging, gamepad, voice, frame)
+
+## Features
+
+- **MVVM Architecture** - Clean separation of concerns
+- **Game Controller Support** - Full gamepad integration with SDL2
+- **Adaptive Cards** - Display interactive card content
+- **Animated Splash Screen** - Professional startup experience
+- **Voice Capabilities** - Full-duplex speech recognition and synthesis (see below)
 
 ## Architecture Rules
 
@@ -79,4 +87,15 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 - [Avalonia Docs](https://docs.avaloniaui.net/)
 - [Project Instructions](.github/copilot-instructions.md)
 - [Game Controller Support](docs/game-controller-support.md)
+- [Voice Setup Guide](docs/voice-setup-guide.md)
 - [Specs](specs/)
+
+## Voice Features 🎤
+
+WatchTower includes full-duplex voice capabilities with both offline and online modes:
+
+- **Offline Mode** (default): Uses Vosk for speech recognition and Piper for TTS - no internet required
+- **Online Mode**: Uses Azure Speech Services for higher accuracy
+- **Full-Duplex**: Listen and speak simultaneously
+
+See [Voice Setup Guide](docs/voice-setup-guide.md) for configuration and model downloads.
