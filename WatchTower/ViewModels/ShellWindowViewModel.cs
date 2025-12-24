@@ -26,15 +26,32 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private Size _frameSourceSize;
     private double _renderScale = 1.0;
     private double _frameDisplayScale = 1.0;
+    private Thickness _contentPadding;
+    private string _backgroundColor = "#1A1A1A";
 
-    // Frame bitmap sources (dynamically sliced from source image)
+    // Frame bitmap sources (dynamically sliced from source image) - 16 pieces for 5x5 grid
+    // Row 0: Top edge
     private Bitmap? _topLeftSource;
+    private Bitmap? _topLeftStretchSource;
     private Bitmap? _topCenterSource;
+    private Bitmap? _topRightStretchSource;
     private Bitmap? _topRightSource;
-    private Bitmap? _middleLeftSource;
-    private Bitmap? _middleRightSource;
+    
+    // Column 0: Left edge (rows 1-3)
+    private Bitmap? _leftTopStretchSource;
+    private Bitmap? _leftCenterSource;
+    private Bitmap? _leftBottomStretchSource;
+    
+    // Column 4: Right edge (rows 1-3)
+    private Bitmap? _rightTopStretchSource;
+    private Bitmap? _rightCenterSource;
+    private Bitmap? _rightBottomStretchSource;
+    
+    // Row 4: Bottom edge
     private Bitmap? _bottomLeftSource;
+    private Bitmap? _bottomLeftStretchSource;
     private Bitmap? _bottomCenterSource;
+    private Bitmap? _bottomRightStretchSource;
     private Bitmap? _bottomRightSource;
 
     public ShellWindowViewModel(SplashWindowViewModel splashViewModel)
@@ -115,11 +132,37 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         }
     }
     
-    // Frame bitmap sources - dynamically sliced from source image
+    /// <summary>
+    /// Gets or sets the padding applied to the content container underneath the frame.
+    /// </summary>
+    public Thickness ContentPadding
+    {
+        get => _contentPadding;
+        set => SetProperty(ref _contentPadding, value);
+    }
+    
+    /// <summary>
+    /// Gets or sets the background color for the padding area.
+    /// </summary>
+    public string BackgroundColor
+    {
+        get => _backgroundColor;
+        set => SetProperty(ref _backgroundColor, value);
+    }
+    
+    // Frame bitmap sources - dynamically sliced from source image (16 pieces for 5x5 grid)
+    
+    // Row 0: Top edge (5 pieces)
     public Bitmap? TopLeftSource
     {
         get => _topLeftSource;
         private set => SetProperty(ref _topLeftSource, value);
+    }
+    
+    public Bitmap? TopLeftStretchSource
+    {
+        get => _topLeftStretchSource;
+        private set => SetProperty(ref _topLeftStretchSource, value);
     }
     
     public Bitmap? TopCenterSource
@@ -128,28 +171,67 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         private set => SetProperty(ref _topCenterSource, value);
     }
     
+    public Bitmap? TopRightStretchSource
+    {
+        get => _topRightStretchSource;
+        private set => SetProperty(ref _topRightStretchSource, value);
+    }
+    
     public Bitmap? TopRightSource
     {
         get => _topRightSource;
         private set => SetProperty(ref _topRightSource, value);
     }
     
-    public Bitmap? MiddleLeftSource
+    // Column 0: Left edge (rows 1-3, 3 pieces)
+    public Bitmap? LeftTopStretchSource
     {
-        get => _middleLeftSource;
-        private set => SetProperty(ref _middleLeftSource, value);
+        get => _leftTopStretchSource;
+        private set => SetProperty(ref _leftTopStretchSource, value);
     }
     
-    public Bitmap? MiddleRightSource
+    public Bitmap? LeftCenterSource
     {
-        get => _middleRightSource;
-        private set => SetProperty(ref _middleRightSource, value);
+        get => _leftCenterSource;
+        private set => SetProperty(ref _leftCenterSource, value);
     }
     
+    public Bitmap? LeftBottomStretchSource
+    {
+        get => _leftBottomStretchSource;
+        private set => SetProperty(ref _leftBottomStretchSource, value);
+    }
+    
+    // Column 4: Right edge (rows 1-3, 3 pieces)
+    public Bitmap? RightTopStretchSource
+    {
+        get => _rightTopStretchSource;
+        private set => SetProperty(ref _rightTopStretchSource, value);
+    }
+    
+    public Bitmap? RightCenterSource
+    {
+        get => _rightCenterSource;
+        private set => SetProperty(ref _rightCenterSource, value);
+    }
+    
+    public Bitmap? RightBottomStretchSource
+    {
+        get => _rightBottomStretchSource;
+        private set => SetProperty(ref _rightBottomStretchSource, value);
+    }
+    
+    // Row 4: Bottom edge (5 pieces)
     public Bitmap? BottomLeftSource
     {
         get => _bottomLeftSource;
         private set => SetProperty(ref _bottomLeftSource, value);
+    }
+    
+    public Bitmap? BottomLeftStretchSource
+    {
+        get => _bottomLeftStretchSource;
+        private set => SetProperty(ref _bottomLeftStretchSource, value);
     }
     
     public Bitmap? BottomCenterSource
@@ -158,60 +240,88 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         private set => SetProperty(ref _bottomCenterSource, value);
     }
     
+    public Bitmap? BottomRightStretchSource
+    {
+        get => _bottomRightStretchSource;
+        private set => SetProperty(ref _bottomRightStretchSource, value);
+    }
+    
     public Bitmap? BottomRightSource
     {
         get => _bottomRightSource;
         private set => SetProperty(ref _bottomRightSource, value);
     }
     
-    // Grid row/column definitions for the frame layout
-    private GridLength _topRowHeight = GridLength.Auto;
-    private GridLength _bottomRowHeight = GridLength.Auto;
-    private GridLength _leftColumnWidth = GridLength.Auto;
-    private GridLength _rightColumnWidth = GridLength.Auto;
+    // Grid row/column definitions for the 5x5 frame layout
+    // Rows: 0=Top corner, 1=Top stretch, 2=Center, 3=Bottom stretch, 4=Bottom corner
+    // Cols: 0=Left corner, 1=Left stretch, 2=Center, 3=Right stretch, 4=Right corner
+    private GridLength _row0Height = GridLength.Auto;  // Top corner row (fixed)
+    private GridLength _row2Height = GridLength.Auto;  // Center row (fixed)
+    private GridLength _row4Height = GridLength.Auto;  // Bottom corner row (fixed)
+    private GridLength _col0Width = GridLength.Auto;   // Left corner column (fixed)
+    private GridLength _col2Width = GridLength.Auto;   // Center column (fixed)
+    private GridLength _col4Width = GridLength.Auto;   // Right corner column (fixed)
     
     /// <summary>
-    /// Height of the top row (corners and top edge).
+    /// Height of row 0 (top corners and top edge).
     /// </summary>
-    public GridLength TopRowHeight
+    public GridLength Row0Height
     {
-        get => _topRowHeight;
-        private set => SetProperty(ref _topRowHeight, value);
+        get => _row0Height;
+        private set => SetProperty(ref _row0Height, value);
     }
     
     /// <summary>
-    /// Height of the bottom row (corners and bottom edge).
+    /// Height of row 2 (center edge pieces - left center, right center).
     /// </summary>
-    public GridLength BottomRowHeight
+    public GridLength Row2Height
     {
-        get => _bottomRowHeight;
-        private set => SetProperty(ref _bottomRowHeight, value);
+        get => _row2Height;
+        private set => SetProperty(ref _row2Height, value);
     }
     
     /// <summary>
-    /// Width of the left column (corners and left edge).
+    /// Height of row 4 (bottom corners and bottom edge).
     /// </summary>
-    public GridLength LeftColumnWidth
+    public GridLength Row4Height
     {
-        get => _leftColumnWidth;
-        private set => SetProperty(ref _leftColumnWidth, value);
+        get => _row4Height;
+        private set => SetProperty(ref _row4Height, value);
     }
     
     /// <summary>
-    /// Width of the right column (corners and right edge).
+    /// Width of column 0 (left corners and left edge).
     /// </summary>
-    public GridLength RightColumnWidth
+    public GridLength Col0Width
     {
-        get => _rightColumnWidth;
-        private set => SetProperty(ref _rightColumnWidth, value);
+        get => _col0Width;
+        private set => SetProperty(ref _col0Width, value);
     }
     
     /// <summary>
-    /// Loads and slices the frame image.
+    /// Width of column 2 (center edge pieces - top center, bottom center).
+    /// </summary>
+    public GridLength Col2Width
+    {
+        get => _col2Width;
+        private set => SetProperty(ref _col2Width, value);
+    }
+    
+    /// <summary>
+    /// Width of column 4 (right corners and right edge).
+    /// </summary>
+    public GridLength Col4Width
+    {
+        get => _col4Width;
+        private set => SetProperty(ref _col4Width, value);
+    }
+    
+    /// <summary>
+    /// Loads and slices the frame image into 16 pieces for the 5x5 grid.
     /// Uses cached slices if available.
     /// </summary>
     /// <param name="sourceUri">URI to the source frame image (e.g., avares://WatchTower/Assets/main-frame.png).</param>
-    /// <param name="sliceDefinition">The slice coordinates for 9-slice extraction (relative to original source).</param>
+    /// <param name="sliceDefinition">The slice coordinates for 5x5 extraction (relative to original source).</param>
     /// <returns>True if loading succeeded, false otherwise.</returns>
     public bool LoadFrameImageForScreen(string sourceUri, FrameSliceDefinition sliceDefinition)
     {
@@ -230,41 +340,64 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         
         _frameSourceSize = frameSlices.SourceSize;
 
-        // Update bitmap sources - this will trigger property changed notifications
+        // Update bitmap sources - this will trigger property changed notifications (16 pieces)
+        // Row 0
         TopLeftSource = frameSlices.TopLeft;
+        TopLeftStretchSource = frameSlices.TopLeftStretch;
         TopCenterSource = frameSlices.TopCenter;
+        TopRightStretchSource = frameSlices.TopRightStretch;
         TopRightSource = frameSlices.TopRight;
-        MiddleLeftSource = frameSlices.MiddleLeft;
-        MiddleRightSource = frameSlices.MiddleRight;
+        
+        // Column 0 (rows 1-3)
+        LeftTopStretchSource = frameSlices.LeftTopStretch;
+        LeftCenterSource = frameSlices.LeftCenter;
+        LeftBottomStretchSource = frameSlices.LeftBottomStretch;
+        
+        // Column 4 (rows 1-3)
+        RightTopStretchSource = frameSlices.RightTopStretch;
+        RightCenterSource = frameSlices.RightCenter;
+        RightBottomStretchSource = frameSlices.RightBottomStretch;
+        
+        // Row 4
         BottomLeftSource = frameSlices.BottomLeft;
+        BottomLeftStretchSource = frameSlices.BottomLeftStretch;
         BottomCenterSource = frameSlices.BottomCenter;
+        BottomRightStretchSource = frameSlices.BottomRightStretch;
         BottomRightSource = frameSlices.BottomRight;
         
         UpdateFrameDimensions();
         
-        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame loaded - SourceSize={_frameSourceSize}, TopLeft={frameSlices.TopLeft.Size}");
+        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame loaded (5x5) - SourceSize={_frameSourceSize}, TopLeft={frameSlices.TopLeft.Size}");
         return true;
     }
     
     /// <summary>
-    /// Updates frame dimensions based on current RenderScale.
+    /// Updates frame dimensions based on current RenderScale for the 5x5 grid.
+    /// Fixed rows/columns: 0, 2, 4 (corners and centers)
+    /// Stretch rows/columns: 1, 3 (handled by Star sizing in XAML)
     /// </summary>
     private void UpdateFrameDimensions()
     {
         if (_frameSliceDefinition == null) return;
 
-        var sliceDef = _frameSliceDefinition;
+        var def = _frameSliceDefinition;
         var scale = RenderScale > 0 ? RenderScale : 1.0;
+        var frameScale = FrameDisplayScale;
 
         // Calculate logical dimensions based on physical slice definition and render scale
         // Physical * FrameScale / RenderScale = Logical
         
-        TopRowHeight = new GridLength((sliceDef.Top * FrameDisplayScale) / scale, GridUnitType.Pixel);
-        BottomRowHeight = new GridLength(((_frameSourceSize.Height - sliceDef.Bottom) * FrameDisplayScale) / scale, GridUnitType.Pixel);
-        LeftColumnWidth = new GridLength((sliceDef.Left * FrameDisplayScale) / scale, GridUnitType.Pixel);
-        RightColumnWidth = new GridLength(((_frameSourceSize.Width - sliceDef.Right) * FrameDisplayScale) / scale, GridUnitType.Pixel);
+        // Row heights (fixed rows: 0, 2, 4)
+        Row0Height = new GridLength((def.Top * frameScale) / scale, GridUnitType.Pixel);
+        Row2Height = new GridLength(((def.BottomInner - def.TopInner) * frameScale) / scale, GridUnitType.Pixel);
+        Row4Height = new GridLength(((_frameSourceSize.Height - def.Bottom) * frameScale) / scale, GridUnitType.Pixel);
         
-        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame dimensions updated for Scale={scale}, FrameScale={FrameDisplayScale}: T={TopRowHeight.Value:F1}, B={BottomRowHeight.Value:F1}, L={LeftColumnWidth.Value:F1}, R={RightColumnWidth.Value:F1}");
+        // Column widths (fixed columns: 0, 2, 4)
+        Col0Width = new GridLength((def.Left * frameScale) / scale, GridUnitType.Pixel);
+        Col2Width = new GridLength(((def.RightInner - def.LeftInner) * frameScale) / scale, GridUnitType.Pixel);
+        Col4Width = new GridLength(((_frameSourceSize.Width - def.Right) * frameScale) / scale, GridUnitType.Pixel);
+        
+        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame dimensions (5x5) for Scale={scale}, FrameScale={frameScale}: R0={Row0Height.Value:F1}, R2={Row2Height.Value:F1}, R4={Row4Height.Value:F1}, C0={Col0Width.Value:F1}, C2={Col2Width.Value:F1}, C4={Col4Width.Value:F1}");
     }
 
     /// <summary>

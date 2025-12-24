@@ -19,11 +19,19 @@
     <!-- Root Grid: Content behind frame -->
     <Grid ClipToBounds="True">
         
+        <!-- Padding background layer - fills padding space with color -->
+        <Border Background="{Binding BackgroundColor}"
+                ZIndex="-2"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"/>
+        
         <!-- Content layer - BEHIND the frame, fills entire window -->
+        <!-- Margin is bound to ContentPadding from config to inset content inside the frame -->
         <ContentControl Content="{Binding CurrentContent}"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
                         ZIndex="-1"
+                        Margin="{Binding ContentPadding}"
                         Name="ShellContent">
             <ContentControl.DataTemplates>
                 <!-- Template for SplashWindowViewModel -->
@@ -458,92 +466,164 @@
             </ContentControl.DataTemplates>
         </ContentControl>
 
-        <!-- Frame layer - 3x3 grid, IsHitTestVisible=False so clicks pass through -->
+        <!-- Frame layer - 5x5 grid, IsHitTestVisible=False so clicks pass through -->
         <!-- Images are pre-sized by service; grid cells sized by ViewModel -->
-        <!-- Grid: Fixed rows/cols from slice dimensions, * for center -->
+        <!-- Grid: Fixed rows/cols (0, 2, 4) for corners/centers, * (1, 3) for stretch sections -->
         <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="False">
             <Grid.RowDefinitions>
-                <RowDefinition Height="{Binding TopRowHeight}"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="{Binding BottomRowHeight}"/>
+                <RowDefinition Height="{Binding Row0Height}"/>   <!-- Top corners/edge (fixed) -->
+                <RowDefinition Height="*"/>                       <!-- Top stretch -->
+                <RowDefinition Height="{Binding Row2Height}"/>   <!-- Center row (fixed) -->
+                <RowDefinition Height="*"/>                       <!-- Bottom stretch -->
+                <RowDefinition Height="{Binding Row4Height}"/>   <!-- Bottom corners/edge (fixed) -->
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{Binding LeftColumnWidth}"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="{Binding RightColumnWidth}"/>
+                <ColumnDefinition Width="{Binding Col0Width}"/>  <!-- Left corners/edge (fixed) -->
+                <ColumnDefinition Width="*"/>                     <!-- Left stretch -->
+                <ColumnDefinition Width="{Binding Col2Width}"/>  <!-- Center column (fixed) -->
+                <ColumnDefinition Width="*"/>                     <!-- Right stretch -->
+                <ColumnDefinition Width="{Binding Col4Width}"/>  <!-- Right corners/edge (fixed) -->
             </Grid.ColumnDefinitions>
             
-            <!-- Row 0: Top-Left Corner, Top Edge, Top-Right Corner -->
+            <!-- ========== ROW 0: Top Edge (5 cells) ========== -->
             
+            <!-- Top-Left Corner (fixed, no stretch) -->
             <Border Grid.Row="0" Grid.Column="0" ClipToBounds="True">
-                <Image Name="TopLeftCorner"
-                       Source="{Binding TopLeftSource}"
+                <Image Source="{Binding TopLeftSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
+            <!-- Top-Left Stretch (horizontal stretch) -->
             <Border Grid.Row="0" Grid.Column="1" ClipToBounds="True">
-                <Image Name="TopEdge"
-                       Source="{Binding TopCenterSource}"
+                <Image Source="{Binding TopLeftStretchSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
+            <!-- Top Center (fixed, no stretch) -->
             <Border Grid.Row="0" Grid.Column="2" ClipToBounds="True">
-                <Image Name="TopRightCorner"
-                       Source="{Binding TopRightSource}"
+                <Image Source="{Binding TopCenterSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
-            <!-- Row 1: Left Edge, (center is empty), Right Edge -->
+            <!-- Top-Right Stretch (horizontal stretch) -->
+            <Border Grid.Row="0" Grid.Column="3" ClipToBounds="True">
+                <Image Source="{Binding TopRightStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
             
+            <!-- Top-Right Corner (fixed, no stretch) -->
+            <Border Grid.Row="0" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding TopRightSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 1: Top Stretch Row (left and right edges only) ========== -->
+            
+            <!-- Left-Top Stretch (vertical stretch) -->
             <Border Grid.Row="1" Grid.Column="0" ClipToBounds="True">
-                <Image Name="LeftEdge"
-                       Source="{Binding MiddleLeftSource}"
+                <Image Source="{Binding LeftTopStretchSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
-            <!-- Center cell is transparent - content goes here -->
-            <Border Grid.Row="1" Grid.Column="1"
-                    Background="Transparent"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"/>
-
-            <Border Grid.Row="1" Grid.Column="2" ClipToBounds="True">
-                <Image Name="RightEdge"
-                       Source="{Binding MiddleRightSource}"
+            <!-- Center cells (1,1), (1,2), (1,3) are content area - transparent -->
+            
+            <!-- Right-Top Stretch (vertical stretch) -->
+            <Border Grid.Row="1" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightTopStretchSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
-            <!-- Row 2: Bottom-Left Corner, Bottom Edge, Bottom-Right Corner -->
+            <!-- ========== ROW 2: Center Row (left and right edges only) ========== -->
             
+            <!-- Left Center (fixed, no stretch) -->
             <Border Grid.Row="2" Grid.Column="0" ClipToBounds="True">
-                <Image Name="BottomLeftCorner"
-                       Source="{Binding BottomLeftSource}"
+                <Image Source="{Binding LeftCenterSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
-            <Border Grid.Row="2" Grid.Column="1" ClipToBounds="True">
-                <Image Name="BottomEdge"
-                       Source="{Binding BottomCenterSource}"
+            <!-- Center cells (2,1), (2,2), (2,3) are content area - transparent -->
+            
+            <!-- Right Center (fixed, no stretch) -->
+            <Border Grid.Row="2" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightCenterSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
-            <Border Grid.Row="2" Grid.Column="2" ClipToBounds="True">
-                <Image Name="BottomRightCorner"
-                       Source="{Binding BottomRightSource}"
+            <!-- ========== ROW 3: Bottom Stretch Row (left and right edges only) ========== -->
+            
+            <!-- Left-Bottom Stretch (vertical stretch) -->
+            <Border Grid.Row="3" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding LeftBottomStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Center cells (3,1), (3,2), (3,3) are content area - transparent -->
+            
+            <!-- Right-Bottom Stretch (vertical stretch) -->
+            <Border Grid.Row="3" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightBottomStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 4: Bottom Edge (5 cells) ========== -->
+            
+            <!-- Bottom-Left Corner (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding BottomLeftSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Left Stretch (horizontal stretch) -->
+            <Border Grid.Row="4" Grid.Column="1" ClipToBounds="True">
+                <Image Source="{Binding BottomLeftStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom Center (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="2" ClipToBounds="True">
+                <Image Source="{Binding BottomCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Right Stretch (horizontal stretch) -->
+            <Border Grid.Row="4" Grid.Column="3" ClipToBounds="True">
+                <Image Source="{Binding BottomRightStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Right Corner (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding BottomRightSource}"
                        Stretch="Fill"
                        HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>

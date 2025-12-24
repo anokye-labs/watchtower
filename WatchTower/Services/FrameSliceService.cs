@@ -46,66 +46,25 @@ public class FrameSliceService : IFrameSliceService
             var sourceWidth = (int)sourceBitmap.Size.Width;
             var sourceHeight = (int)sourceBitmap.Size.Height;
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Loaded source {sourceWidth}x{sourceHeight}, slicing at L={sliceDefinition.Left}, T={sliceDefinition.Top}, R={sliceDefinition.Right}, B={sliceDefinition.Bottom}");
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Loaded source {sourceWidth}x{sourceHeight}, slicing 5x5 at L={sliceDefinition.Left}, LI={sliceDefinition.LeftInner}, RI={sliceDefinition.RightInner}, R={sliceDefinition.Right}, T={sliceDefinition.Top}, TI={sliceDefinition.TopInner}, BI={sliceDefinition.BottomInner}, B={sliceDefinition.Bottom}");
             
-            // Validate slice definition (absolute coordinates)
-            if (sliceDefinition.Left <= 0 || sliceDefinition.Left >= sliceDefinition.Right ||
-                sliceDefinition.Right >= sourceWidth ||
-                sliceDefinition.Top <= 0 || sliceDefinition.Top >= sliceDefinition.Bottom ||
-                sliceDefinition.Bottom >= sourceHeight)
+            // Validate slice definition (absolute coordinates for 5x5 grid)
+            if (!ValidateSliceDefinition(sliceDefinition, sourceWidth, sourceHeight))
             {
-                System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid slice definition - coordinates out of bounds or in wrong order");
                 return null;
             }
             
-            // Calculate dimensions from absolute coordinates
-            var leftWidth = sliceDefinition.Left;
-            var topHeight = sliceDefinition.Top;
-            var rightWidth = sourceWidth - sliceDefinition.Right;
-            var bottomHeight = sourceHeight - sliceDefinition.Bottom;
-            var centerWidth = sliceDefinition.Right - sliceDefinition.Left;
-            var centerHeight = sliceDefinition.Bottom - sliceDefinition.Top;
-            
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Calculated regions - leftW={leftWidth}, topH={topHeight}, rightW={rightWidth}, bottomH={bottomHeight}, centerW={centerWidth}, centerH={centerHeight}");
-            
-            // Extract all 9 slices using absolute coordinates
-            // Top row
-            var topLeft = ExtractRegion(sourceBitmap, 0, 0, leftWidth, topHeight);
-            var topCenter = ExtractRegion(sourceBitmap, sliceDefinition.Left, 0, centerWidth, topHeight);
-            var topRight = ExtractRegion(sourceBitmap, sliceDefinition.Right, 0, rightWidth, topHeight);
-            
-            // Middle row
-            var middleLeft = ExtractRegion(sourceBitmap, 0, sliceDefinition.Top, leftWidth, centerHeight);
-            var middleRight = ExtractRegion(sourceBitmap, sliceDefinition.Right, sliceDefinition.Top, rightWidth, centerHeight);
-            
-            // Bottom row
-            var bottomLeft = ExtractRegion(sourceBitmap, 0, sliceDefinition.Bottom, leftWidth, bottomHeight);
-            var bottomCenter = ExtractRegion(sourceBitmap, sliceDefinition.Left, sliceDefinition.Bottom, centerWidth, bottomHeight);
-            var bottomRight = ExtractRegion(sourceBitmap, sliceDefinition.Right, sliceDefinition.Bottom, rightWidth, bottomHeight);
-            
-            if (topLeft == null || topCenter == null || topRight == null ||
-                middleLeft == null || middleRight == null ||
-                bottomLeft == null || bottomCenter == null || bottomRight == null)
+            // Extract all 16 border slices using absolute coordinates
+            var slices = ExtractAllSlices(sourceBitmap, sliceDefinition, sourceWidth, sourceHeight);
+            if (slices == null)
             {
-                System.Diagnostics.Debug.WriteLine("FrameSliceService: Failed to extract one or more regions");
                 return null;
             }
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced - TopLeft={topLeft.Size}, TopCenter={topCenter.Size}, TopRight={topRight.Size}");
+            slices = slices with { SourceSize = sourceBitmap.Size };
             
-            return new FrameSlices
-            {
-                TopLeft = topLeft,
-                TopCenter = topCenter,
-                TopRight = topRight,
-                MiddleLeft = middleLeft,
-                MiddleRight = middleRight,
-                BottomLeft = bottomLeft,
-                BottomCenter = bottomCenter,
-                BottomRight = bottomRight,
-                SourceSize = sourceBitmap.Size,
-                SliceDefinition = sliceDefinition
-            };
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced 5x5 - TopLeft={slices.TopLeft.Size}");
+            return slices;
         }
         catch (Exception ex)
         {
@@ -114,55 +73,110 @@ public class FrameSliceService : IFrameSliceService
         }
     }
     
-    /// <inheritdoc/>
-    public FrameSlices? LoadAndSliceByPercent(string sourceUri, double leftPercent, double topPercent, double rightPercent, double bottomPercent)
+    /// <summary>
+    /// Validates slice definition coordinates for a 5x5 grid.
+    /// </summary>
+    private static bool ValidateSliceDefinition(FrameSliceDefinition def, int sourceWidth, int sourceHeight)
     {
-        ArgumentNullException.ThrowIfNull(sourceUri);
-        
-        // Validate percentages
-        if (leftPercent < 0 || leftPercent > 1 || topPercent < 0 || topPercent > 1 ||
-            rightPercent < 0 || rightPercent > 1 || bottomPercent < 0 || bottomPercent > 1)
+        // X coordinates must be in order: 0 < Left < LeftInner < RightInner < Right < sourceWidth
+        if (def.Left <= 0 || def.Left >= def.LeftInner ||
+            def.LeftInner >= def.RightInner ||
+            def.RightInner >= def.Right ||
+            def.Right >= sourceWidth)
         {
-            throw new ArgumentException("Percentages must be between 0.0 and 1.0");
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid X coordinates - must be 0 < {def.Left} < {def.LeftInner} < {def.RightInner} < {def.Right} < {sourceWidth}");
+            return false;
         }
         
-        if (leftPercent + rightPercent >= 1 || topPercent + bottomPercent >= 1)
+        // Y coordinates must be in order: 0 < Top < TopInner < BottomInner < Bottom < sourceHeight
+        if (def.Top <= 0 || def.Top >= def.TopInner ||
+            def.TopInner >= def.BottomInner ||
+            def.BottomInner >= def.Bottom ||
+            def.Bottom >= sourceHeight)
         {
-            throw new ArgumentException("Combined percentages for opposite edges must be less than 1.0");
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid Y coordinates - must be 0 < {def.Top} < {def.TopInner} < {def.BottomInner} < {def.Bottom} < {sourceHeight}");
+            return false;
         }
         
-        try
+        return true;
+    }
+    
+    /// <summary>
+    /// Extracts all 16 border slices from the source bitmap.
+    /// </summary>
+    private static FrameSlices? ExtractAllSlices(Bitmap source, FrameSliceDefinition def, int sourceWidth, int sourceHeight)
+    {
+        // Calculate column widths
+        var col0Width = def.Left;                           // Left corner
+        var col1Width = def.LeftInner - def.Left;           // Left stretch
+        var col2Width = def.RightInner - def.LeftInner;     // Center
+        var col3Width = def.Right - def.RightInner;         // Right stretch
+        var col4Width = sourceWidth - def.Right;            // Right corner
+        
+        // Calculate row heights
+        var row0Height = def.Top;                           // Top corner
+        var row1Height = def.TopInner - def.Top;            // Top stretch
+        var row2Height = def.BottomInner - def.TopInner;    // Center
+        var row3Height = def.Bottom - def.BottomInner;      // Bottom stretch
+        var row4Height = sourceHeight - def.Bottom;         // Bottom corner
+        
+        System.Diagnostics.Debug.WriteLine($"FrameSliceService: Cols={col0Width},{col1Width},{col2Width},{col3Width},{col4Width} Rows={row0Height},{row1Height},{row2Height},{row3Height},{row4Height}");
+        
+        // Row 0: Top edge (5 cells)
+        var topLeft = ExtractRegion(source, 0, 0, col0Width, row0Height);
+        var topLeftStretch = ExtractRegion(source, def.Left, 0, col1Width, row0Height);
+        var topCenter = ExtractRegion(source, def.LeftInner, 0, col2Width, row0Height);
+        var topRightStretch = ExtractRegion(source, def.RightInner, 0, col3Width, row0Height);
+        var topRight = ExtractRegion(source, def.Right, 0, col4Width, row0Height);
+        
+        // Column 0: Left edge (rows 1-3)
+        var leftTopStretch = ExtractRegion(source, 0, def.Top, col0Width, row1Height);
+        var leftCenter = ExtractRegion(source, 0, def.TopInner, col0Width, row2Height);
+        var leftBottomStretch = ExtractRegion(source, 0, def.BottomInner, col0Width, row3Height);
+        
+        // Column 4: Right edge (rows 1-3)
+        var rightTopStretch = ExtractRegion(source, def.Right, def.Top, col4Width, row1Height);
+        var rightCenter = ExtractRegion(source, def.Right, def.TopInner, col4Width, row2Height);
+        var rightBottomStretch = ExtractRegion(source, def.Right, def.BottomInner, col4Width, row3Height);
+        
+        // Row 4: Bottom edge (5 cells)
+        var bottomLeft = ExtractRegion(source, 0, def.Bottom, col0Width, row4Height);
+        var bottomLeftStretch = ExtractRegion(source, def.Left, def.Bottom, col1Width, row4Height);
+        var bottomCenter = ExtractRegion(source, def.LeftInner, def.Bottom, col2Width, row4Height);
+        var bottomRightStretch = ExtractRegion(source, def.RightInner, def.Bottom, col3Width, row4Height);
+        var bottomRight = ExtractRegion(source, def.Right, def.Bottom, col4Width, row4Height);
+        
+        // Validate all slices were extracted
+        if (topLeft == null || topLeftStretch == null || topCenter == null || topRightStretch == null || topRight == null ||
+            leftTopStretch == null || leftCenter == null || leftBottomStretch == null ||
+            rightTopStretch == null || rightCenter == null || rightBottomStretch == null ||
+            bottomLeft == null || bottomLeftStretch == null || bottomCenter == null || bottomRightStretch == null || bottomRight == null)
         {
-            // Load source to get dimensions
-            var sourceBitmap = LoadBitmap(sourceUri);
-            if (sourceBitmap == null)
-            {
-                return null;
-            }
-            
-            var sourceWidth = (int)sourceBitmap.Size.Width;
-            var sourceHeight = (int)sourceBitmap.Size.Height;
-            
-            // Calculate pixel coordinates from percentages
-            var sliceDefinition = new FrameSliceDefinition
-            {
-                Left = (int)(sourceWidth * leftPercent),
-                Top = (int)(sourceHeight * topPercent),
-                Right = (int)(sourceWidth * rightPercent),
-                Bottom = (int)(sourceHeight * bottomPercent)
-            };
-            
-            // Dispose the source bitmap we loaded just for dimensions
-            // LoadAndSlice will load it again - this is slightly inefficient but keeps the code clean
-            // For optimization, we could pass the already-loaded bitmap
-            
-            return LoadAndSlice(sourceUri, sliceDefinition);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Error in LoadAndSliceByPercent: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine("FrameSliceService: Failed to extract one or more 5x5 regions");
             return null;
         }
+        
+        return new FrameSlices
+        {
+            TopLeft = topLeft,
+            TopLeftStretch = topLeftStretch,
+            TopCenter = topCenter,
+            TopRightStretch = topRightStretch,
+            TopRight = topRight,
+            LeftTopStretch = leftTopStretch,
+            LeftCenter = leftCenter,
+            LeftBottomStretch = leftBottomStretch,
+            RightTopStretch = rightTopStretch,
+            RightCenter = rightCenter,
+            RightBottomStretch = rightBottomStretch,
+            BottomLeft = bottomLeft,
+            BottomLeftStretch = bottomLeftStretch,
+            BottomCenter = bottomCenter,
+            BottomRightStretch = bottomRightStretch,
+            BottomRight = bottomRight,
+            SourceSize = default,
+            SliceDefinition = def
+        };
     }
     
     /// <summary>
@@ -293,64 +307,31 @@ public class FrameSliceService : IFrameSliceService
             var scaledSliceDefinition = new FrameSliceDefinition
             {
                 Left = (int)(sliceDefinition.Left * scaleX),
-                Top = (int)(sliceDefinition.Top * scaleY),
+                LeftInner = (int)(sliceDefinition.LeftInner * scaleX),
+                RightInner = (int)(sliceDefinition.RightInner * scaleX),
                 Right = (int)(sliceDefinition.Right * scaleX),
+                Top = (int)(sliceDefinition.Top * scaleY),
+                TopInner = (int)(sliceDefinition.TopInner * scaleY),
+                BottomInner = (int)(sliceDefinition.BottomInner * scaleY),
                 Bottom = (int)(sliceDefinition.Bottom * scaleY)
             };
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Scaled slices L={scaledSliceDefinition.Left}, T={scaledSliceDefinition.Top}, R={scaledSliceDefinition.Right}, B={scaledSliceDefinition.Bottom}");
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Scaled slices L={scaledSliceDefinition.Left}, LI={scaledSliceDefinition.LeftInner}, RI={scaledSliceDefinition.RightInner}, R={scaledSliceDefinition.Right}");
             
             // Validate scaled slice definition
-            if (scaledSliceDefinition.Left <= 0 || scaledSliceDefinition.Left >= scaledSliceDefinition.Right ||
-                scaledSliceDefinition.Right >= targetWidth ||
-                scaledSliceDefinition.Top <= 0 || scaledSliceDefinition.Top >= scaledSliceDefinition.Bottom ||
-                scaledSliceDefinition.Bottom >= targetHeight)
+            if (!ValidateSliceDefinition(scaledSliceDefinition, targetWidth, targetHeight))
             {
-                System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid scaled slice definition");
                 return null;
             }
             
-            // Calculate dimensions from scaled coordinates
-            var leftWidth = scaledSliceDefinition.Left;
-            var topHeight = scaledSliceDefinition.Top;
-            var rightWidth = targetWidth - scaledSliceDefinition.Right;
-            var bottomHeight = targetHeight - scaledSliceDefinition.Bottom;
-            var centerWidth = scaledSliceDefinition.Right - scaledSliceDefinition.Left;
-            var centerHeight = scaledSliceDefinition.Bottom - scaledSliceDefinition.Top;
-            
-            // Extract all 8 outer slices (skip center)
-            var topLeft = ExtractRegion(resizedBitmap, 0, 0, leftWidth, topHeight);
-            var topCenter = ExtractRegion(resizedBitmap, scaledSliceDefinition.Left, 0, centerWidth, topHeight);
-            var topRight = ExtractRegion(resizedBitmap, scaledSliceDefinition.Right, 0, rightWidth, topHeight);
-            
-            var middleLeft = ExtractRegion(resizedBitmap, 0, scaledSliceDefinition.Top, leftWidth, centerHeight);
-            var middleRight = ExtractRegion(resizedBitmap, scaledSliceDefinition.Right, scaledSliceDefinition.Top, rightWidth, centerHeight);
-            
-            var bottomLeft = ExtractRegion(resizedBitmap, 0, scaledSliceDefinition.Bottom, leftWidth, bottomHeight);
-            var bottomCenter = ExtractRegion(resizedBitmap, scaledSliceDefinition.Left, scaledSliceDefinition.Bottom, centerWidth, bottomHeight);
-            var bottomRight = ExtractRegion(resizedBitmap, scaledSliceDefinition.Right, scaledSliceDefinition.Bottom, rightWidth, bottomHeight);
-            
-            if (topLeft == null || topCenter == null || topRight == null ||
-                middleLeft == null || middleRight == null ||
-                bottomLeft == null || bottomCenter == null || bottomRight == null)
+            // Extract all 16 border slices
+            var slices = ExtractAllSlices(resizedBitmap, scaledSliceDefinition, targetWidth, targetHeight);
+            if (slices == null)
             {
-                System.Diagnostics.Debug.WriteLine("FrameSliceService: Failed to extract one or more regions from resized image");
                 return null;
             }
             
-            var slices = new FrameSlices
-            {
-                TopLeft = topLeft,
-                TopCenter = topCenter,
-                TopRight = topRight,
-                MiddleLeft = middleLeft,
-                MiddleRight = middleRight,
-                BottomLeft = bottomLeft,
-                BottomCenter = bottomCenter,
-                BottomRight = bottomRight,
-                SourceSize = new Size(targetWidth, targetHeight),
-                SliceDefinition = scaledSliceDefinition
-            };
+            slices = slices with { SourceSize = new Size(targetWidth, targetHeight) };
             
 #if DEBUG
             // Save slices to temp folder for debugging
@@ -360,7 +341,7 @@ public class FrameSliceService : IFrameSliceService
             // Add to cache
             AddToCache(cacheKey, slices);
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced resized image - TopLeft={topLeft.Size}");
+            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced resized image - TopLeft={slices.TopLeft.Size}");
             return slices;
         }
         catch (Exception ex)
@@ -443,31 +424,45 @@ public class FrameSliceService : IFrameSliceService
             // Save resized full frame
             SaveBitmapToPng(resizedBitmap, Path.Combine(tempDir, "resized-full.png"));
             
-            // Save each slice
-            SaveBitmapToPng(slices.TopLeft, Path.Combine(tempDir, "top-left.png"));
-            SaveBitmapToPng(slices.TopCenter, Path.Combine(tempDir, "top-center.png"));
-            SaveBitmapToPng(slices.TopRight, Path.Combine(tempDir, "top-right.png"));
-            SaveBitmapToPng(slices.MiddleLeft, Path.Combine(tempDir, "middle-left.png"));
-            SaveBitmapToPng(slices.MiddleRight, Path.Combine(tempDir, "middle-right.png"));
-            SaveBitmapToPng(slices.BottomLeft, Path.Combine(tempDir, "bottom-left.png"));
-            SaveBitmapToPng(slices.BottomCenter, Path.Combine(tempDir, "bottom-center.png"));
-            SaveBitmapToPng(slices.BottomRight, Path.Combine(tempDir, "bottom-right.png"));
+            // Save each slice (16 total for 5x5 grid)
+            // Row 0
+            SaveBitmapToPng(slices.TopLeft, Path.Combine(tempDir, "row0-col0-top-left.png"));
+            SaveBitmapToPng(slices.TopLeftStretch, Path.Combine(tempDir, "row0-col1-top-left-stretch.png"));
+            SaveBitmapToPng(slices.TopCenter, Path.Combine(tempDir, "row0-col2-top-center.png"));
+            SaveBitmapToPng(slices.TopRightStretch, Path.Combine(tempDir, "row0-col3-top-right-stretch.png"));
+            SaveBitmapToPng(slices.TopRight, Path.Combine(tempDir, "row0-col4-top-right.png"));
+            
+            // Left edge (rows 1-3)
+            SaveBitmapToPng(slices.LeftTopStretch, Path.Combine(tempDir, "row1-col0-left-top-stretch.png"));
+            SaveBitmapToPng(slices.LeftCenter, Path.Combine(tempDir, "row2-col0-left-center.png"));
+            SaveBitmapToPng(slices.LeftBottomStretch, Path.Combine(tempDir, "row3-col0-left-bottom-stretch.png"));
+            
+            // Right edge (rows 1-3)
+            SaveBitmapToPng(slices.RightTopStretch, Path.Combine(tempDir, "row1-col4-right-top-stretch.png"));
+            SaveBitmapToPng(slices.RightCenter, Path.Combine(tempDir, "row2-col4-right-center.png"));
+            SaveBitmapToPng(slices.RightBottomStretch, Path.Combine(tempDir, "row3-col4-right-bottom-stretch.png"));
+            
+            // Row 4
+            SaveBitmapToPng(slices.BottomLeft, Path.Combine(tempDir, "row4-col0-bottom-left.png"));
+            SaveBitmapToPng(slices.BottomLeftStretch, Path.Combine(tempDir, "row4-col1-bottom-left-stretch.png"));
+            SaveBitmapToPng(slices.BottomCenter, Path.Combine(tempDir, "row4-col2-bottom-center.png"));
+            SaveBitmapToPng(slices.BottomRightStretch, Path.Combine(tempDir, "row4-col3-bottom-right-stretch.png"));
+            SaveBitmapToPng(slices.BottomRight, Path.Combine(tempDir, "row4-col4-bottom-right.png"));
             
             // Write slice info
+            var def = slices.SliceDefinition;
             var infoPath = Path.Combine(tempDir, "slice-info.txt");
             var info = $"""
                 Resolution: {targetWidth}x{targetHeight}
-                Slice Definition: L={slices.SliceDefinition.Left}, T={slices.SliceDefinition.Top}, R={slices.SliceDefinition.Right}, B={slices.SliceDefinition.Bottom}
+                Slice Definition (5x5):
+                  X: L={def.Left}, LI={def.LeftInner}, RI={def.RightInner}, R={def.Right}
+                  Y: T={def.Top}, TI={def.TopInner}, BI={def.BottomInner}, B={def.Bottom}
                 
-                Slice Sizes:
-                  TopLeft: {slices.TopLeft.Size}
-                  TopCenter: {slices.TopCenter.Size}
-                  TopRight: {slices.TopRight.Size}
-                  MiddleLeft: {slices.MiddleLeft.Size}
-                  MiddleRight: {slices.MiddleRight.Size}
-                  BottomLeft: {slices.BottomLeft.Size}
-                  BottomCenter: {slices.BottomCenter.Size}
-                  BottomRight: {slices.BottomRight.Size}
+                Slice Sizes (16 border cells):
+                  Row 0: TopLeft={slices.TopLeft.Size}, TopLeftS={slices.TopLeftStretch.Size}, TopCenter={slices.TopCenter.Size}, TopRightS={slices.TopRightStretch.Size}, TopRight={slices.TopRight.Size}
+                  Col 0: LeftTopS={slices.LeftTopStretch.Size}, LeftCenter={slices.LeftCenter.Size}, LeftBottomS={slices.LeftBottomStretch.Size}
+                  Col 4: RightTopS={slices.RightTopStretch.Size}, RightCenter={slices.RightCenter.Size}, RightBottomS={slices.RightBottomStretch.Size}
+                  Row 4: BottomLeft={slices.BottomLeft.Size}, BottomLeftS={slices.BottomLeftStretch.Size}, BottomCenter={slices.BottomCenter.Size}, BottomRightS={slices.BottomRightStretch.Size}, BottomRight={slices.BottomRight.Size}
                 
                 Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
                 """;

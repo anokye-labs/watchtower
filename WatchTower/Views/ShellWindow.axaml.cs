@@ -88,7 +88,7 @@ public partial class ShellWindow : Window
     }
     
     /// <summary>
-    /// Loads the frame image from source and slices it into 9 regions.
+    /// Loads the frame image from source and slices it into 16 regions (5x5 grid).
     /// Should be called once during initialization.
     /// </summary>
     private void LoadFrameImage()
@@ -99,23 +99,42 @@ public partial class ShellWindow : Window
             return;
         }
         
-        // Read frame configuration
+        // Read frame configuration (5x5 grid requires 8 slice coordinates)
         var frameSourceUri = _configuration?.GetValue<string>("Frame:SourceUri") 
             ?? "avares://WatchTower/Assets/main-frame.png";
         
+        // X coordinates (4 cut lines)
         var sliceLeft = _configuration?.GetValue<int>("Frame:Slice:Left") ?? 400;
+        var sliceLeftInner = _configuration?.GetValue<int>("Frame:Slice:LeftInner") ?? 800;
+        var sliceRightInner = _configuration?.GetValue<int>("Frame:Slice:RightInner") ?? 1200;
+        var sliceRight = _configuration?.GetValue<int>("Frame:Slice:Right") ?? 1600;
+        
+        // Y coordinates (4 cut lines)
         var sliceTop = _configuration?.GetValue<int>("Frame:Slice:Top") ?? 400;
-        var sliceRight = _configuration?.GetValue<int>("Frame:Slice:Right") ?? 400;
-        var sliceBottom = _configuration?.GetValue<int>("Frame:Slice:Bottom") ?? 400;
+        var sliceTopInner = _configuration?.GetValue<int>("Frame:Slice:TopInner") ?? 800;
+        var sliceBottomInner = _configuration?.GetValue<int>("Frame:Slice:BottomInner") ?? 1200;
+        var sliceBottom = _configuration?.GetValue<int>("Frame:Slice:Bottom") ?? 1600;
+        
         var frameScale = _configuration?.GetValue<double>("Frame:Scale") ?? 1.0;
         
-        System.Diagnostics.Debug.WriteLine($"LoadFrameImage: source={frameSourceUri}, slice=L:{sliceLeft} T:{sliceTop} R:{sliceRight} B:{sliceBottom}, scale={frameScale}");
+        // Read padding configuration
+        var paddingLeft = _configuration?.GetValue<double>("Frame:Padding:Left") ?? 0;
+        var paddingTop = _configuration?.GetValue<double>("Frame:Padding:Top") ?? 0;
+        var paddingRight = _configuration?.GetValue<double>("Frame:Padding:Right") ?? 0;
+        var paddingBottom = _configuration?.GetValue<double>("Frame:Padding:Bottom") ?? 0;
+        var backgroundColor = _configuration?.GetValue<string>("Frame:BackgroundColor") ?? "#1A1A1A";
+        
+        System.Diagnostics.Debug.WriteLine($"LoadFrameImage: source={frameSourceUri}, slice X=L:{sliceLeft} LI:{sliceLeftInner} RI:{sliceRightInner} R:{sliceRight}, Y=T:{sliceTop} TI:{sliceTopInner} BI:{sliceBottomInner} B:{sliceBottom}, scale={frameScale}, padding=({paddingLeft},{paddingTop},{paddingRight},{paddingBottom}), bg={backgroundColor}");
         
         var sliceDefinition = new FrameSliceDefinition
         {
             Left = sliceLeft,
-            Top = sliceTop,
+            LeftInner = sliceLeftInner,
+            RightInner = sliceRightInner,
             Right = sliceRight,
+            Top = sliceTop,
+            TopInner = sliceTopInner,
+            BottomInner = sliceBottomInner,
             Bottom = sliceBottom
         };
         
@@ -123,7 +142,9 @@ public partial class ShellWindow : Window
         {
             _viewModel.FrameDisplayScale = frameScale;
             _viewModel.RenderScale = RenderScaling;
-            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Successfully loaded and sliced frame image");
+            _viewModel.ContentPadding = new Thickness(paddingLeft, paddingTop, paddingRight, paddingBottom);
+            _viewModel.BackgroundColor = backgroundColor;
+            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Successfully loaded and sliced frame image (5x5)");
         }
         else
         {
