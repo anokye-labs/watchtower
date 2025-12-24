@@ -192,13 +192,11 @@ public partial class ShellWindow : Window
     private void OnShellViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // When CurrentContent changes to MainWindowViewModel, set up overlay animations
-        if (e.PropertyName == nameof(ShellWindowViewModel.CurrentContent))
+        if (e.PropertyName == nameof(ShellWindowViewModel.CurrentContent)
+            && _viewModel?.CurrentContent is MainWindowViewModel mainViewModel)
         {
-            if (_viewModel?.CurrentContent is MainWindowViewModel mainViewModel)
-            {
-                // Subscribe to property changes for overlay animations
-                mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
-            }
+            // Subscribe to property changes for overlay animations
+            mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
         }
     }
 
