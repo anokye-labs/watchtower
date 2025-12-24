@@ -49,6 +49,9 @@ public partial class App : Application
             {
                 DataContext = shellViewModel
             };
+            
+            // Pass configuration to shell window for frame settings
+            shellWindow.SetConfiguration(configuration);
 
             // Handle exit request from splash
             EventHandler? exitHandler = null;

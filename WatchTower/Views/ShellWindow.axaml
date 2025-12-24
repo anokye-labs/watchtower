@@ -459,96 +459,95 @@
         </ContentControl>
 
         <!-- Frame layer - 3x3 grid, IsHitTestVisible=False so clicks pass through -->
-        <!-- Row/column sizes are set explicitly in code-behind based on scaled corner dimensions -->
-        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="True">
+        <!-- Images are pre-sized by service; grid cells sized by ViewModel -->
+        <!-- Grid: Fixed rows/cols from slice dimensions, * for center -->
+        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="False">
             <Grid.RowDefinitions>
-                <RowDefinition Height="100"/>  <!-- Top row: will be set to scaled corner height -->
-                <RowDefinition Height="*"/>    <!-- Middle row: left/right edges -->
-                <RowDefinition Height="100"/>  <!-- Bottom row: will be set to scaled corner height -->
+                <RowDefinition Height="{Binding TopRowHeight}"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="{Binding BottomRowHeight}"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100"/> <!-- Left column: will be set to scaled corner width -->
-                <ColumnDefinition Width="*"/>   <!-- Center column -->
-                <ColumnDefinition Width="100"/> <!-- Right column: will be set to scaled corner width -->
+                <ColumnDefinition Width="{Binding LeftColumnWidth}"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="{Binding RightColumnWidth}"/>
             </Grid.ColumnDefinitions>
-            
-            <!-- DEBUG: Red borders for each cell -->
-            <Border Grid.Row="0" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="0" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="0" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="1" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="1" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="1" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="2" Grid.Column="0" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="2" Grid.Column="1" BorderBrush="Red" BorderThickness="2"/>
-            <Border Grid.Row="2" Grid.Column="2" BorderBrush="Red" BorderThickness="2"/>
             
             <!-- Row 0: Top-Left Corner, Top Edge, Top-Right Corner -->
             
-            <Image Name="TopLeftCorner"
-                   Grid.Row="0" Grid.Column="0"
-                   Source="avares://WatchTower/Assets/Frame/top-left.png"
-                   Stretch="Uniform"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Top"/>
+            <Border Grid.Row="0" Grid.Column="0" ClipToBounds="True">
+                <Image Name="TopLeftCorner"
+                       Source="{Binding TopLeftSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
             
-            <Image Name="TopEdge"
-                   Grid.Row="0" Grid.Column="1"
-                   Source="avares://WatchTower/Assets/Frame/top.png"
-                   Stretch="Fill"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Top"/>
+            <Border Grid.Row="0" Grid.Column="1" ClipToBounds="True">
+                <Image Name="TopEdge"
+                       Source="{Binding TopCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
             
-            <Image Name="TopRightCorner"
-                   Grid.Row="0" Grid.Column="2"
-                   Source="avares://WatchTower/Assets/Frame/top-right.png"
-                   Stretch="Uniform"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Top"/>
+            <Border Grid.Row="0" Grid.Column="2" ClipToBounds="True">
+                <Image Name="TopRightCorner"
+                       Source="{Binding TopRightSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
             
             <!-- Row 1: Left Edge, (center is empty), Right Edge -->
             
-            <Border Grid.Row="1" Grid.Column="0" Name="LeftEdgeBorder" ClipToBounds="True">
+            <Border Grid.Row="1" Grid.Column="0" ClipToBounds="True">
                 <Image Name="LeftEdge"
-                       Source="avares://WatchTower/Assets/Frame/left.png"
+                       Source="{Binding MiddleLeftSource}"
                        Stretch="Fill"
-                       HorizontalAlignment="Left"
+                       HorizontalAlignment="Stretch"
                        VerticalAlignment="Stretch"/>
             </Border>
             
             <!-- Center cell is transparent - content goes here -->
-            
-            <Border Grid.Row="1" Grid.Column="2" Name="RightEdgeBorder" ClipToBounds="True">
+            <Border Grid.Row="1" Grid.Column="1"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"/>
+
+            <Border Grid.Row="1" Grid.Column="2" ClipToBounds="True">
                 <Image Name="RightEdge"
-                       Source="avares://WatchTower/Assets/Frame/right.png"
+                       Source="{Binding MiddleRightSource}"
                        Stretch="Fill"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="UniformToFill"/>
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
             </Border>
             
             <!-- Row 2: Bottom-Left Corner, Bottom Edge, Bottom-Right Corner -->
             
-            <Image Name="BottomLeftCorner"
-                   Grid.Row="2" Grid.Column="0"
-                   Source="avares://WatchTower/Assets/Frame/bottom-left.png"
-                   Stretch="None"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Bottom"/>
-            
-            <Border Grid.Row="2" Grid.Column="1" Name="BottomEdgeBorder" ClipToBounds="True">
-                <Image Name="BottomEdge"
-                       Source="avares://WatchTower/Assets/Frame/bottom.png"
-                       Stretch="UniformToFill"
+            <Border Grid.Row="2" Grid.Column="0" ClipToBounds="True">
+                <Image Name="BottomLeftCorner"
+                       Source="{Binding BottomLeftSource}"
+                       Stretch="Fill"
                        HorizontalAlignment="Stretch"
-                       VerticalAlignment="Bottom"/>
+                       VerticalAlignment="Stretch"/>
             </Border>
             
-            <Image Name="BottomRightCorner"
-                   Grid.Row="2" Grid.Column="2"
-                   Source="avares://WatchTower/Assets/Frame/bottom-right.png"
-                   Stretch="None"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Bottom"/>
+            <Border Grid.Row="2" Grid.Column="1" ClipToBounds="True">
+                <Image Name="BottomEdge"
+                       Source="{Binding BottomCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <Border Grid.Row="2" Grid.Column="2" ClipToBounds="True">
+                <Image Name="BottomRightCorner"
+                       Source="{Binding BottomRightSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
         </Grid>
     </Grid>
 </Window>

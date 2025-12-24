@@ -108,7 +108,7 @@
 
 ## Frame Stretching
 
-The frame image uses `Stretch="Fill"` to scale with the window:
+The frame image uses `Stretch="None"` to scale with the window:
 
 ```
 Initial (1344x756):              Final (1920x1080):

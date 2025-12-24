@@ -11,6 +11,8 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Microsoft.Extensions.Configuration;
+using WatchTower.Services;
 using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
@@ -23,6 +25,7 @@ public partial class ShellWindow : Window
     private bool _isAnimating;
     private Screen? _currentScreen;
     private System.Threading.CancellationTokenSource? _monitorSwitchDebounce;
+    private IConfiguration? _configuration;
 
     // Animation parameters
     private const int StartupAnimationDurationMs = 1000;
@@ -40,18 +43,17 @@ public partial class ShellWindow : Window
     private const int DefaultOverlayHeight = 400;
     private const double OverlayHeightRatio = 0.6;
     
-    // Frame image references for setting Width/Height
-    private Image? _topLeftCorner;
-    private Image? _topRightCorner;
-    private Image? _bottomLeftCorner;
-    private Image? _bottomRightCorner;
-    private Image? _topEdge;
-    private Image? _bottomEdge;
-    private Image? _leftEdge;
-    private Image? _rightEdge;
-    
-    // Frame grid for setting row/column sizes
+    // Frame grid reference
     private Grid? _frameGrid;
+    
+    /// <summary>
+    /// Sets the configuration for frame settings.
+    /// Call this before the window is shown.
+    /// </summary>
+    public void SetConfiguration(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
 
     public ShellWindow()
     {
@@ -63,45 +65,75 @@ public partial class ShellWindow : Window
         Closed += OnWindowClosed;
         DataContextChanged += OnDataContextChanged;
         PositionChanged += OnPositionChanged;
-        
-        // Update frame scale when window size changes
-        this.GetObservable(BoundsProperty).Subscribe(_ => UpdateFrameScale());
+        ScalingChanged += OnScalingChanged;
         
         // Initialize current screen tracking
         _currentScreen = Screens.ScreenFromWindow(this);
     }
+
+    private void OnScalingChanged(object? sender, EventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.RenderScale = RenderScaling;
+        }
+    }
     
     private void InitializeFrameElements()
     {
-        // Get frame images
-        _topLeftCorner = this.FindControl<Image>("TopLeftCorner");
-        _topRightCorner = this.FindControl<Image>("TopRightCorner");
-        _bottomLeftCorner = this.FindControl<Image>("BottomLeftCorner");
-        _bottomRightCorner = this.FindControl<Image>("BottomRightCorner");
-        _topEdge = this.FindControl<Image>("TopEdge");
-        _bottomEdge = this.FindControl<Image>("BottomEdge");
-        _leftEdge = this.FindControl<Image>("LeftEdge");
-        _rightEdge = this.FindControl<Image>("RightEdge");
-        
         // Get frame grid
         _frameGrid = this.FindControl<Grid>("FrameGrid");
+        
+        System.Diagnostics.Debug.WriteLine($"InitializeFrameElements: frameGrid={_frameGrid != null}");
     }
     
     /// <summary>
-    /// Gets the pixel size of an image from its source bitmap.
+    /// Loads the frame image from source and slices it into 9 regions.
+    /// Should be called once during initialization.
     /// </summary>
-    private static Size GetImageSourceSize(Image? image)
+    private void LoadFrameImage()
     {
-        if (image?.Source is Avalonia.Media.Imaging.Bitmap bitmap)
+        if (_viewModel == null)
         {
-            return bitmap.Size;
+            System.Diagnostics.Debug.WriteLine("LoadFrameImage: ViewModel is null");
+            return;
         }
-        return default;
+        
+        // Read frame configuration
+        var frameSourceUri = _configuration?.GetValue<string>("Frame:SourceUri") 
+            ?? "avares://WatchTower/Assets/main-frame.png";
+        
+        var sliceLeft = _configuration?.GetValue<int>("Frame:Slice:Left") ?? 400;
+        var sliceTop = _configuration?.GetValue<int>("Frame:Slice:Top") ?? 400;
+        var sliceRight = _configuration?.GetValue<int>("Frame:Slice:Right") ?? 400;
+        var sliceBottom = _configuration?.GetValue<int>("Frame:Slice:Bottom") ?? 400;
+        var frameScale = _configuration?.GetValue<double>("Frame:Scale") ?? 1.0;
+        
+        System.Diagnostics.Debug.WriteLine($"LoadFrameImage: source={frameSourceUri}, slice=L:{sliceLeft} T:{sliceTop} R:{sliceRight} B:{sliceBottom}, scale={frameScale}");
+        
+        var sliceDefinition = new FrameSliceDefinition
+        {
+            Left = sliceLeft,
+            Top = sliceTop,
+            Right = sliceRight,
+            Bottom = sliceBottom
+        };
+        
+        if (_viewModel.LoadFrameImageForScreen(frameSourceUri, sliceDefinition))
+        {
+            _viewModel.FrameDisplayScale = frameScale;
+            _viewModel.RenderScale = RenderScaling;
+            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Successfully loaded and sliced frame image");
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Failed to load frame image");
+        }
     }
     
     /// <summary>
-    /// Calculates and applies uniform scale to all frame images based on screen size.
-    /// Dynamically reads image dimensions from the loaded bitmaps.
+    /// Updates frame slices for the current screen.
+    /// Called on monitor switch to re-slice for new resolution.
     /// </summary>
     private void UpdateFrameScale()
     {
@@ -111,133 +143,14 @@ public partial class ShellWindow : Window
             InitializeFrameElements();
         }
         
-        // Get actual image dimensions from loaded bitmaps
-        var topLeftSize = GetImageSourceSize(_topLeftCorner);
-        var topRightSize = GetImageSourceSize(_topRightCorner);
-        var topEdgeSize = GetImageSourceSize(_topEdge);
-        var leftEdgeSize = GetImageSourceSize(_leftEdge);
-        var bottomLeftSize = GetImageSourceSize(_bottomLeftCorner);
-        
-        // Validate we have valid image sizes
-        if (topLeftSize.Width == 0 || topLeftSize.Height == 0)
+        // Just update render scale, no need to re-slice
+        if (_viewModel != null)
         {
-            System.Diagnostics.Debug.WriteLine("UpdateFrameScale: Images not loaded yet");
-            return;
+            _viewModel.RenderScale = RenderScaling;
         }
-        
-        // Calculate full frame dimensions from actual image sizes
-        // Width = left corner + top edge + right corner
-        var fullFrameWidth = topLeftSize.Width + topEdgeSize.Width + topRightSize.Width;
-        // Height = top corner + left edge + bottom corner
-        var fullFrameHeight = topLeftSize.Height + leftEdgeSize.Height + bottomLeftSize.Height;
-        
-        var screen = Screens.Primary;
-        if (screen == null)
-        {
-            System.Diagnostics.Debug.WriteLine("UpdateFrameScale: No primary screen found");
-            return;
-        }
-        
-        var screenWidth = screen.WorkingArea.Width;
-        var screenHeight = screen.WorkingArea.Height;
-        
-        // Calculate scale: pick the smaller ratio to fit the frame on screen
-        var scaleX = screenWidth / fullFrameWidth;
-        var scaleY = screenHeight / fullFrameHeight;
-        var scale = Math.Min(scaleX, scaleY);
-        
-        System.Diagnostics.Debug.WriteLine($"UpdateFrameScale: screen={screenWidth}x{screenHeight}, frame={fullFrameWidth}x{fullFrameHeight}, scale={scale:F4}");
-        
-        // Apply uniform scale to all frame elements
-        ApplyFrameScale(scale);
     }
     
     /// <summary>
-    /// Applies the given scale factor to all frame images by setting explicit Width/Height.
-    /// Reads actual dimensions from loaded image bitmaps.
-    /// </summary>
-    private void ApplyFrameScale(double scale)
-    {
-        System.Diagnostics.Debug.WriteLine($"ApplyFrameScale called with scale={scale:F4}");
-        
-        // Get actual image dimensions
-        var topLeftSize = GetImageSourceSize(_topLeftCorner);
-        var topRightSize = GetImageSourceSize(_topRightCorner);
-        var bottomLeftSize = GetImageSourceSize(_bottomLeftCorner);
-        var bottomRightSize = GetImageSourceSize(_bottomRightCorner);
-        var topEdgeSize = GetImageSourceSize(_topEdge);
-        var bottomEdgeSize = GetImageSourceSize(_bottomEdge);
-        var leftEdgeSize = GetImageSourceSize(_leftEdge);
-        var rightEdgeSize = GetImageSourceSize(_rightEdge);
-        
-        // Set explicit dimensions on corner images (they use Stretch=None)
-        if (_topLeftCorner != null && topLeftSize.Width > 0)
-        {
-            _topLeftCorner.Width = topLeftSize.Width * scale;
-            _topLeftCorner.Height = topLeftSize.Height * scale;
-        }
-        if (_topRightCorner != null && topRightSize.Width > 0)
-        {
-            _topRightCorner.Width = topRightSize.Width * scale;
-            _topRightCorner.Height = topRightSize.Height * scale;
-        }
-        if (_bottomLeftCorner != null && bottomLeftSize.Width > 0)
-        {
-            _bottomLeftCorner.Width = bottomLeftSize.Width * scale;
-            _bottomLeftCorner.Height = bottomLeftSize.Height * scale;
-        }
-        if (_bottomRightCorner != null && bottomRightSize.Width > 0)
-        {
-            _bottomRightCorner.Width = bottomRightSize.Width * scale;
-            _bottomRightCorner.Height = bottomRightSize.Height * scale;
-        }
-        
-        // Set explicit dimensions on edge images
-        // Horizontal edges (top/bottom): fixed HEIGHT, width stretches to fill container
-        if (_topEdge != null && topEdgeSize.Height > 0)
-        {
-            _topEdge.Height = topEdgeSize.Height * scale;
-        }
-        if (_bottomEdge != null && bottomEdgeSize.Height > 0)
-        {
-            _bottomEdge.Height = bottomEdgeSize.Height * scale;
-        }
-        
-        // Vertical edges (left/right): fixed WIDTH, height stretches to fill container
-        if (_leftEdge != null && leftEdgeSize.Width > 0)
-        {
-            _leftEdge.Width = leftEdgeSize.Width * scale;
-        }
-        if (_rightEdge != null && rightEdgeSize.Width > 0)
-        {
-            _rightEdge.Width = rightEdgeSize.Width * scale;
-        }
-        
-        // Set explicit row heights and column widths based on scaled corner sizes
-        if (_frameGrid != null && topLeftSize.Width > 0)
-        {
-            // Calculate scaled corner dimensions
-            var scaledTopHeight = topLeftSize.Height * scale;
-            var scaledBottomHeight = bottomLeftSize.Height * scale;
-            var scaledLeftWidth = topLeftSize.Width * scale;
-            var scaledRightWidth = topRightSize.Width * scale;
-            
-            System.Diagnostics.Debug.WriteLine($"ApplyFrameScale: topH={scaledTopHeight:F1}, bottomH={scaledBottomHeight:F1}, leftW={scaledLeftWidth:F1}, rightW={scaledRightWidth:F1}");
-            
-            // Set row heights (corners define the row heights)
-            _frameGrid.RowDefinitions[0].Height = new GridLength(scaledTopHeight);
-            _frameGrid.RowDefinitions[2].Height = new GridLength(scaledBottomHeight);
-            
-            // Set column widths (corners define the column widths)
-            _frameGrid.ColumnDefinitions[0].Width = new GridLength(scaledLeftWidth);
-            _frameGrid.ColumnDefinitions[2].Width = new GridLength(scaledRightWidth);
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine("ApplyFrameScale: _frameGrid is null or images not loaded!");
-        }
-    }
-
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         // Unsubscribe from previous view model
@@ -426,9 +339,11 @@ public partial class ShellWindow : Window
             _viewModel.SplashViewModel.DiagnosticMessages.CollectionChanged += OnDiagnosticMessagesChanged;
         }
 
-        // Initialize frame elements and apply initial scale
+        // Initialize frame elements
         InitializeFrameElements();
-        UpdateFrameScale();
+        
+        // Load, resize, and slice the frame image for current screen
+        LoadFrameImage();
 
         // Set initial splash window size if not already animated
         if (!_hasAnimated && _viewModel?.IsInSplashMode == true)
@@ -454,6 +369,7 @@ public partial class ShellWindow : Window
         Closed -= OnWindowClosed;
         DataContextChanged -= OnDataContextChanged;
         PositionChanged -= OnPositionChanged;
+        ScalingChanged -= OnScalingChanged;
         
         // Cancel any pending monitor switch debounce
         _monitorSwitchDebounce?.Cancel();
@@ -851,6 +767,9 @@ public partial class ShellWindow : Window
         // Ensure we're exactly at the target
         WindowState = WindowState.Maximized;
         _currentScreen = newScreen;
+        
+        // Update frame scale for the new screen
+        UpdateFrameScale();
         
         _viewModel?.EndExpansionAnimation();
         _isAnimating = false;
