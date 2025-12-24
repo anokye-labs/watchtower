@@ -42,12 +42,16 @@ public partial class App : Application
                     $"Startup:HangThresholdSeconds must be between 5 and 300 seconds. Current value: {hangThreshold}");
             }
 
-            // Create and show splash window immediately
+            // Create and show shell window immediately with splash content
             var splashViewModel = new SplashWindowViewModel(hangThreshold);
-            var splashWindow = new Views.SplashWindow
+            var shellViewModel = new ShellWindowViewModel(splashViewModel);
+            var shellWindow = new Views.ShellWindow
             {
-                DataContext = splashViewModel
+                DataContext = shellViewModel
             };
+            
+            // Pass configuration to shell window for frame settings
+            shellWindow.SetConfiguration(configuration);
 
             // Handle exit request from splash
             EventHandler? exitHandler = null;
@@ -55,17 +59,17 @@ public partial class App : Application
             {
                 desktop.Shutdown();
             };
-            splashViewModel.ExitRequested += exitHandler;
+            shellViewModel.ExitRequested += exitHandler;
 
-            desktop.MainWindow = splashWindow;
-            splashWindow.Show();
+            desktop.MainWindow = shellWindow;
+            shellWindow.Show();
 
             // Start async startup workflow
             Task.Run(async () =>
             {
                 try
                 {
-                    await ExecuteStartupAsync(splashViewModel, desktop, splashWindow, configuration);
+                    await ExecuteStartupAsync(shellViewModel, desktop, shellWindow, configuration);
                 }
                 catch (Exception ex)
                 {
@@ -78,8 +82,8 @@ public partial class App : Application
             // Cleanup on shutdown
             desktop.ShutdownRequested += (s, e) =>
             {
-                splashViewModel.ExitRequested -= exitHandler;
-                splashViewModel?.Dispose();
+                shellViewModel.ExitRequested -= exitHandler;
+                shellViewModel?.Cleanup();
                 _gamepadPollTimer?.Stop();
                 _gameControllerService?.Dispose();
                 _serviceProvider?.Dispose();
@@ -90,11 +94,13 @@ public partial class App : Application
     }
 
     private async Task ExecuteStartupAsync(
-        SplashWindowViewModel splashViewModel,
+        ShellWindowViewModel shellViewModel,
         IClassicDesktopStyleApplicationLifetime desktop,
-        Views.SplashWindow splashWindow,
+        Views.ShellWindow shellWindow,
         IConfiguration configuration)
     {
+        var splashViewModel = shellViewModel.SplashViewModel;
+        
         try
         {
             // Execute startup workflow with shared configuration
@@ -133,29 +139,16 @@ public partial class App : Application
             // Small delay to show success state
             await Task.Delay(500);
 
-            // Create and show main window on UI thread
+            // Animate window expansion from splash size to full-screen
+            await shellWindow.AnimateExpansionAsync();
+            logger.LogInformation("Shell window expansion animation completed");
+
+            // Transition to main content on UI thread
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 var mainViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
-                var mainWindow = new Views.MainWindow
-                {
-                    DataContext = mainViewModel
-                };
-
-                desktop.MainWindow = mainWindow;
-                mainWindow.Show();
-                logger.LogInformation("Main window created and shown");
-
-                // Close splash window and dispose resources
-                try
-                {
-                    splashWindow?.Close();
-                    splashViewModel?.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Error closing splash window");
-                }
+                shellViewModel.TransitionToMainContent(mainViewModel);
+                logger.LogInformation("Transitioned to main content");
             });
         }
         catch (Exception ex)

@@ -1,0 +1,624 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:WatchTower.ViewModels"
+        xmlns:ac="using:AdaptiveCards.Rendering.Avalonia"
+        xmlns:converters="using:WatchTower.Converters"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="WatchTower.Views.ShellWindow"
+        x:DataType="vm:ShellWindowViewModel"
+        Title="WatchTower"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <!-- Root Grid: Content behind frame -->
+    <Grid ClipToBounds="True">
+        
+        <!-- Padding background layer - fills padding space with color -->
+        <Border Background="{Binding BackgroundColor}"
+                ZIndex="-2"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"/>
+        
+        <!-- Content layer - BEHIND the frame, fills entire window -->
+        <!-- Margin is bound to ContentPadding from config to inset content inside the frame -->
+        <ContentControl Content="{Binding CurrentContent}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        ZIndex="-1"
+                        Margin="{Binding ContentPadding}"
+                        Name="ShellContent">
+            <ContentControl.DataTemplates>
+                <!-- Template for SplashWindowViewModel -->
+                <DataTemplate DataType="vm:SplashWindowViewModel">
+                    <Border Background="#EE0A0A0A"
+                            CornerRadius="12"
+                            BorderBrush="#4AFFFFFF"
+                            BorderThickness="1"
+                            BoxShadow="0 8 32 8 #80000000"
+                            Margin="40">
+                        <Grid>
+                            <!-- Main content area -->
+                            <Grid Margin="40">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Logo/Title -->
+                                <StackPanel Grid.Row="0" 
+                                           HorizontalAlignment="Center"
+                                           Spacing="8">
+                                    <TextBlock Text="WatchTower"
+                                              FontSize="36"
+                                              FontWeight="Bold"
+                                              HorizontalAlignment="Center"
+                                              Foreground="White"/>
+                                </StackPanel>
+
+                                <!-- Status and Spinner Area -->
+                                <StackPanel Grid.Row="2"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           Spacing="20">
+                                    <!-- Spinner (pulsing circle) -->
+                                    <Ellipse Width="60" 
+                                             Height="60"
+                                             Fill="#4AFFFFFF"
+                                             HorizontalAlignment="Center"
+                                             IsVisible="{Binding IsStartupRunning}"
+                                             Name="SpinnerEllipse">
+                                        <Ellipse.Styles>
+                                            <Style Selector="Ellipse#SpinnerEllipse">
+                                                <Style.Animations>
+                                                    <Animation Duration="0:0:1.5" 
+                                                             IterationCount="Infinite"
+                                                             PlaybackDirection="Alternate">
+                                                        <KeyFrame Cue="0%">
+                                                            <Setter Property="Opacity" Value="0.2"/>
+                                                        </KeyFrame>
+                                                        <KeyFrame Cue="100%">
+                                                            <Setter Property="Opacity" Value="1.0"/>
+                                                        </KeyFrame>
+                                                    </Animation>
+                                                </Style.Animations>
+                                            </Style>
+                                        </Ellipse.Styles>
+                                    </Ellipse>
+
+                                    <!-- Success checkmark -->
+                                    <Viewbox Width="60" 
+                                             Height="60"
+                                             HorizontalAlignment="Center"
+                                             IsVisible="{Binding IsStartupComplete}">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Fill="#4AFF4A"
+                                                  Data="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/>
+                                        </Canvas>
+                                    </Viewbox>
+
+                                    <!-- Status message -->
+                                    <TextBlock Text="{Binding StatusMessage}"
+                                              FontSize="16"
+                                              HorizontalAlignment="Center"
+                                              Foreground="White"/>
+
+                                    <!-- Warning icon for slow startup -->
+                                    <Border IsVisible="{Binding IsSlowStartup}"
+                                            Padding="12,8"
+                                            Background="#44FFA500"
+                                            CornerRadius="6"
+                                            HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="⚠" 
+                                                      FontSize="16"
+                                                      Foreground="#FFFFA500"/>
+                                            <TextBlock Text="Taking longer than usual"
+                                                      FontSize="14"
+                                                      Foreground="#FFFFA500"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Error indicator -->
+                                    <Border IsVisible="{Binding IsStartupFailed}"
+                                            Padding="12,8"
+                                            Background="#44FF4444"
+                                            CornerRadius="6"
+                                            HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="✕" 
+                                                      FontSize="16"
+                                                      Foreground="#FFFF4444"/>
+                                            <TextBlock Text="See diagnostics for details"
+                                                      FontSize="14"
+                                                      Foreground="#FFFF4444"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Elapsed time -->
+                                <TextBlock Grid.Row="4"
+                                          Text="{Binding ElapsedTime}"
+                                          FontSize="24"
+                                          FontFamily="Consolas,Courier New"
+                                          HorizontalAlignment="Center"
+                                          Foreground="#AAFFFFFF"/>
+
+                                <!-- Diagnostics panel (collapsible) -->
+                                <Border Grid.Row="6"
+                                        IsVisible="{Binding IsDiagnosticsVisible}"
+                                        Background="#1AFFFFFF"
+                                        CornerRadius="6"
+                                        Padding="12"
+                                        MaxHeight="200">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="8"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                  Text="Diagnostics"
+                                                  FontSize="14"
+                                                  FontWeight="SemiBold"
+                                                  Foreground="White"/>
+
+                                        <ScrollViewer Grid.Row="2"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     HorizontalScrollBarVisibility="Auto"
+                                                     Name="DiagnosticsScroller">
+                                            <ItemsControl ItemsSource="{Binding DiagnosticMessages}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}"
+                                                                  FontFamily="Consolas,Courier New"
+                                                                  FontSize="11"
+                                                                  Foreground="#CCFFFFFF"
+                                                                  TextWrapping="NoWrap"
+                                                                  Margin="0,1"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                            <!-- Close button (top-right corner) -->
+                            <Button Content="✕"
+                                    Command="{Binding ExitCommand}"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Margin="0,8,8,0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="#CCFFFFFF"
+                                    FontSize="20"
+                                    Padding="12,8"
+                                    ToolTip.Tip="Exit Application"/>
+
+                            <!-- Hint text -->
+                            <TextBlock Text="Press 'D' for diagnostics | ESC or ✕ to exit"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Bottom"
+                                      Margin="0,0,0,12"
+                                      FontSize="11"
+                                      Foreground="#66FFFFFF"
+                                      FontStyle="Italic"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+
+                <!-- Template for MainWindowViewModel -->
+                <DataTemplate DataType="vm:MainWindowViewModel">
+                    <Panel>
+                        <!-- Main Content -->
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Title -->
+                            <TextBlock Grid.Row="0"
+                                       Text="WatchTower"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Adaptive Card (maximized) -->
+                            <Border Grid.Row="2"
+                                    Background="Transparent"
+                                    CornerRadius="8"
+                                    Padding="10">
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                                              VerticalScrollBarVisibility="Auto">
+                                    <ac:AdaptiveCardView Card="{Binding CurrentCard}" 
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"
+                                                        Name="AdaptiveCardView" />
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                        
+                        <!-- Event Log Overlay (slides from left) -->
+                        <Grid IsVisible="{Binding IsEventLogVisible}">
+                            <!-- Semi-transparent backdrop -->
+                            <Border Background="#CC000000"
+                                    AutomationProperties.Name="Click to close the event log overlay"
+                                    Tapped="OnMainBackdropTapped"/>
+                            
+                            <!-- Event Log Panel Container -->
+                            <Border Background="#EE1A1A1A"
+                                    CornerRadius="0 12 12 0"
+                                    BorderBrush="#4AFFFFFF"
+                                    BorderThickness="0 1 1 1"
+                                    Padding="24"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Stretch"
+                                    BoxShadow="8 0 32 4 #80000000"
+                                    Name="EventLogPanel">
+                                <Border.Styles>
+                                    <Style Selector="Border#EventLogPanel">
+                                        <Setter Property="Width" Value="{Binding $parent[Window].Bounds.Width, Converter={x:Static converters:HalfWidthConverter.Instance}}"/>
+                                    </Style>
+                                </Border.Styles>
+                                <Border.RenderTransform>
+                                    <TranslateTransform X="0" />
+                                </Border.RenderTransform>
+                                
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="16"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- Header -->
+                                    <Grid Grid.Row="0">
+                                        <TextBlock Text="Event Log"
+                                                   FontSize="20" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="White"/>
+                                        <Button Content="✕" 
+                                                Command="{Binding CloseOverlayCommand}"
+                                                HorizontalAlignment="Right"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Foreground="#CCFFFFFF"
+                                                FontSize="20"
+                                                Padding="8,0"
+                                                ToolTip.Tip="Close (Esc)"/>
+                                    </Grid>
+                                    
+                                    <!-- Event Log Content -->
+                                    <ScrollViewer Grid.Row="2">
+                                        <ItemsControl ItemsSource="{Binding ControllerEvents}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" 
+                                                               FontFamily="Consolas,Courier New"
+                                                               FontSize="12"
+                                                               Foreground="#CCFFFFFF"
+                                                               Margin="0,2" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        
+                        <!-- Input Overlay (slides from bottom) -->
+                        <Grid IsVisible="{Binding IsInputOverlayVisible}">
+                            <!-- Semi-transparent backdrop -->
+                            <Border Background="#CC000000" 
+                                    AutomationProperties.Name="Click to close the input overlay"
+                                    Tapped="OnMainBackdropTapped"/>
+                            
+                            <!-- Input Panel Container -->
+                            <Border Background="#EE1A1A1A"
+                                    CornerRadius="12 12 0 0"
+                                    BorderBrush="#4AFFFFFF"
+                                    BorderThickness="1 1 1 0"
+                                    MaxHeight="400"
+                                    Padding="24"
+                                    Margin="20,0,20,0"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Bottom"
+                                    BoxShadow="0 -8 32 4 #80000000"
+                                    Name="OverlayPanel">
+                                <Border.RenderTransform>
+                                    <TranslateTransform Y="0" />
+                                </Border.RenderTransform>
+                                
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- Header -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                                        <TextBlock FontSize="20" 
+                                                   FontWeight="SemiBold"
+                                                   Foreground="White">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} Input">
+                                                    <Binding Path="IsRichTextMode">
+                                                        <Binding.Converter>
+                                                            <converters:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
+                                                        </Binding.Converter>
+                                                    </Binding>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <Button Content="✕" 
+                                                Command="{Binding CloseOverlayCommand}"
+                                                HorizontalAlignment="Right"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Foreground="#CCFFFFFF"
+                                                FontSize="20"
+                                                Padding="8,0"
+                                                ToolTip.Tip="Close (Esc)"/>
+                                    </Grid>
+                                    
+                                    <!-- Rich Text Input Panel with Overlay Buttons -->
+                                    <Border Grid.Row="1" 
+                                            IsVisible="{Binding IsRichTextMode}"
+                                            Background="#1AFFFFFF"
+                                            CornerRadius="6">
+                                        <Grid>
+                                            <!-- TextBox with bottom padding to avoid button overlap -->
+                                            <TextBox Text="{Binding InputText}"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     Watermark="Enter your text here..."
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     FontSize="14"
+                                                     MinHeight="200"
+                                                     Padding="12,12,12,56"
+                                                     Name="InputTextBox"/>
+                                            
+                                            <!-- Overlay Action Buttons -->
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Bottom"
+                                                        Spacing="8"
+                                                        Margin="12">
+                                                <Button Content="Cancel" 
+                                                        Command="{Binding CloseOverlayCommand}"
+                                                        Padding="12,6"
+                                                        MinWidth="80"
+                                                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                                        CornerRadius="4"
+                                                        ToolTip.Tip="Cancel (Esc)"/>
+                                                <Button Content="Submit" 
+                                                        Command="{Binding SubmitInputCommand}"
+                                                        Padding="12,6"
+                                                        MinWidth="80"
+                                                        Background="{DynamicResource SystemAccentColor}"
+                                                        CornerRadius="4"
+                                                        Classes="accent"
+                                                        ToolTip.Tip="Submit (Ctrl+Enter)"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    
+                                    <!-- Voice Input Panel (no action buttons - use Close or Esc to exit) -->
+                                    <Border Grid.Row="1" 
+                                            IsVisible="{Binding IsVoiceMode}"
+                                            Background="#1AFFFFFF"
+                                            CornerRadius="6"
+                                            Padding="12">
+                                        <StackPanel VerticalAlignment="Center" 
+                                                    HorizontalAlignment="Center"
+                                                    Spacing="16">
+                                            <Ellipse Width="80" 
+                                                     Height="80" 
+                                                     Fill="#FF4444"
+                                                     HorizontalAlignment="Center">
+                                                <Ellipse.Transitions>
+                                                    <Transitions>
+                                                        <DoubleTransition Property="Opacity" Duration="0:0:1"/>
+                                                    </Transitions>
+                                                </Ellipse.Transitions>
+                                            </Ellipse>
+                                            <TextBlock Text="Voice recording ready..."
+                                                       FontSize="16"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="#CCFFFFFF"/>
+                                            <TextBlock Text="Press Esc or ✕ to close"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="#88FFFFFF"
+                                                       FontStyle="Italic"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Panel>
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+
+        <!-- Frame layer - 5x5 grid, IsHitTestVisible=False so clicks pass through -->
+        <!-- Images are pre-sized by service; grid cells sized by ViewModel -->
+        <!-- Grid: Fixed rows/cols (0, 2, 4) for corners/centers, * (1, 3) for stretch sections -->
+        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding Row0Height}"/>   <!-- Top corners/edge (fixed) -->
+                <RowDefinition Height="*"/>                       <!-- Top stretch -->
+                <RowDefinition Height="{Binding Row2Height}"/>   <!-- Center row (fixed) -->
+                <RowDefinition Height="*"/>                       <!-- Bottom stretch -->
+                <RowDefinition Height="{Binding Row4Height}"/>   <!-- Bottom corners/edge (fixed) -->
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding Col0Width}"/>  <!-- Left corners/edge (fixed) -->
+                <ColumnDefinition Width="*"/>                     <!-- Left stretch -->
+                <ColumnDefinition Width="{Binding Col2Width}"/>  <!-- Center column (fixed) -->
+                <ColumnDefinition Width="*"/>                     <!-- Right stretch -->
+                <ColumnDefinition Width="{Binding Col4Width}"/>  <!-- Right corners/edge (fixed) -->
+            </Grid.ColumnDefinitions>
+            
+            <!-- ========== ROW 0: Top Edge (5 cells) ========== -->
+            
+            <!-- Top-Left Corner (fixed, no stretch) -->
+            <Border Grid.Row="0" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding TopLeftSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Top-Left Stretch (horizontal stretch) -->
+            <Border Grid.Row="0" Grid.Column="1" ClipToBounds="True">
+                <Image Source="{Binding TopLeftStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Top Center (fixed, no stretch) -->
+            <Border Grid.Row="0" Grid.Column="2" ClipToBounds="True">
+                <Image Source="{Binding TopCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Top-Right Stretch (horizontal stretch) -->
+            <Border Grid.Row="0" Grid.Column="3" ClipToBounds="True">
+                <Image Source="{Binding TopRightStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Top-Right Corner (fixed, no stretch) -->
+            <Border Grid.Row="0" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding TopRightSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 1: Top Stretch Row (left and right edges only) ========== -->
+            
+            <!-- Left-Top Stretch (vertical stretch) -->
+            <Border Grid.Row="1" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding LeftTopStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Center cells (1,1), (1,2), (1,3) are content area - transparent -->
+            
+            <!-- Right-Top Stretch (vertical stretch) -->
+            <Border Grid.Row="1" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightTopStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 2: Center Row (left and right edges only) ========== -->
+            
+            <!-- Left Center (fixed, no stretch) -->
+            <Border Grid.Row="2" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding LeftCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Center cells (2,1), (2,2), (2,3) are content area - transparent -->
+            
+            <!-- Right Center (fixed, no stretch) -->
+            <Border Grid.Row="2" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 3: Bottom Stretch Row (left and right edges only) ========== -->
+            
+            <!-- Left-Bottom Stretch (vertical stretch) -->
+            <Border Grid.Row="3" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding LeftBottomStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Center cells (3,1), (3,2), (3,3) are content area - transparent -->
+            
+            <!-- Right-Bottom Stretch (vertical stretch) -->
+            <Border Grid.Row="3" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding RightBottomStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- ========== ROW 4: Bottom Edge (5 cells) ========== -->
+            
+            <!-- Bottom-Left Corner (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="0" ClipToBounds="True">
+                <Image Source="{Binding BottomLeftSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Left Stretch (horizontal stretch) -->
+            <Border Grid.Row="4" Grid.Column="1" ClipToBounds="True">
+                <Image Source="{Binding BottomLeftStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom Center (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="2" ClipToBounds="True">
+                <Image Source="{Binding BottomCenterSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Right Stretch (horizontal stretch) -->
+            <Border Grid.Row="4" Grid.Column="3" ClipToBounds="True">
+                <Image Source="{Binding BottomRightStretchSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+            
+            <!-- Bottom-Right Corner (fixed, no stretch) -->
+            <Border Grid.Row="4" Grid.Column="4" ClipToBounds="True">
+                <Image Source="{Binding BottomRightSource}"
+                       Stretch="Fill"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

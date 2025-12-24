@@ -31,23 +31,9 @@
     {
       "name": "Watch (Hot Reload)",
       "type": "coreclr",
-      "request": "launch",
       "preLaunchTask": "watch",
-      "program": "dotnet",
-      "args": [
-        "watch",
-        "run",
-        "--project",
-        "${workspaceFolder}/WatchTower/WatchTower.csproj",
-        "--non-interactive"
-      ],
-      "cwd": "${workspaceFolder}/WatchTower",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "env": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
-      }
+      "request": "attach",
+      "processName": "WatchTower"
     },
     {
       "name": "Attach to Running App",

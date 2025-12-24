@@ -57,22 +57,16 @@
           "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
         }
       },
+      "runOptions": {
+        "instanceLimit": 1,
+        "instancePolicy": "terminateOldest"
+      },
       "problemMatcher": {
-        "owner": "dotnet-watch",
-        "fileLocation": "absolute",
-        "pattern": {
-          "regexp": "^(.*)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "code": 5,
-          "message": 6
-        },
+        "base": "$msCompile",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^dotnet watch .* (Building|Started|Restart requested).*$",
-          "endsPattern": "^dotnet watch .* (Started|Exited|Waiting for).*$"
+          "beginsPattern": "^dotnet watch 🔥|^Building\\.\\.\\.",
+          "endsPattern": "Now listening on|Application starting...|Content root path"
         }
       },
       "isBackground": true,
@@ -102,24 +96,7 @@
           "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
         }
       },
-      "problemMatcher": {
-        "owner": "dotnet-watch-verbose",
-        "fileLocation": "absolute",
-        "pattern": {
-          "regexp": "^(.*)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(.*):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "code": 5,
-          "message": 6
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^dotnet watch .* (Building|Started|Restart requested).*$",
-          "endsPattern": "^dotnet watch .* (Started|Exited|Waiting for).*$"
-        }
-      },
+      "problemMatcher": "$msCompile",
       "isBackground": true,
       "presentation": {
         "reveal": "always",
