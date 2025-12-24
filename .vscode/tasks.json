@@ -57,12 +57,16 @@
           "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
         }
       },
+      "runOptions": {
+        "instanceLimit": 1,
+        "instancePolicy": "terminateOldest"
+      },
       "problemMatcher": {
         "base": "$msCompile",
         "background": {
           "activeOnStart": true,
           "beginsPattern": "^dotnet watch 🔥|^Building\\.\\.\\.",
-          "endsPattern": "Now listening on|Application started|Content root path"
+          "endsPattern": "Now listening on|Application starting...|Content root path"
         }
       },
       "isBackground": true,
