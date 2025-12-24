@@ -1,0 +1,299 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/host-config.json",
+  "supportsInteractivity": true,
+  "fontFamily": "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif",
+  "fontSizes": {
+    "small": 12,
+    "default": 14,
+    "medium": 16,
+    "large": 20,
+    "extraLarge": 26
+  },
+  "fontWeights": {
+    "lighter": 300,
+    "default": 400,
+    "bolder": 600
+  },
+  "containerStyles": {
+    "default": {
+      "backgroundColor": "#050508",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    },
+    "emphasis": {
+      "backgroundColor": "#0A0A10",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    },
+    "good": {
+      "backgroundColor": "#0A1A0A",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    },
+    "attention": {
+      "backgroundColor": "#1A1A0A",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    },
+    "warning": {
+      "backgroundColor": "#1A0A00",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    },
+    "accent": {
+      "backgroundColor": "#001A1A",
+      "foregroundColors": {
+        "default": {
+          "default": "#00F0FF",
+          "subtle": "#80C0C0"
+        },
+        "accent": {
+          "default": "#FFD700",
+          "subtle": "#FFE680"
+        },
+        "attention": {
+          "default": "#FF6B6B",
+          "subtle": "#FF9999"
+        },
+        "good": {
+          "default": "#4AFF4A",
+          "subtle": "#A0FFA0"
+        },
+        "warning": {
+          "default": "#FF8C00",
+          "subtle": "#FFB366"
+        },
+        "dark": {
+          "default": "#4A1812",
+          "subtle": "#6B2A22"
+        },
+        "light": {
+          "default": "#FFFFFF",
+          "subtle": "#E0E0E0"
+        }
+      }
+    }
+  },
+  "imageSizes": {
+    "small": 40,
+    "medium": 80,
+    "large": 160
+  },
+  "imageSet": {
+    "imageSize": "medium",
+    "maxImageHeight": 100
+  },
+  "spacing": {
+    "small": 4,
+    "default": 8,
+    "medium": 16,
+    "large": 24,
+    "extraLarge": 32,
+    "padding": 16
+  },
+  "separator": {
+    "lineThickness": 1,
+    "lineColor": "#4A1812"
+  },
+  "actions": {
+    "maxActions": 5,
+    "spacing": "default",
+    "buttonSpacing": 8,
+    "showCard": {
+      "actionMode": "inline",
+      "inlineTopMargin": 16,
+      "style": "emphasis"
+    },
+    "actionsOrientation": "horizontal",
+    "actionAlignment": "stretch",
+    "iconPlacement": "leftOfTitle",
+    "iconSize": 20
+  },
+  "adaptiveCard": {
+    "allowCustomStyle": true
+  },
+  "textBlock": {
+    "headingLevel": 2
+  },
+  "factSet": {
+    "title": {
+      "color": "accent",
+      "size": "default",
+      "isSubtle": false,
+      "weight": "bolder",
+      "wrap": true
+    },
+    "value": {
+      "color": "default",
+      "size": "default",
+      "isSubtle": false,
+      "weight": "default",
+      "wrap": true
+    },
+    "spacing": 8
+  },
+  "inputs": {
+    "label": {
+      "inputSpacing": "small",
+      "requiredInputs": {
+        "weight": "bolder",
+        "color": "attention",
+        "size": "default",
+        "isSubtle": false,
+        "suffix": " *"
+      },
+      "optionalInputs": {
+        "weight": "default",
+        "color": "default",
+        "size": "default",
+        "isSubtle": true
+      }
+    },
+    "errorMessage": {
+      "weight": "default",
+      "color": "attention",
+      "size": "small",
+      "isSubtle": false
+    }
+  }
+}

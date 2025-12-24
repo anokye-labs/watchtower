@@ -2,6 +2,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using AdaptiveCards;
+using AdaptiveCards.Rendering;
+using AdaptiveCards.Rendering.Avalonia;
+using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
 using WatchTower.Models;
 using WatchTower.Services;
@@ -16,11 +19,14 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly IGameControllerService _gameControllerService;
     private readonly IAdaptiveCardService _cardService;
+    private readonly IAdaptiveCardThemeService _themeService;
     private readonly ILogger<MainWindowViewModel> _logger;
     private string _statusText = "Game Controller Status: Initializing...";
     private string _lastButtonPressed = "None";
     private int _buttonPressCount = 0;
     private AdaptiveCard? _currentCard;
+    private AdaptiveHostConfig? _hostConfig;
+    private Control? _renderedCardControl;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
 
@@ -50,8 +56,43 @@ public class MainWindowViewModel : ViewModelBase
     public AdaptiveCard? CurrentCard
     {
         get => _currentCard;
-        set => SetProperty(ref _currentCard, value);
+        set
+        {
+            if (SetProperty(ref _currentCard, value))
+            {
+                RenderCard();
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets or sets the host config for adaptive card theming.
+    /// </summary>
+    public AdaptiveHostConfig? HostConfig
+    {
+        get => _hostConfig;
+        set
+        {
+            if (SetProperty(ref _hostConfig, value))
+            {
+                RenderCard();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the rendered card control for display.
+    /// </summary>
+    public Control? RenderedCardControl
+    {
+        get => _renderedCardControl;
+        private set => SetProperty(ref _renderedCardControl, value);
+    }
+
+    /// <summary>
+    /// Gets the current theme mode display name.
+    /// </summary>
+    public string CurrentThemeName => _themeService.CurrentThemeMode.ToString();
 
     /// <summary>
     /// Gets or sets the current input overlay mode.
@@ -139,13 +180,20 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     public ICommand ToggleEventLogCommand { get; }
 
+    /// <summary>
+    /// Command to cycle through theme modes (Dark -> Light -> System).
+    /// </summary>
+    public ICommand ToggleThemeCommand { get; }
+
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
-        IAdaptiveCardService cardService, 
+        IAdaptiveCardService cardService,
+        IAdaptiveCardThemeService themeService,
         ILogger<MainWindowViewModel> logger)
     {
         _gameControllerService = gameControllerService;
         _cardService = cardService;
+        _themeService = themeService;
         _logger = logger;
         
         // Subscribe to controller events
@@ -154,17 +202,103 @@ public class MainWindowViewModel : ViewModelBase
         _gameControllerService.ControllerConnected += OnControllerConnected;
         _gameControllerService.ControllerDisconnected += OnControllerDisconnected;
 
+        // Subscribe to theme changes
+        _themeService.ThemeChanged += OnThemeChanged;
+
+        // Subscribe to card action events
+        _cardService.ActionInvoked += OnCardActionInvoked;
+        _cardService.SubmitAction += OnCardSubmit;
+        _cardService.OpenUrlAction += OnCardOpenUrl;
+        _cardService.ExecuteAction += OnCardExecute;
+        _cardService.ShowCardAction += OnCardShowCard;
+
         // Initialize commands
         ShowRichTextInputCommand = new RelayCommand(ShowRichTextInput);
         ShowVoiceInputCommand = new RelayCommand(ShowVoiceInput);
         CloseOverlayCommand = new RelayCommand(CloseOverlay);
         SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
+        ToggleThemeCommand = new RelayCommand(ToggleTheme);
 
         UpdateStatus();
         
-        // Load the sample card on initialization
+        // Initialize host config BEFORE loading the card
+        HostConfig = _themeService.GetHostConfig();
+        _logger.LogInformation("HostConfig initialized: {IsNull}", HostConfig == null ? "NULL" : "NOT NULL");
+        if (HostConfig != null)
+        {
+            var bgColor = HostConfig.ContainerStyles?.Default?.BackgroundColor ?? "null";
+            _logger.LogInformation("HostConfig background color: {BgColor}", bgColor);
+        }
+        
+        // Load the sample card (RenderCard will be called automatically)
         LoadSampleCard();
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        HostConfig = e.HostConfig;
+        OnPropertyChanged(nameof(CurrentThemeName));
+        _logger.LogInformation("Theme changed to {ThemeMode} (resolved: {ResolvedTheme})", e.ThemeMode, e.ResolvedTheme);
+        // RenderCard() will be called automatically by the HostConfig setter
+    }
+
+    /// <summary>
+    /// Renders the current card using the AdaptiveCardRenderer with the current HostConfig.
+    /// </summary>
+    private void RenderCard()
+    {
+        if (CurrentCard == null)
+        {
+            _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
+            RenderedCardControl = null;
+            return;
+        }
+
+        if (HostConfig == null)
+        {
+            _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
+            RenderedCardControl = null;
+            return;
+        }
+
+        try
+        {
+            var bgColor = HostConfig.ContainerStyles?.Default?.BackgroundColor ?? "null";
+            var fgColor = HostConfig.ContainerStyles?.Default?.ForegroundColors?.Default?.Default ?? "null";
+            _logger.LogInformation("Rendering card with HostConfig - BG: {BgColor}, FG: {FgColor}", bgColor, fgColor);
+
+            var renderer = new AdaptiveCardRenderer(HostConfig);
+            var renderedCard = renderer.RenderCard(CurrentCard);
+            
+            // Wire up action handler
+            renderedCard.OnAction += (sender, e) =>
+            {
+                // Convert JObject to Dictionary<string, object>
+                var inputJson = renderedCard.UserInputs.AsJson();
+                var inputDict = inputJson?.ToObject<System.Collections.Generic.Dictionary<string, object>>();
+                _cardService.HandleAction(e.Action, inputDict);
+            };
+
+            RenderedCardControl = renderedCard.Control;
+            _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);
+            
+            // Log any warnings
+            foreach (var warning in renderedCard.Warnings)
+            {
+                _logger.LogWarning("Card render warning: {Message}", warning.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to render adaptive card");
+            RenderedCardControl = null;
+        }
+    }
+
+    private void ToggleTheme()
+    {
+        _themeService.CycleTheme();
     }
 
     private void OnButtonPressed(object? sender, GameControllerButtonEventArgs e)
@@ -280,4 +414,75 @@ public class MainWindowViewModel : ViewModelBase
             ? InputOverlayMode.None
             : InputOverlayMode.EventLog;
     }
+
+    #region Card Action Handlers
+
+    private void OnCardActionInvoked(object? sender, AdaptiveCardActionEventArgs e)
+    {
+        _logger.LogDebug("Card action invoked: {ActionType}", e.Action.GetType().Name);
+        AddEvent($"Card Action: {e.Action.GetType().Name.Replace("Adaptive", "").Replace("Action", "")}");
+    }
+
+    private void OnCardSubmit(object? sender, AdaptiveCardSubmitEventArgs e)
+    {
+        _logger.LogInformation("Card submitted with {Count} inputs", e.InputValues.Count);
+        
+        foreach (var kvp in e.InputValues)
+        {
+            _logger.LogDebug("Input: {Key} = {Value}", kvp.Key, kvp.Value);
+        }
+
+        // TODO: Process submitted data based on card context
+        AddEvent($"Card Submit: {e.InputValues.Count} input(s)");
+    }
+
+    private void OnCardOpenUrl(object? sender, AdaptiveCardActionEventArgs e)
+    {
+        if (e.Action is AdaptiveOpenUrlAction openUrlAction)
+        {
+            _logger.LogInformation("Opening URL: {Url}", openUrlAction.Url);
+            
+            // Open URL in default browser
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = openUrlAction.Url.ToString(),
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+                AddEvent($"Opened URL: {openUrlAction.Url}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to open URL: {Url}", openUrlAction.Url);
+                AddEvent($"Failed to open URL: {openUrlAction.Url}");
+            }
+        }
+    }
+
+    private void OnCardExecute(object? sender, AdaptiveCardActionEventArgs e)
+    {
+        if (e.Action is AdaptiveExecuteAction executeAction)
+        {
+            _logger.LogInformation("Executing action verb: {Verb}", executeAction.Verb);
+            
+            // TODO: Handle execute actions based on verb
+            AddEvent($"Execute: {executeAction.Verb}");
+        }
+    }
+
+    private void OnCardShowCard(object? sender, AdaptiveCardActionEventArgs e)
+    {
+        if (e.Action is AdaptiveShowCardAction showCardAction)
+        {
+            _logger.LogInformation("Show card action triggered");
+            
+            // ShowCard is typically handled inline by the renderer
+            // This event is for custom handling if needed
+            AddEvent("ShowCard triggered");
+        }
+    }
+
+    #endregion
 }
