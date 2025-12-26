@@ -60,7 +60,7 @@
                     Name="EventLogPanel">
                 <Border.Styles>
                     <Style Selector="Border#EventLogPanel">
-                        <Setter Property="Width" Value="{Binding $parent[TopLevel].Bounds.Width, Converter={x:Static converters:HalfWidthConverter.Instance}}"/>
+                        <Setter Property="Width" Value="{Binding $parent[UserControl].Bounds.Width, Converter={x:Static converters:HalfWidthConverter.Instance}}"/>
                     </Style>
                 </Border.Styles>
                 <Border.RenderTransform>

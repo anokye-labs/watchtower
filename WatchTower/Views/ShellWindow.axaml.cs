@@ -376,8 +376,9 @@ public partial class ShellWindow : AnimatableWindow
             // Ensure window doesn't exceed screen size
             var maxLogicalWidth = workingArea.Width / scaling;
             var maxLogicalHeight = workingArea.Height / scaling;
-            logicalWidth = Math.Min(logicalWidth, maxLogicalWidth * 0.9); // Max 90% of screen
-            logicalHeight = Math.Min(logicalHeight, maxLogicalHeight * 0.9);
+            const double MaxScreenUsageRatio = 0.9; // Max 90% of screen
+            logicalWidth = Math.Min(logicalWidth, maxLogicalWidth * MaxScreenUsageRatio);
+            logicalHeight = Math.Min(logicalHeight, maxLogicalHeight * MaxScreenUsageRatio);
             
             // Calculate physical dimensions for positioning
             var physicalWidth = logicalWidth * scaling;

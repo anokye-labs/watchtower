@@ -259,7 +259,10 @@ With default config:
 - Frame source: 6880×3800 pixels
 - Frame slices: Col0=1330, Col2=1680, Col4=1320, Row0=955, Row2=1015, Row4=940
 - FrameScale: 0.25
-- DPI: 1.0frame-based size (static components + min content area) centered on primary screen
+- DPI: 1.0
+
+**Animation Behavior:**
+1. Window opens at frame-based size (static components + min content area) centered on primary screen
 2. Splash screen displays with loading animation
 3. After startup completes, window animates to fullscreen over configured duration (default 1000ms)
 4. Uses cubic ease-out easing for smooth deceleration
