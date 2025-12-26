@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using WatchTower.Services;
@@ -17,7 +19,7 @@ using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
-public partial class ShellWindow : Window
+public partial class ShellWindow : AnimatableWindow
 {
     private ScrollViewer? _diagnosticsScroller;
     private ShellWindowViewModel? _viewModel;
@@ -26,22 +28,16 @@ public partial class ShellWindow : Window
     private Screen? _currentScreen;
     private System.Threading.CancellationTokenSource? _monitorSwitchDebounce;
     private IConfiguration? _configuration;
+    private double _minContentWidth = 400; // Minimum content area width (logical pixels)
+    private double _minContentHeight = 300; // Minimum content area height (logical pixels)
 
     // Animation parameters
-    private const int StartupAnimationDurationMs = 1000;
-    private const int ReplayAnimationDurationMs = 1000; // Each direction for Ctrl+F5 (2000ms total)
-    private const int MonitorSwitchDurationMs = 250; // Each direction for monitor switch (500ms total)
-    private const int AnimationBufferMs = 100; // Extra buffer after animation completes
     private const int MonitorSwitchDebounceMs = 100; // Debounce delay for rapid monitor changes
     private const double SplashSizeRatio = 0.7; // 70% of screen size
     
     // Fallback dimensions if screen info unavailable
     private const int FallbackWidth = 800;
     private const int FallbackHeight = 600;
-    
-    // Overlay sizing
-    private const int DefaultOverlayHeight = 400;
-    private const double OverlayHeightRatio = 0.6;
     
     // Frame grid reference
     private Grid? _frameGrid;
@@ -53,6 +49,21 @@ public partial class ShellWindow : Window
     public void SetConfiguration(IConfiguration configuration)
     {
         _configuration = configuration;
+        
+        // Load minimum content area dimensions
+        _minContentWidth = configuration.GetValue("Startup:MinContentWidth", 400.0);
+        if (_minContentWidth < 100 || _minContentWidth > 2000)
+        {
+            throw new InvalidOperationException(
+                $"Startup:MinContentWidth must be between 100 and 2000. Current value: {_minContentWidth}");
+        }
+        
+        _minContentHeight = configuration.GetValue("Startup:MinContentHeight", 300.0);
+        if (_minContentHeight < 100 || _minContentHeight > 2000)
+        {
+            throw new InvalidOperationException(
+                $"Startup:MinContentHeight must be between 100 and 2000. Current value: {_minContentHeight}");
+        }
     }
 
     public ShellWindow()
@@ -69,6 +80,9 @@ public partial class ShellWindow : Window
         
         // Initialize current screen tracking
         _currentScreen = Screens.ScreenFromWindow(this);
+        
+        // DON'T set up Transitions yet - we need to set initial splash size first
+        // Transitions will be enabled just before first animation
     }
 
     private void OnScalingChanged(object? sender, EventArgs e)
@@ -191,156 +205,7 @@ public partial class ShellWindow : Window
 
     private void OnShellViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // When CurrentContent changes to MainWindowViewModel, set up overlay animations
-        if (e.PropertyName == nameof(ShellWindowViewModel.CurrentContent)
-            && _viewModel?.CurrentContent is MainWindowViewModel mainViewModel)
-        {
-            // Subscribe to property changes for overlay animations
-            mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
-        }
-    }
-
-    private void OnMainViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (sender is not MainWindowViewModel vm)
-        {
-            return;
-        }
-
-        // Handle input overlay (Rich Text / Voice) - slides from bottom
-        if (e.PropertyName == nameof(MainWindowViewModel.IsInputOverlayVisible))
-        {
-            AnimateInputOverlay(vm);
-        }
-
-        // Handle event log overlay - slides from left
-        if (e.PropertyName == nameof(MainWindowViewModel.IsEventLogVisible))
-        {
-            AnimateEventLogOverlay(vm);
-        }
-    }
-
-    private void AnimateInputOverlay(MainWindowViewModel vm)
-    {
-        var overlayPanel = this.FindControl<Border>("OverlayPanel");
-        if (overlayPanel == null)
-        {
-            return;
-        }
-
-        var overlayTransform = overlayPanel.RenderTransform as TranslateTransform;
-        if (overlayTransform == null)
-        {
-            return;
-        }
-
-        // Calculate slide distance
-        var slideDistance = overlayPanel.Bounds.Height > 0 
-            ? overlayPanel.Bounds.Height 
-            : Math.Min(DefaultOverlayHeight, Bounds.Height * OverlayHeightRatio);
-
-        // Initialize transitions if not already created
-        if (overlayPanel.Transitions == null || overlayPanel.Transitions.Count == 0)
-        {
-            overlayPanel.Transitions = new Transitions
-            {
-                new DoubleTransition
-                {
-                    Property = TranslateTransform.YProperty,
-                    Duration = TimeSpan.FromMilliseconds(300),
-                    Easing = new CubicEaseOut()
-                }
-            };
-        }
-
-        if (vm.IsInputOverlayVisible)
-        {
-            // Start off-screen at the bottom
-            overlayTransform.Y = slideDistance;
-            
-            // Slide up
-            overlayTransform.Y = 0.0;
-            
-            // Auto-focus the TextBox when rich text mode is shown
-            if (vm.IsRichTextMode)
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    var inputTextBox = this.FindControl<TextBox>("InputTextBox");
-                    inputTextBox?.Focus();
-                }, DispatcherPriority.Loaded);
-            }
-        }
-        else
-        {
-            // Slide down
-            overlayTransform.Y = slideDistance;
-        }
-    }
-
-    private void AnimateEventLogOverlay(MainWindowViewModel vm)
-    {
-        var eventLogPanel = this.FindControl<Border>("EventLogPanel");
-        if (eventLogPanel == null)
-        {
-            return;
-        }
-
-        var eventLogTransform = eventLogPanel.RenderTransform as TranslateTransform;
-        if (eventLogTransform == null)
-        {
-            return;
-        }
-
-        // Use actual panel width for slide distance
-        var slideDistance = eventLogPanel.Bounds.Width > 0 ? eventLogPanel.Bounds.Width : Bounds.Width / 2;
-
-        // Initialize transitions if not already created
-        if (eventLogPanel.Transitions == null)
-        {
-            eventLogPanel.Transitions = new Transitions();
-        }
-
-        var transitions = eventLogPanel.Transitions;
-        DoubleTransition? slideTransition = null;
-
-        // Find existing transition or create new one
-        for (int i = 0; i < transitions.Count; i++)
-        {
-            if (transitions[i] is DoubleTransition dt &&
-                dt.Property == TranslateTransform.XProperty)
-            {
-                slideTransition = dt;
-                break;
-            }
-        }
-
-        if (slideTransition == null)
-        {
-            slideTransition = new DoubleTransition
-            {
-                Property = TranslateTransform.XProperty,
-                Duration = TimeSpan.FromMilliseconds(300),
-                Easing = new CubicEaseOut()
-            };
-            transitions.Add(slideTransition);
-        }
-
-        if (vm.IsEventLogVisible)
-        {
-            // Start off-screen to the left
-            eventLogTransform.X = -slideDistance;
-
-            // Slide in from left
-            slideTransition.Easing = new CubicEaseOut();
-            eventLogTransform.X = 0.0;
-        }
-        else
-        {
-            // Slide out to the left
-            slideTransition.Easing = new CubicEaseIn();
-            eventLogTransform.X = -slideDistance;
-        }
+        // ShellWindow no longer handles overlay animations - MainWindow handles its own
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -492,24 +357,45 @@ public partial class ShellWindow : Window
     }
 
     /// <summary>
-    /// Sets the initial splash window size (70% of screen, centered).
+    /// Sets the initial splash window size based on frame static components plus minimum content area.
+    /// Properly handles DPI scaling by converting physical pixels to logical pixels.
     /// </summary>
     private void SetSplashSize()
     {
-        var screen = Screens.Primary;
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
         if (screen != null)
         {
             var workingArea = screen.WorkingArea;
-            var splashWidth = workingArea.Width * SplashSizeRatio;
-            var splashHeight = workingArea.Height * SplashSizeRatio;
-
-            Width = splashWidth;
-            Height = splashHeight;
+            var scaling = screen.Scaling;
             
-            // Center the window
-            var left = (workingArea.Width - splashWidth) / 2;
-            var top = (workingArea.Height - splashHeight) / 2;
-            Position = new PixelPoint((int)left, (int)top);
+            // Calculate frame-based minimum size
+            var frameSize = CalculateFrameBasedSplashSize(scaling);
+            var logicalWidth = frameSize.Width;
+            var logicalHeight = frameSize.Height;
+            
+            // Ensure window doesn't exceed screen size
+            var maxLogicalWidth = workingArea.Width / scaling;
+            var maxLogicalHeight = workingArea.Height / scaling;
+            logicalWidth = Math.Min(logicalWidth, maxLogicalWidth * 0.9); // Max 90% of screen
+            logicalHeight = Math.Min(logicalHeight, maxLogicalHeight * 0.9);
+            
+            // Calculate physical dimensions for positioning
+            var physicalWidth = logicalWidth * scaling;
+            var physicalHeight = logicalHeight * scaling;
+            
+            // Center on the target screen (accounting for screen offset)
+            var left = workingArea.X + (int)((workingArea.Width - physicalWidth) / 2);
+            var top = workingArea.Y + (int)((workingArea.Height - physicalHeight) / 2);
+            
+            // Set both platform properties AND animated properties directly
+            // No transitions yet, so this happens instantly
+            Width = logicalWidth;
+            Height = logicalHeight;
+            Position = new PixelPoint(left, top);
+            AnimatedX = left;
+            AnimatedY = top;
+            AnimatedWidth = logicalWidth;
+            AnimatedHeight = logicalHeight;
         }
         else
         {
@@ -517,11 +403,91 @@ public partial class ShellWindow : Window
             Width = FallbackWidth;
             Height = FallbackHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            AnimatedWidth = FallbackWidth;
+            AnimatedHeight = FallbackHeight;
         }
+    }
+    
+    /// <summary>
+    /// Calculates the minimum splash window size based on frame static components.
+    /// Returns size in logical pixels accounting for frame scale and DPI.
+    /// </summary>
+    private Size CalculateFrameBasedSplashSize(double dpiScaling)
+    {
+        // Check if frame is loaded with slice definition
+        if (_viewModel?.FrameSliceDefinition == null || _viewModel.FrameSourceSize == default)
+        {
+            System.Diagnostics.Debug.WriteLine("SetSplashSize: Frame not loaded yet, using fallback");
+            return new Size(FallbackWidth, FallbackHeight);
+        }
+        
+        var def = _viewModel.FrameSliceDefinition;
+        var frameSourceSize = _viewModel.FrameSourceSize;
+        var frameScale = _viewModel.FrameDisplayScale;
+        var renderScale = _viewModel.RenderScale > 0 ? _viewModel.RenderScale : dpiScaling;
+        var padding = _viewModel.ContentPadding;
+        
+        // Calculate fixed column widths (source pixels) for columns 0, 2, 4
+        var col0Width = def.Left;                              // Left edge
+        var col2Width = def.RightInner - def.LeftInner;        // Center column
+        var col4Width = frameSourceSize.Width - def.Right;     // Right edge
+        
+        // Calculate fixed row heights (source pixels) for rows 0, 2, 4
+        var row0Height = def.Top;                              // Top edge
+        var row2Height = def.BottomInner - def.TopInner;       // Center row
+        var row4Height = frameSourceSize.Height - def.Bottom;  // Bottom edge
+        
+        // Convert to logical pixels: (source pixels * frame scale) / DPI scale
+        var frameLogicalWidth = ((col0Width + col2Width + col4Width) * frameScale) / renderScale;
+        var frameLogicalHeight = ((row0Height + row2Height + row4Height) * frameScale) / renderScale;
+        
+        // Add padding and minimum content area
+        var totalWidth = frameLogicalWidth + padding.Left + padding.Right + _minContentWidth;
+        var totalHeight = frameLogicalHeight + padding.Top + padding.Bottom + _minContentHeight;
+        
+        System.Diagnostics.Debug.WriteLine($"SetSplashSize: Frame-based size calculated: {totalWidth:F0}x{totalHeight:F0} " +
+            $"(frame: {frameLogicalWidth:F0}x{frameLogicalHeight:F0}, padding: {padding.Left + padding.Right}x{padding.Top + padding.Bottom}, " +
+            $"content: {_minContentWidth}x{_minContentHeight}, scale: {frameScale}, dpi: {renderScale:F2})");
+        
+        return new Size(totalWidth, totalHeight);
+    }
+
+    /// <summary>
+    /// Helper method to create an animation for a property.
+    /// </summary>
+    private Animation CreateAnimation(AvaloniaProperty property, double startValue, double endValue, int durationMs, Easing? easing = null)
+    {
+        return new Animation
+        {
+            Duration = TimeSpan.FromMilliseconds(durationMs),
+            Easing = easing ?? new CubicEaseOut(),
+            FillMode = FillMode.Forward,
+            Children =
+            {
+                new KeyFrame 
+                { 
+                    Cue = new Cue(0.0), 
+                    Setters = 
+                    { 
+                        new Avalonia.Styling.Setter(property, startValue) 
+                    } 
+                },
+                new KeyFrame 
+                { 
+                    Cue = new Cue(1.0), 
+                    Setters = 
+                    { 
+                        new Avalonia.Styling.Setter(property, endValue) 
+                    } 
+                }
+            }
+        };
     }
 
     /// <summary>
     /// Animates the window expansion from splash size to full-screen.
+    /// Properly handles DPI scaling by converting physical pixels to logical pixels.
+    /// Uses Avalonia's Animation system with KeyFrame animations.
     /// </summary>
     public async Task AnimateExpansionAsync()
     {
@@ -536,87 +502,60 @@ public partial class ShellWindow : Window
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
-            var screen = Screens.Primary;
+            var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
             if (screen == null)
             {
-                // Fallback: just maximize
-                WindowState = WindowState.Maximized;
+                // Fallback: set to default size
+                Width = FallbackWidth;
+                Height = FallbackHeight;
                 _viewModel?.EndExpansionAnimation();
                 _isAnimating = false;
                 return;
             }
 
             var workingArea = screen.WorkingArea;
-            var startWidth = Width;
-            var startHeight = Height;
-            var startPosition = Position;
+            var scaling = screen.Scaling;
 
-            var targetWidth = (double)workingArea.Width;
-            var targetHeight = (double)workingArea.Height;
-            var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
-
-            await AnimateWindowSizeAsync(
-                startWidth, startHeight, startPosition,
-                targetWidth, targetHeight, targetPosition,
-                StartupAnimationDurationMs);
+            // Get starting values
+            var startX = AnimatedX;
+            var startY = AnimatedY;
+            var startWidth = AnimatedWidth;
+            var startHeight = AnimatedHeight;
             
-            // Ensure we're exactly at the target
-            WindowState = WindowState.Maximized;
+            // Calculate target values
+            var targetX = (double)workingArea.X;
+            var targetY = (double)workingArea.Y;
+            var targetWidth = workingArea.Width / scaling;
+            var targetHeight = workingArea.Height / scaling;
+
+            System.Diagnostics.Debug.WriteLine($"AnimateExpansion: Starting from {startX},{startY} {startWidth:F0}x{startHeight:F0}");
+            System.Diagnostics.Debug.WriteLine($"AnimateExpansion: Target {targetX},{targetY} {targetWidth:F0}x{targetHeight:F0}");
+
+            // Run all animations in parallel
+            await Task.WhenAll(
+                CreateAnimation(AnimatedXProperty, startX, targetX, 500).RunAsync(this),
+                CreateAnimation(AnimatedYProperty, startY, targetY, 500).RunAsync(this),
+                CreateAnimation(AnimatedWidthProperty, startWidth, targetWidth, 500).RunAsync(this),
+                CreateAnimation(AnimatedHeightProperty, startHeight, targetHeight, 500).RunAsync(this)
+            );
+            
+            // Explicitly set final values to ensure they persist
+            AnimatedX = targetX;
+            AnimatedY = targetY;
+            AnimatedWidth = targetWidth;
+            AnimatedHeight = targetHeight;
             
             _viewModel?.EndExpansionAnimation();
             _isAnimating = false;
         });
     }
 
-    /// <summary>
-    /// Generic bidirectional window size animation helper.
-    /// </summary>
-    private async Task AnimateWindowSizeAsync(
-        double startWidth, double startHeight, PixelPoint startPosition,
-        double endWidth, double endHeight, PixelPoint endPosition,
-        int durationMs)
-    {
-        var tcs = new TaskCompletionSource<bool>();
-        var startTime = DateTime.UtcNow;
-        var timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
-        };
 
-        timer.Tick += (s, e) =>
-        {
-            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            var progress = Math.Min(elapsed / durationMs, 1.0);
-            
-            // Apply cubic ease-out
-            var easedProgress = CubicEaseOut(progress);
-
-            // Interpolate width and height
-            var currentWidth = startWidth + (endWidth - startWidth) * easedProgress;
-            var currentHeight = startHeight + (endHeight - startHeight) * easedProgress;
-            
-            // Interpolate position
-            var currentX = startPosition.X + (int)((endPosition.X - startPosition.X) * easedProgress);
-            var currentY = startPosition.Y + (int)((endPosition.Y - startPosition.Y) * easedProgress);
-
-            Width = currentWidth;
-            Height = currentHeight;
-            Position = new PixelPoint(currentX, currentY);
-
-            if (progress >= 1.0)
-            {
-                timer.Stop();
-                tcs.TrySetResult(true);
-            }
-        };
-
-        timer.Start();
-        await tcs.Task;
-    }
 
     /// <summary>
     /// Replays the splash animation: contracts to splash size, pauses, then expands back.
-    /// Triggered by Ctrl+F5.
+    /// Triggered by Ctrl+F5. Properly handles DPI scaling.
+    /// Uses Avalonia's Transitions system for smooth animation.
     /// </summary>
     private async Task ReplaySplashAnimationAsync()
     {
@@ -635,49 +574,52 @@ public partial class ShellWindow : Window
             }
 
             var workingArea = screen.WorkingArea;
+            var scaling = screen.Scaling;
             
-            // Calculate splash size (70% of screen, centered)
-            var splashWidth = workingArea.Width * SplashSizeRatio;
-            var splashHeight = workingArea.Height * SplashSizeRatio;
-            var splashLeft = workingArea.X + (int)((workingArea.Width - splashWidth) / 2);
-            var splashTop = workingArea.Y + (int)((workingArea.Height - splashHeight) / 2);
-            var splashPosition = new PixelPoint(splashLeft, splashTop);
+            // Calculate splash size based on frame (centered) in logical pixels
+            var frameSize = CalculateFrameBasedSplashSize(scaling);
+            var splashWidth = frameSize.Width;
+            var splashHeight = frameSize.Height;
+            var physicalSplashWidth = splashWidth * scaling;
+            var physicalSplashHeight = splashHeight * scaling;
+            var splashLeft = (double)(workingArea.X + (int)((workingArea.Width - physicalSplashWidth) / 2));
+            var splashTop = (double)(workingArea.Y + (int)((workingArea.Height - physicalSplashHeight) / 2));
 
-            // Store current state
-            var currentWidth = Width;
-            var currentHeight = Height;
-            var currentPosition = Position;
+            // Get current values
+            var currentX = AnimatedX;
+            var currentY = AnimatedY;
+            var currentWidth = AnimatedWidth;
+            var currentHeight = AnimatedHeight;
+
+            // Phase 1: Contract to splash size (500ms)
+            await Task.WhenAll(
+                CreateAnimation(AnimatedXProperty, currentX, splashLeft, 500).RunAsync(this),
+                CreateAnimation(AnimatedYProperty, currentY, splashTop, 500).RunAsync(this),
+                CreateAnimation(AnimatedWidthProperty, currentWidth, splashWidth, 500).RunAsync(this),
+                CreateAnimation(AnimatedHeightProperty, currentHeight, splashHeight, 500).RunAsync(this)
+            );
+
+            // Phase 2: Brief pause at splash size (100ms)
+            await Task.Delay(100);
+
+            // Phase 3: Expand back to working area (500ms)
+            var targetX = (double)workingArea.X;
+            var targetY = (double)workingArea.Y;
+            var targetWidth = workingArea.Width / scaling;
+            var targetHeight = workingArea.Height / scaling;
             
-            // If maximized, restore first
-            if (WindowState == WindowState.Maximized)
-            {
-                WindowState = WindowState.Normal;
-                Width = workingArea.Width;
-                Height = workingArea.Height;
-                Position = new PixelPoint(workingArea.X, workingArea.Y);
-                currentWidth = Width;
-                currentHeight = Height;
-                currentPosition = Position;
-            }
-
-            // Phase 1: Contract to splash size
-            await AnimateWindowSizeAsync(
-                currentWidth, currentHeight, currentPosition,
-                splashWidth, splashHeight, splashPosition,
-                ReplayAnimationDurationMs);
-
-            // Phase 2: Brief pause at splash size
-            await Task.Delay(200);
-
-            // Phase 3: Expand back to fullscreen
-            var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
-            await AnimateWindowSizeAsync(
-                splashWidth, splashHeight, splashPosition,
-                workingArea.Width, workingArea.Height, targetPosition,
-                ReplayAnimationDurationMs);
-
-            // Ensure we're exactly at the target
-            WindowState = WindowState.Maximized;
+            await Task.WhenAll(
+                CreateAnimation(AnimatedXProperty, splashLeft, targetX, 500).RunAsync(this),
+                CreateAnimation(AnimatedYProperty, splashTop, targetY, 500).RunAsync(this),
+                CreateAnimation(AnimatedWidthProperty, splashWidth, targetWidth, 500).RunAsync(this),
+                CreateAnimation(AnimatedHeightProperty, splashHeight, targetHeight, 500).RunAsync(this)
+            );
+            
+            // Explicitly set final values to ensure they persist
+            AnimatedX = targetX;
+            AnimatedY = targetY;
+            AnimatedWidth = targetWidth;
+            AnimatedHeight = targetHeight;
             
             _viewModel?.EndExpansionAnimation();
             _isAnimating = false;
@@ -731,6 +673,8 @@ public partial class ShellWindow : Window
 
     /// <summary>
     /// Handles monitor switch by zooming down and back up on the new screen.
+    /// Properly handles DPI scaling.
+    /// Uses Avalonia's Transitions system for smooth animation with faster 200ms timing.
     /// </summary>
     private async Task OnMonitorSwitchedAsync(Screen newScreen)
     {
@@ -739,46 +683,37 @@ public partial class ShellWindow : Window
         _viewModel?.BeginExpansionAnimation();
 
         var workingArea = newScreen.WorkingArea;
+        var scaling = newScreen.Scaling;
         
-        // Calculate splash size for the new screen (70% of screen, centered)
-        var splashWidth = workingArea.Width * SplashSizeRatio;
-        var splashHeight = workingArea.Height * SplashSizeRatio;
-        var splashLeft = workingArea.X + (int)((workingArea.Width - splashWidth) / 2);
-        var splashTop = workingArea.Y + (int)((workingArea.Height - splashHeight) / 2);
-        var splashPosition = new PixelPoint(splashLeft, splashTop);
-
-        // Store current state
-        var currentWidth = Width;
-        var currentHeight = Height;
-        var currentPosition = Position;
+        // Sync animated properties from actual window state
+        SyncFromWindowState();
         
-        // If maximized, restore first
-        if (WindowState == WindowState.Maximized)
-        {
-            WindowState = WindowState.Normal;
-            // Use current screen dimensions as starting point
-            var prevScreen = _currentScreen ?? newScreen;
-            Width = prevScreen.WorkingArea.Width;
-            Height = prevScreen.WorkingArea.Height;
-            currentWidth = Width;
-            currentHeight = Height;
-        }
+        // Get current values
+        var currentX = AnimatedX;
+        var currentY = AnimatedY;
+        var currentWidth = AnimatedWidth;
+        var currentHeight = AnimatedHeight;
 
-        // Phase 1: Zoom down to splash size on new screen
-        await AnimateWindowSizeAsync(
-            currentWidth, currentHeight, currentPosition,
-            splashWidth, splashHeight, splashPosition,
-            MonitorSwitchDurationMs);
+        // Calculate target position and size for new screen
+        var targetX = (double)workingArea.X;
+        var targetY = (double)workingArea.Y;
+        var targetWidth = workingArea.Width / scaling;
+        var targetHeight = workingArea.Height / scaling;
+        
+        // Smoothly animate directly to new screen size (300ms)
+        await Task.WhenAll(
+            CreateAnimation(AnimatedXProperty, currentX, targetX, 300).RunAsync(this),
+            CreateAnimation(AnimatedYProperty, currentY, targetY, 300).RunAsync(this),
+            CreateAnimation(AnimatedWidthProperty, currentWidth, targetWidth, 300).RunAsync(this),
+            CreateAnimation(AnimatedHeightProperty, currentHeight, targetHeight, 300).RunAsync(this)
+        );
+        
+        // Explicitly set final values to ensure they persist
+        AnimatedX = targetX;
+        AnimatedY = targetY;
+        AnimatedWidth = targetWidth;
+        AnimatedHeight = targetHeight;
 
-        // Phase 2: Zoom back up to fullscreen on new screen
-        var targetPosition = new PixelPoint(workingArea.X, workingArea.Y);
-        await AnimateWindowSizeAsync(
-            splashWidth, splashHeight, splashPosition,
-            workingArea.Width, workingArea.Height, targetPosition,
-            MonitorSwitchDurationMs);
-
-        // Ensure we're exactly at the target
-        WindowState = WindowState.Maximized;
         _currentScreen = newScreen;
         
         // Update frame scale for the new screen
@@ -786,15 +721,6 @@ public partial class ShellWindow : Window
         
         _viewModel?.EndExpansionAnimation();
         _isAnimating = false;
-    }
-
-    /// <summary>
-    /// Cubic ease-out easing function.
-    /// </summary>
-    private static double CubicEaseOut(double t)
-    {
-        var p = t - 1;
-        return p * p * p + 1;
     }
 
     /// <summary>

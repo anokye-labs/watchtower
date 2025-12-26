@@ -193,6 +193,128 @@
 3. **Success**: Checkmark shows, 500ms delay, transition to main window
 4. **Failure**: Error state, diagnostics auto-show, remains visible
 
+## Configuration
+
+### Window Sizing & Animation
+
+The splash window size and animation duration can be configured in `appsettings.json`:
+
+```json
+{
+  "Startup": {
+    "MinContentWidth": 400,
+    "MinContentHeight": 300,
+    "AnimationDurationMs": 1000
+  }
+}
+```
+
+**Configuration Parameters:**
+
+- **`MinContentWidth`** (default: `400`)
+  - Minimum width of the content area inside the frame (logical pixels)
+  - Valid range: `100` to `2000` pixels
+  - The actual window width will be: `FrameStaticWidth + Padding + MinContentWidth`
+  - Example: `400` = comfortable space for splash content (logo, spinner, status)
+  - Example: `600` = larger content area for more detailed splash screens
+  - Application throws `InvalidOperationException` if value is outside valid range
+
+- **`MinContentHeight`** (default: `300`)
+  - Minimum height of the content area inside the frame (logical pixels)
+  - Valid range: `100` to `2000` pixels
+  - The actual window height will be: `FrameStaticHeight + Padding + MinContentHeight`
+  - Example: `300` = comfortable space for vertical splash layout
+  - Example: `450` = taller content area for additional information
+  - Application throws `InvalidOperationException` if value is outside valid range
+
+- **`AnimationDurationMs`** (default: `1000`)
+  - Duration of the expansion animation from splash size to fullscreen
+  - Valid range: `100` to `5000` milliseconds
+  - Example: `600` = faster animation (0.6 seconds)
+  - Example: `1500` = slower animation (1.5 seconds)
+  - Application throws `InvalidOperationException` if value is outside valid range
+
+### Frame-Based Sizing
+
+The application calculates the splash window size based on the **static (non-stretching) components** of the decorative frame, ensuring the frame always looks proportional without excessive stretching.
+
+**Size Calculation Formula:**
+
+```
+WindowWidth  = (Col0 + Col2 + Col4) × FrameScale / DPI + PaddingLR + MinContentWidth
+WindowHeight = (Row0 + Row2 + Row4) × FrameScale / DPI + PaddingTB + MinContentHeight
+```
+
+Where:
+- **Col0, Col2, Col4**: Fixed-width columns (left edge, center, right edge) from source image
+- **Row0, Row2, Row4**: Fixed-height rows (top edge, center, bottom edge) from source image
+- **FrameScale**: Display scaling from `Frame.Scale` config (default: 0.25 = 25% of source)
+- **DPI**: Screen DPI scaling factor (1.0, 1.5, 2.0, etc.)
+- **PaddingLR/TB**: Frame padding from `Frame.Padding` config (default: 160px horizontal, 120px vertical)
+- **MinContentWidth/Height**: Minimum content area from `Startup` config (default: 400×300)
+
+**Example Calculation (1080p @ 100% DPI):**
+
+With default config:
+- Frame source: 6880×3800 pixels
+- Frame slices: Col0=1330, Col2=1680, Col4=1320, Row0=955, Row2=1015, Row4=940
+- FrameScale: 0.25
+- DPI: 1.0frame-based size (static components + min content area) centered on primary screen
+2. Splash screen displays with loading animation
+3. After startup completes, window animates to fullscreen over configured duration (default 1000ms)
+4. Uses cubic ease-out easing for smooth deceleration
+
+**Ctrl+F5 Replay:**
+- Contracts from fullscreen to frame-based splash size (1000ms)
+- Pauses for 200ms
+- Expands back to fullscreen (1000ms)
+
+**Monitor Switch:**
+- Zooms down to frame-based splash size on new monitor (250ms)
+- Recalculates frame size for new monitor's DPI
+- Zooms back up to fullscreen on new monitor (250ms)
+- Properly handles different DPI on different monitors
+
+**Size Constraints:**
+- Splash window is clamped to maximum 90% of screen size
+- Ensures window never exceeds screen bounds even with large MinContent values
+- Frame components and padding are always fully visiblescreen.Scaling`
+- Calculating frame component sizes in logical pixels accounting for both FrameScale and DPI
+- Converting back to physical pixels for window positioning
+- Ensuring correct centering on multi-monitor setups with different DPI settings
+
+**Example DPI Calculations (with frame-based sizing):**
+
+| Display | DPI | Scaling | Frame Logical Size | Content Area | Total Window Size (Logical) |
+|---------|-----|---------|-------------------|--------------|---------------------------|
+| 1080p   | 96  | 1.0×    | 1082.5×727.5      | 400×300      | 1642.5×1147.5             |
+| 1080p   | 144 | 1.5×    | 721.7×485.0       | 400×300      | 1281.7×905.0              |
+| 4K      | 192 | 2.0×    | 541.25×363.75     | 400×300      | 1101.25×783.75            |
+
+The window always appears at the correct size regardless of DPI scaling, with proper centering that accounts for:
+- Screen offsets (multi-monitor setups)
+- Taskbar/dock positions (uses `WorkingArea` not `Bounds`)
+- Different DPI on different monitors (recalculates on monitor switch)
+- Maximum size constraint (90% of screen to prevent oversized windows on small displays)
+
+### Animation Behavior
+
+**Initial Launch:**
+1. Window opens at configured splash size (default 20%) centered on primary screen
+2. Splash screen displays with loading animation
+3. After startup completes, window animates to fullscreen over configured duration (default 1000ms)
+4. Uses cubic ease-out easing for smooth deceleration
+
+**Ctrl+F5 Replay:**
+- Contracts from fullscreen to splash size (1000ms)
+- Pauses for 200ms
+- Expands back to fullscreen (1000ms)
+
+**Monitor Switch:**
+- Zooms down to splash size on new monitor (250ms)
+- Zooms back up to fullscreen on new monitor (250ms)
+- Properly handles different DPI on different monitors
+
 ## Accessibility
 
 - High contrast text (white on dark)
