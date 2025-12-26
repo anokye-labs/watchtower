@@ -12,7 +12,7 @@ NOTE: the FAL.AI Key is in the local .env file when creating scripts, create the
 ## Architecture & Structure
 - MVVM enforcement: ViewModels contain logic; Views only bindings/presentation; code-behind limited to initialization.
 - Service layer: business logic in Services/, injected into ViewModels via DI; ViewModels orchestrate services.
-- Directory highlights: WatchTower/ (Models, ViewModels, Views, Services, App.axaml, Program.cs, appsettings.json); .specify/ (constitution, templates, scripts); specs/NNN-feature-name/ (spec, plan, tasks, checklists).
+- Directory highlights: WatchTower/ (Models, ViewModels, Views, Services, App.axaml, Program.cs, appsettings.json); docs/ (technical documentation); concept-art/ (design inspiration and cultural references).
 
 ## Core Principles
 1. MVVM Architecture First.
@@ -61,7 +61,7 @@ NOTE: the FAL.AI Key is in the local .env file when creating scripts, create the
 - Solution management: dotnet sln list/add/remove.
 
 ## When Working on Features
-- Check constitution (.specify/memory/constitution.md), spec, plan, tasks in order; respect task dependencies and [P] markers; keep MVVM separation; ensure cross-platform parity; stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships).
+- Review relevant documentation in docs/ before starting; respect task dependencies and [P] markers; keep MVVM separation; ensure cross-platform parity; stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships).
 
 **IMPORTANT:** The message "Terminal will be reused by tasks, press any key to close it." is informational, not a prompt.
 
