@@ -219,7 +219,17 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
             return;
         }
 
-        StopListeningAsync().Wait();
+        _disposed = true;
+
+        // Stop listening using Task.Run to avoid deadlock from synchronization context
+        try
+        {
+            Task.Run(() => StopListeningAsync()).Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Timeout or error during Azure recognition shutdown");
+        }
 
         if (_recognizer != null)
         {
@@ -233,7 +243,6 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
 
         // SpeechConfig doesn't need disposal in newer SDKs
 
-        _disposed = true;
         _logger.LogInformation("AzureSpeechRecognitionService disposed");
     }
 }

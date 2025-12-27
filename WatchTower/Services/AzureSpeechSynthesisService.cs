@@ -208,7 +208,17 @@ public class AzureSpeechSynthesisService : ITextToSpeechService
             return;
         }
 
-        StopAsync().Wait();
+        _disposed = true;
+
+        // Stop synthesis using Task.Run to avoid deadlock from synchronization context
+        try
+        {
+            Task.Run(() => StopAsync()).Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Timeout or error during Azure synthesis shutdown");
+        }
 
         if (_synthesizer != null)
         {
@@ -220,7 +230,6 @@ public class AzureSpeechSynthesisService : ITextToSpeechService
 
         // SpeechConfig doesn't need disposal in newer SDKs
 
-        _disposed = true;
         _logger.LogInformation("AzureSpeechSynthesisService disposed");
     }
 }

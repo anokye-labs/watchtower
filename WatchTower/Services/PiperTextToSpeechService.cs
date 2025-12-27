@@ -244,12 +244,23 @@ public class PiperTextToSpeechService : ITextToSpeechService
             return;
         }
 
-        StopAsync().Wait();
+        _disposed = true;
+
+        // Stop playback using Task.Run to avoid deadlock from synchronization context
+        try
+        {
+            Task.Run(() => StopAsync()).Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Timeout or error during Piper TTS shutdown");
+        }
 
         // Clean up resources
         _waveOut?.Dispose();
+        (_piperProvider as IDisposable)?.Dispose();
+        (_model as IDisposable)?.Dispose();
 
-        _disposed = true;
         _logger.LogInformation("PiperTextToSpeechService disposed");
     }
 }

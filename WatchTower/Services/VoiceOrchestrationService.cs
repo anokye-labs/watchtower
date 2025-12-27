@@ -61,7 +61,12 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
 
             // Determine voice mode from configuration
             var modeString = _configuration.GetValue<string>("Voice:Mode") ?? "offline";
-            _state.Mode = Enum.Parse<VoiceMode>(modeString, ignoreCase: true);
+            if (!Enum.TryParse<VoiceMode>(modeString, ignoreCase: true, out var mode))
+            {
+                _logger.LogWarning("Unknown voice mode '{Mode}', defaulting to Offline", modeString);
+                mode = VoiceMode.Offline;
+            }
+            _state.Mode = mode;
             _logger.LogInformation("Voice mode: {Mode}", _state.Mode);
 
             // Initialize recognition service
@@ -282,17 +287,25 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
             return;
         }
 
-        // Unsubscribe from events
+        _disposed = true;
+
+        // Unsubscribe from events first to prevent callbacks during disposal
         _recognitionService.SpeechRecognized -= OnSpeechRecognized;
         _recognitionService.VoiceActivityDetected -= OnVoiceActivityDetected;
         _ttsService.SynthesisStarted -= OnSynthesisStarted;
         _ttsService.SynthesisCompleted -= OnSynthesisCompleted;
         _ttsService.SynthesisError -= OnSynthesisError;
 
-        // Stop all operations
-        StopFullDuplexAsync().Wait();
+        // Stop all operations using Task.Run to avoid deadlock from synchronization context
+        try
+        {
+            Task.Run(() => StopFullDuplexAsync()).Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Timeout or error during voice orchestration shutdown");
+        }
 
-        _disposed = true;
         _logger.LogInformation("VoiceOrchestrationService disposed");
     }
 }

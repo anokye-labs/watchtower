@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -156,7 +157,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
 
     private void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
     {
-        if (_recognizer == null || !_isListening)
+        if (_disposed || _recognizer == null || !_isListening)
         {
             return;
         }
@@ -224,21 +225,18 @@ public class VoskRecognitionService : IVoiceRecognitionService
 
     private string ExtractTextFromJson(string json)
     {
-        // Simple JSON parsing for "text" field
-        // Format: {"text": "recognized text"}
-        var textStart = json.IndexOf("\"text\"", StringComparison.Ordinal);
-        if (textStart < 0) return string.Empty;
-
-        var colonIndex = json.IndexOf(':', textStart);
-        if (colonIndex < 0) return string.Empty;
-
-        var quoteStart = json.IndexOf('"', colonIndex);
-        if (quoteStart < 0) return string.Empty;
-
-        var quoteEnd = json.IndexOf('"', quoteStart + 1);
-        if (quoteEnd < 0) return string.Empty;
-
-        return json.Substring(quoteStart + 1, quoteEnd - quoteStart - 1).Trim();
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("text", out var textElement))
+            {
+                return textElement.GetString() ?? string.Empty;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+        return string.Empty;
     }
 
     private float CalculateAudioLevel(byte[] buffer, int length)
@@ -273,13 +271,22 @@ public class VoskRecognitionService : IVoiceRecognitionService
             return;
         }
 
-        StopListeningAsync().Wait();
+        _disposed = true;
+
+        // Stop listening using Task.Run to avoid deadlock from synchronization context
+        try
+        {
+            Task.Run(() => StopListeningAsync()).Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Timeout or error during Vosk recognition shutdown");
+        }
 
         _recognizer?.Dispose();
         _model?.Dispose();
         _waveIn?.Dispose();
 
-        _disposed = true;
         _logger.LogInformation("VoskRecognitionService disposed");
     }
 }

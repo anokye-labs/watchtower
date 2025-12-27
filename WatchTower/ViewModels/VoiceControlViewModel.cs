@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using WatchTower.Models;
 using WatchTower.Services;
 
@@ -11,7 +12,7 @@ namespace WatchTower.ViewModels;
 /// ViewModel for voice control features.
 /// Provides properties and commands for voice interaction.
 /// </summary>
-public class VoiceControlViewModel : INotifyPropertyChanged
+public class VoiceControlViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IVoiceOrchestrationService _voiceService;
     private string _recognizedText = string.Empty;
@@ -21,6 +22,7 @@ public class VoiceControlViewModel : INotifyPropertyChanged
     private bool _isInitialized;
     private bool _voiceActivityDetected;
     private float _inputLevel;
+    private bool _disposed;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -208,26 +210,51 @@ public class VoiceControlViewModel : INotifyPropertyChanged
 
     private void OnVoiceStateChanged(object? sender, VoiceStateChangedEventArgs e)
     {
-        IsListening = e.State.IsListening;
-        IsSpeaking = e.State.IsSpeaking;
-        IsInitialized = e.State.IsInitialized;
-        VoiceActivityDetected = e.State.VoiceActivityDetected;
-        InputLevel = e.State.InputLevel;
+        if (_disposed)
+        {
+            return;
+        }
+
+        // Marshal to UI thread since events may fire from background threads
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            IsListening = e.State.IsListening;
+            IsSpeaking = e.State.IsSpeaking;
+            IsInitialized = e.State.IsInitialized;
+            VoiceActivityDetected = e.State.VoiceActivityDetected;
+            InputLevel = e.State.InputLevel;
+        });
     }
 
     private void OnSpeechRecognized(object? sender, VoiceRecognitionEventArgs e)
     {
-        if (e.Result.IsFinal)
+        if (_disposed)
         {
-            // Final result - update the recognized text
-            RecognizedText = e.Result.Text;
+            return;
         }
-        else
+
+        // Marshal to UI thread since events may fire from background threads
+        Dispatcher.UIThread.Post(() =>
         {
-            // Partial result - could show in a separate property if needed
-            // For now, we'll update the same property
-            RecognizedText = $"{e.Result.Text} ...";
-        }
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (e.Result.IsFinal)
+            {
+                RecognizedText = e.Result.Text;
+            }
+            else
+            {
+                RecognizedText = $"{e.Result.Text} ...";
+            }
+        });
     }
 
     private void OnSpeaking(object? sender, SpeechSynthesisEventArgs e)
@@ -239,5 +266,20 @@ public class VoiceControlViewModel : INotifyPropertyChanged
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
+        // Unsubscribe from events to prevent memory leaks
+        _voiceService.StateChanged -= OnVoiceStateChanged;
+        _voiceService.SpeechRecognized -= OnSpeechRecognized;
+        _voiceService.Speaking -= OnSpeaking;
     }
 }
