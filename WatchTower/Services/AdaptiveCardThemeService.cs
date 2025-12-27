@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
