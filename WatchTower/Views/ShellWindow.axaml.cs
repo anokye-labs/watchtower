@@ -33,7 +33,6 @@ public partial class ShellWindow : AnimatableWindow
 
     // Animation parameters
     private const int MonitorSwitchDebounceMs = 100; // Debounce delay for rapid monitor changes
-    private const double SplashSizeRatio = 0.7; // 70% of screen size
     
     // Fallback dimensions if screen info unavailable
     private const int FallbackWidth = 800;
@@ -419,6 +418,8 @@ public partial class ShellWindow : AnimatableWindow
         if (_viewModel?.FrameSliceDefinition == null || _viewModel.FrameSourceSize == default)
         {
             System.Diagnostics.Debug.WriteLine("SetSplashSize: Frame not loaded yet, using fallback");
+            AnimatedWidth = FallbackWidth;
+            AnimatedHeight = FallbackHeight;
             return new Size(FallbackWidth, FallbackHeight);
         }
         

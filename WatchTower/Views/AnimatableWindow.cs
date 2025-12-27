@@ -11,7 +11,8 @@ namespace WatchTower.Views;
 public class AnimatableWindow : Window
 {
     /// <summary>
-    /// Defines the AnimatedX property (window X position in physical pixels).
+    /// Defines the AnimatedX property (window X position coordinate).
+    /// Values are in logical coordinates and converted to physical pixels when synced to Window.Position.
     /// </summary>
     public static readonly StyledProperty<double> AnimatedXProperty =
         AvaloniaProperty.Register<AnimatableWindow, double>(
@@ -28,7 +29,8 @@ public class AnimatableWindow : Window
     }
 
     /// <summary>
-    /// Defines the AnimatedY property (window Y position in physical pixels).
+    /// Defines the AnimatedY property (window Y position coordinate).
+    /// Values are in logical coordinates and converted to physical pixels when synced to Window.Position.
     /// </summary>
     public static readonly StyledProperty<double> AnimatedYProperty =
         AvaloniaProperty.Register<AnimatableWindow, double>(

@@ -27,7 +27,7 @@
 
             <!-- Adaptive Card (maximized) -->
             <Border Grid.Row="2"
-                    Background="#050508"
+                    Background="Transparent"
                     CornerRadius="8"
                     Padding="10">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" 
