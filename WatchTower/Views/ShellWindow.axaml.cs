@@ -33,7 +33,6 @@ public partial class ShellWindow : AnimatableWindow
 
     // Animation parameters
     private const int MonitorSwitchDebounceMs = 100; // Debounce delay for rapid monitor changes
-    private const double SplashSizeRatio = 0.7; // 70% of screen size
     
     // Fallback dimensions if screen info unavailable
     private const int FallbackWidth = 800;

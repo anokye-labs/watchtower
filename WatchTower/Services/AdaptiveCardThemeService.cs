@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
@@ -17,6 +18,8 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
     private readonly ILogger<AdaptiveCardThemeService> _logger;
     private readonly IUserPreferencesService _userPreferencesService;
 
+    private AdaptiveHostConfig? _darkHostConfigOriginal;
+    private AdaptiveHostConfig? _lightHostConfigOriginal;
     private AdaptiveHostConfig? _darkHostConfig;
     private AdaptiveHostConfig? _lightHostConfig;
     private AdaptiveHostConfig? _currentHostConfig;
@@ -92,31 +95,44 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
     private void LoadThemeConfigs()
     {
         _logger.LogInformation("Loading theme configurations...");
-        _darkHostConfig = LoadHostConfigFromResource(DarkThemePath);
-        _lightHostConfig = LoadHostConfigFromResource(LightThemePath);
+        _darkHostConfigOriginal = LoadHostConfigFromResource(DarkThemePath, applyFontOverrides: false);
+        _lightHostConfigOriginal = LoadHostConfigFromResource(LightThemePath, applyFontOverrides: false);
 
-        if (_darkHostConfig == null)
+        if (_darkHostConfigOriginal == null)
         {
             _logger.LogWarning("Failed to load dark theme, using fallback");
-            _darkHostConfig = CreateFallbackHostConfig();
+            _darkHostConfigOriginal = CreateFallbackHostConfig();
         }
         else
         {
             _logger.LogInformation("Dark theme loaded successfully");
         }
 
-        if (_lightHostConfig == null)
+        if (_lightHostConfigOriginal == null)
         {
             _logger.LogWarning("Failed to load light theme, using fallback");
-            _lightHostConfig = CreateFallbackHostConfig();
+            _lightHostConfigOriginal = CreateFallbackHostConfig();
         }
         else
         {
             _logger.LogInformation("Light theme loaded successfully");
         }
+
+        // Create working copies with font overrides applied
+        _darkHostConfig = CloneHostConfig(_darkHostConfigOriginal);
+        _lightHostConfig = CloneHostConfig(_lightHostConfigOriginal);
+        
+        if (_darkHostConfig != null)
+        {
+            ApplyFontOverrides(_darkHostConfig);
+        }
+        if (_lightHostConfig != null)
+        {
+            ApplyFontOverrides(_lightHostConfig);
+        }
     }
 
-    private AdaptiveHostConfig? LoadHostConfigFromResource(string resourcePath)
+    private AdaptiveHostConfig? LoadHostConfigFromResource(string resourcePath, bool applyFontOverrides = true)
     {
         try
         {
@@ -132,7 +148,10 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
             _logger.LogInformation("Loaded theme from {Path}, background color: {BackgroundColor}", resourcePath, bgColor ?? "null");
 
             // Apply font overrides if configured
-            ApplyFontOverrides(hostConfig);
+            if (applyFontOverrides)
+            {
+                ApplyFontOverrides(hostConfig);
+            }
 
             return hostConfig;
         }
@@ -153,25 +172,49 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
         {
             // Use the non-deprecated FontTypes.Default.FontFamily
             hostConfig.FontTypes.Default.FontFamily = fontOverrides.DefaultFontFamily;
-            _logger.LogDebug("Applied font override: {FontFamily}", fontOverrides.DefaultFontFamily);
+            _logger.LogDebug("Applied default font override: {FontFamily}", fontOverrides.DefaultFontFamily);
         }
+
+        if (!string.IsNullOrWhiteSpace(fontOverrides.MonospaceFontFamily))
+        {
+            // Apply monospace font family
+            hostConfig.FontTypes.Monospace.FontFamily = fontOverrides.MonospaceFontFamily;
+            _logger.LogDebug("Applied monospace font override: {FontFamily}", fontOverrides.MonospaceFontFamily);
+        }
+    }
+
+    private AdaptiveHostConfig CloneHostConfig(AdaptiveHostConfig original)
+    {
+        // Create a fresh copy by serializing and deserializing using Newtonsoft.Json
+        // to match the format expected by AdaptiveHostConfig.FromJson
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(original);
+        var clone = AdaptiveHostConfig.FromJson(json);
+        return clone ?? original;
     }
 
     private void ResolveAndApplyTheme()
     {
         ResolvedTheme = ResolveTheme(CurrentThemeMode);
 
+        // Recreate working copies from originals to avoid font override accumulation
+        _darkHostConfig = CloneHostConfig(_darkHostConfigOriginal ?? CreateFallbackHostConfig());
+        _lightHostConfig = CloneHostConfig(_lightHostConfigOriginal ?? CreateFallbackHostConfig());
+
+        // Apply current font overrides to both configs
+        if (_darkHostConfig != null)
+        {
+            ApplyFontOverrides(_darkHostConfig);
+        }
+        if (_lightHostConfig != null)
+        {
+            ApplyFontOverrides(_lightHostConfig);
+        }
+
         _currentHostConfig = ResolvedTheme switch
         {
             ThemeMode.Light => _lightHostConfig ?? CreateFallbackHostConfig(),
             _ => _darkHostConfig ?? CreateFallbackHostConfig()
         };
-
-        // Re-apply font overrides to current config
-        if (_currentHostConfig != null)
-        {
-            ApplyFontOverrides(_currentHostConfig);
-        }
 
         ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(
             CurrentThemeMode,

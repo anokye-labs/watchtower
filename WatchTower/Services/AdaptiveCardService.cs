@@ -51,7 +51,7 @@ public class AdaptiveCardService : IAdaptiveCardService
                 _logger.LogDebug("Execute action handled: {Verb}", executeAction.Verb);
                 break;
 
-            case AdaptiveShowCardAction showCardAction:
+            case AdaptiveShowCardAction:
                 ShowCardAction?.Invoke(this, eventArgs);
                 _logger.LogDebug("ShowCard action handled");
                 break;

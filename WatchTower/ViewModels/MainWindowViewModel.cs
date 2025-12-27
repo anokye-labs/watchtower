@@ -27,6 +27,8 @@ public class MainWindowViewModel : ViewModelBase
     private AdaptiveCard? _currentCard;
     private AdaptiveHostConfig? _hostConfig;
     private Control? _renderedCardControl;
+    private RenderedAdaptiveCard? _currentRenderedCard;
+    private TypedEventHandler<RenderedAdaptiveCard, AdaptiveActionEventArgs>? _cardActionHandler;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
 
@@ -252,6 +254,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
             RenderedCardControl = null;
+            _currentRenderedCard = null;
             return;
         }
 
@@ -259,6 +262,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
             RenderedCardControl = null;
+            _currentRenderedCard = null;
             return;
         }
 
@@ -268,17 +272,25 @@ public class MainWindowViewModel : ViewModelBase
             var fgColor = HostConfig.ContainerStyles?.Default?.ForegroundColors?.Default?.Default ?? "null";
             _logger.LogInformation("Rendering card with HostConfig - BG: {BgColor}, FG: {FgColor}", bgColor, fgColor);
 
+            // Unsubscribe from previous rendered card to avoid memory leak
+            if (_currentRenderedCard != null && _cardActionHandler != null)
+            {
+                _currentRenderedCard.OnAction -= _cardActionHandler;
+            }
+
             var renderer = new AdaptiveCardRenderer(HostConfig);
             var renderedCard = renderer.RenderCard(CurrentCard);
             
-            // Wire up action handler
-            renderedCard.OnAction += (sender, e) =>
+            // Wire up action handler with a reference we can unsubscribe
+            _cardActionHandler = (sender, e) =>
             {
                 // Convert JObject to Dictionary<string, object>
                 var inputJson = renderedCard.UserInputs.AsJson();
                 var inputDict = inputJson?.ToObject<System.Collections.Generic.Dictionary<string, object>>();
                 _cardService.HandleAction(e.Action, inputDict);
             };
+            renderedCard.OnAction += _cardActionHandler;
+            _currentRenderedCard = renderedCard;
 
             RenderedCardControl = renderedCard.Control;
             _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);

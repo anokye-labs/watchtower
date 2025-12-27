@@ -35,7 +35,10 @@ public class UserPreferencesService : IUserPreferencesService
     {
         lock (_lock)
         {
-            return _preferences;
+            // Return a defensive copy to avoid exposing the internal mutable instance.
+            var json = JsonSerializer.Serialize(_preferences, JsonOptions);
+            var copy = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
+            return copy ?? new UserPreferences();
         }
     }
 
@@ -75,7 +78,15 @@ public class UserPreferencesService : IUserPreferencesService
     {
         lock (_lock)
         {
-            return _preferences.FontOverrides;
+            var fontOverrides = _preferences.FontOverrides;
+            if (fontOverrides == null)
+            {
+                return null;
+            }
+
+            // Return a defensive copy to avoid exposing internal mutable state outside the lock.
+            var json = JsonSerializer.Serialize(fontOverrides, JsonOptions);
+            return JsonSerializer.Deserialize<FontOverrides>(json, JsonOptions);
         }
     }
 
