@@ -15,7 +15,7 @@ A unified shell window that replaces the separate splash and main windows with a
 - `WatchTower/Views/ShellWindow.axaml` - Unified window layout
 - `WatchTower/Views/ShellWindow.axaml.cs` - Animation and event handling
 - `WatchTower/ViewModels/ShellWindowViewModel.cs` - State management
-- `WatchTower/Assets/main-frame-complete-2.svg` - Placeholder frame
+- `WatchTower/Assets/main-frame.png` - Decorative frame image
 
 ### Modified Files
 - `WatchTower/App.axaml.cs` - Updated startup flow
@@ -49,14 +49,23 @@ private const int AnimationDurationMs = 800;        // Animation speed
 private const double SplashSizeRatio = 0.7;         // Initial size (70%)
 ```
 
-## Frame Asset Replacement
+## Frame Configuration
 
-The placeholder SVG can be replaced with the actual frame image:
+The frame image (`WatchTower/Assets/main-frame.png`) is configured via `appsettings.json`:
 
-1. Get `main-frame-complete-2.jpg` from issue attachments
-2. Replace `WatchTower/Assets/main-frame-complete-2.svg`
-3. Update `ShellWindow.axaml` line 20: `.svg` → `.jpg`
-4. Adjust margin in line 25 if needed (currently 100px)
+```json
+{
+  "Frame": {
+    "SourceUri": "avares://WatchTower/Assets/main-frame.png",
+    "Scale": 0.25,
+    "BackgroundColor": "#261208",
+    "Padding": { "Left": 80, "Top": 60, "Right": 80, "Bottom": 60 },
+    "Slice": { ... }
+  }
+}
+```
+
+The frame uses a 5x5 grid slicing system for resolution-independent scaling.
 
 ## Architecture
 

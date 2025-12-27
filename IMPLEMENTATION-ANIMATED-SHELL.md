@@ -11,10 +11,10 @@ This implementation replaces the separate SplashWindow and MainWindow with a uni
 ## Key Components
 
 ### ShellWindow (`Views/ShellWindow.axaml`)
-- Root window with decorative frame background (`main-frame-complete-2.svg`)
+- Root window with decorative frame background (`main-frame.png`)
 - ContentControl that switches between splash and main content
-- Frame stretches with window during animation
-- 100px margin for content area inside frame
+- Frame uses 5x5 grid slicing for resolution-independent scaling
+- Configurable padding for content area inside frame
 
 ### ShellWindowViewModel (`ViewModels/ShellWindowViewModel.cs`)
 - Manages state transitions between splash and main modes
@@ -38,19 +38,18 @@ This implementation replaces the separate SplashWindow and MainWindow with a uni
 ## Frame Asset
 
 ### Current Implementation
-The implementation uses a PNG frame (`Assets/main-frame-complete-2.png`) that provides:
+The implementation uses a PNG frame (`Assets/main-frame.png`) that provides:
 - Golden/bronze ornate corners with Art Deco patterns
-- 28px border thickness
+- Configurable border thickness via slice coordinates
 - Transparent center for content
-- Created at 1920x1080 native resolution
+- High-resolution source image for quality scaling
 
-### 9-Slice Implementation
-To prevent corner distortion during the window expansion animation, the frame is implemented using proper 9-slice layout:
-- **Frame pieces** in `Assets/Frame/` directory:
-  - 4 corner pieces (28x28px each): `top-left.png`, `top-right.png`, `bottom-left.png`, `bottom-right.png`
-  - 4 edge pieces (1-pixel strips that tile): `top.png`, `bottom.png`, `left.png`, `right.png`
-- **Layout**: 3x3 Grid where corners remain fixed and edges tile seamlessly
-- **Content margin**: 28px to match the border thickness
+### 5x5 Grid Slicing Implementation
+To prevent corner distortion during the window expansion animation, the frame is implemented using a 5x5 grid (25-slice) layout configured in `appsettings.json`:
+- **Slice coordinates** define 8 boundary points (Left, LeftInner, RightInner, Right, Top, TopInner, BottomInner, Bottom)
+- **FrameSliceService** extracts 16 border pieces from the source image
+- **LRU-5 cache** stores sliced frames for different display resolutions
+- **Content padding** configurable via Frame.Padding settings
 
 This ensures the decorative corners maintain their detail while the edges stretch smoothly as the window animates from 70% to full-screen size.
 
