@@ -6,7 +6,7 @@ namespace WatchTower.Services;
 
 /// <summary>
 /// Interface for speech recognition services.
-/// Provides text-to-speech (ASR) functionality from audio input.
+/// Provides speech-to-text (ASR) functionality from audio input.
 /// </summary>
 public interface IVoiceRecognitionService : IDisposable
 {

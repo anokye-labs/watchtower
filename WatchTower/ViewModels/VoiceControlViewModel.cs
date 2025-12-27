@@ -246,14 +246,9 @@ public class VoiceControlViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            if (e.Result.IsFinal)
-            {
-                RecognizedText = e.Result.Text;
-            }
-            else
-            {
-                RecognizedText = $"{e.Result.Text} ...";
-            }
+            RecognizedText = e.Result.IsFinal
+                ? e.Result.Text
+                : $"{e.Result.Text} ...";
         });
     }
 

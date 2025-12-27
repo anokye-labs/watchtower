@@ -233,8 +233,10 @@ public class VoskRecognitionService : IVoiceRecognitionService
                 return textElement.GetString() ?? string.Empty;
             }
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
+            _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
         }
         return string.Empty;
     }
@@ -252,7 +254,8 @@ public class VoskRecognitionService : IVoiceRecognitionService
             }
         }
 
-        double rms = Math.Sqrt((double)sum / (length / 2));
+        double sampleCount = length / 2.0;
+        double rms = Math.Sqrt(sum / sampleCount);
         return (float)(rms / 32768.0); // Normalize to 0.0 - 1.0
     }
 
@@ -276,11 +279,25 @@ public class VoskRecognitionService : IVoiceRecognitionService
         // Stop listening using Task.Run to avoid deadlock from synchronization context
         try
         {
-            Task.Run(() => StopListeningAsync()).Wait(TimeSpan.FromSeconds(2));
+            const int shutdownTimeoutSeconds = 2;
+            var shutdownTask = Task.Run(() => StopListeningAsync());
+
+            _logger.LogInformation(
+                "Waiting up to {TimeoutSeconds}s for Vosk recognition shutdown",
+                shutdownTimeoutSeconds);
+
+            var completedInTime = shutdownTask.Wait(TimeSpan.FromSeconds(shutdownTimeoutSeconds));
+
+            if (!completedInTime)
+            {
+                _logger.LogWarning(
+                    "Vosk recognition shutdown did not complete within {TimeoutSeconds}s",
+                    shutdownTimeoutSeconds);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Timeout or error during Vosk recognition shutdown");
+            _logger.LogWarning(ex, "Error during Vosk recognition shutdown");
         }
 
         _recognizer?.Dispose();
