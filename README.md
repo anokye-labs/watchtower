@@ -1,6 +1,6 @@
 # WatchTower
 
-Avalonia UI application (.NET 10) built with MVVM architecture.
+A cross-platform desktop application built with Avalonia UI on .NET 10, featuring an immersive, gamepad-first user interface. WatchTower showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, including Adinkra symbols.
 
 ## Quick Start
 
@@ -34,7 +34,8 @@ WatchTower/          # Main app
 └── Models/          # Data
 
 .vscode/             # Already configured
-specs/               # Feature docs
+docs/                # Technical documentation
+concept-art/         # Design inspiration and cultural references
 ```
 
 ## Key Files
@@ -51,7 +52,7 @@ specs/               # Feature docs
 - ViewModels = all logic, testable
 - Services = business logic, DI injected
 
-See [`.github/copilot-instructions.md`](.github/copilot-instructions.md) for details.
+See [AGENTS.md](AGENTS.md) for detailed development guidelines.
 
 ## Publishing
 
@@ -77,6 +78,6 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 ## Resources
 
 - [Avalonia Docs](https://docs.avaloniaui.net/)
-- [Project Instructions](.github/copilot-instructions.md)
+- [Development Guidelines](AGENTS.md)
 - [Game Controller Support](docs/game-controller-support.md)
-- [Specs](specs/)
+- [Documentation Index](docs/README.md)
