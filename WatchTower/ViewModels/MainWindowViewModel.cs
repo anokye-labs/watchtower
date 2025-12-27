@@ -254,6 +254,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
             RenderedCardControl = null;
+            _currentRenderedCard = null;
             return;
         }
 
@@ -261,6 +262,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
             RenderedCardControl = null;
+            _currentRenderedCard = null;
             return;
         }
 

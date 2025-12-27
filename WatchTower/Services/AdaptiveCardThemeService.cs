@@ -22,7 +22,6 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
     private AdaptiveHostConfig? _darkHostConfig;
     private AdaptiveHostConfig? _lightHostConfig;
     private AdaptiveHostConfig? _currentHostConfig;
-    private string? _lastAppliedDefaultFont;
 
     private const string DarkThemePath = "avares://WatchTower/Assets/Themes/ancestral-futurism-dark.json";
     private const string LightThemePath = "avares://WatchTower/Assets/Themes/ancestral-futurism-light.json";
@@ -170,8 +169,6 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
 
         if (!string.IsNullOrWhiteSpace(fontOverrides.DefaultFontFamily))
         {
-            // Track if the font changed
-            _lastAppliedDefaultFont = fontOverrides.DefaultFontFamily;
             // Use the non-deprecated FontTypes.Default.FontFamily
             hostConfig.FontTypes.Default.FontFamily = fontOverrides.DefaultFontFamily;
             _logger.LogDebug("Applied default font override: {FontFamily}", fontOverrides.DefaultFontFamily);
@@ -187,8 +184,9 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
 
     private AdaptiveHostConfig CloneHostConfig(AdaptiveHostConfig original)
     {
-        // Create a fresh copy by serializing and deserializing
-        var json = System.Text.Json.JsonSerializer.Serialize(original);
+        // Create a fresh copy by serializing and deserializing using Newtonsoft.Json
+        // to match the format expected by AdaptiveHostConfig.FromJson
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(original);
         var clone = AdaptiveHostConfig.FromJson(json);
         return clone ?? original;
     }

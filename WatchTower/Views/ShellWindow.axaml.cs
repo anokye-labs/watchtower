@@ -418,8 +418,6 @@ public partial class ShellWindow : AnimatableWindow
         if (_viewModel?.FrameSliceDefinition == null || _viewModel.FrameSourceSize == default)
         {
             System.Diagnostics.Debug.WriteLine("SetSplashSize: Frame not loaded yet, using fallback");
-            AnimatedWidth = FallbackWidth;
-            AnimatedHeight = FallbackHeight;
             return new Size(FallbackWidth, FallbackHeight);
         }
         
