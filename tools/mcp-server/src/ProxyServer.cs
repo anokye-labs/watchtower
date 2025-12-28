@@ -100,8 +100,7 @@ public class ProxyServer
 
         if (_pendingRequests.TryRemove(correlationId, out var tcs))
         {
-            tcs.SetException(new OperationCanceledException(reason));
-            return true;
+            return tcs.TrySetException(new OperationCanceledException(reason));
         }
         return false;
     }
@@ -123,11 +122,11 @@ public class ProxyServer
         }
 
         var keys = _pendingRequests.Keys.ToList();
-        foreach (var key in keys)
+        foreach (var key in keys.Where(k => _pendingRequests.ContainsKey(k)))
         {
             if (_pendingRequests.TryRemove(key, out var tcs))
             {
-                tcs.SetException(new OperationCanceledException(reason));
+                tcs.TrySetException(new OperationCanceledException(reason));
             }
         }
     }
