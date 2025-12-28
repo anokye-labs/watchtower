@@ -16,7 +16,10 @@ Creates semantic labels with Akan names for the Nsumankwahene Flow System (agent
 **Usage:**
 
 ```bash
-# From repository root
+# Preview what would be created (dry-run)
+./tools/create-labels.sh --dry-run
+
+# Actually create the labels
 ./tools/create-labels.sh
 ```
 

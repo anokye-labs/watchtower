@@ -61,7 +61,10 @@ The repository includes a script to create all agent signal labels:
 # Make sure gh CLI is installed and authenticated
 gh auth status
 
-# Run the label creation script
+# Preview what would be created (recommended first step)
+./tools/create-labels.sh --dry-run
+
+# Create the labels
 ./tools/create-labels.sh
 ```
 

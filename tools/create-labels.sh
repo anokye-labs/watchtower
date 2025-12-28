@@ -7,9 +7,16 @@
 # - Proper permissions to manage labels in the repository
 #
 # Usage:
-#   ./tools/create-labels.sh
+#   ./tools/create-labels.sh           # Create labels
+#   ./tools/create-labels.sh --dry-run # Show what would be created
 
 set -euo pipefail
+
+# Parse arguments
+DRY_RUN=false
+if [ "${1:-}" = "--dry-run" ]; then
+    DRY_RUN=true
+fi
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -17,6 +24,11 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+if [ "$DRY_RUN" = true ]; then
+    echo "DRY RUN MODE - No labels will be created"
+    echo ""
+fi
 
 echo "Creating semantic labels for agent signals..."
 echo ""
@@ -28,15 +40,22 @@ create_label() {
     local color="$3"
     
     echo -e "${BLUE}Creating label:${NC} ${name}"
-    if gh label create "$name" --description "$description" --color "$color" 2>/dev/null; then
-        echo -e "${GREEN}✓${NC} Label '${name}' created successfully"
+    echo -e "  Description: ${description}"
+    echo -e "  Color: #${color}"
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${YELLOW}[DRY RUN]${NC} Would execute: gh label create \"${name}\" --description \"${description}\" --color \"${color}\""
     else
-        # Check if it failed because the label already exists
-        if gh label list --json name --jq '.[].name' | grep -q "^${name}$"; then
-            echo -e "${YELLOW}⚠${NC} Label '${name}' already exists"
+        if gh label create "$name" --description "$description" --color "$color" 2>/dev/null; then
+            echo -e "${GREEN}✓${NC} Label '${name}' created successfully"
         else
-            echo -e "${RED}✗${NC} Failed to create label '${name}'"
-            return 1
+            # Check if it failed because the label already exists
+            if gh label list --json name --jq '.[].name' | grep -q "^${name}$"; then
+                echo -e "${YELLOW}⚠${NC} Label '${name}' already exists"
+            else
+                echo -e "${RED}✗${NC} Failed to create label '${name}'"
+                return 1
+            fi
         fi
     fi
     echo ""
@@ -79,7 +98,11 @@ create_label "nhwɛsoɔ-hia" \
     "5319E7"
 
 echo "=== Summary ==="
-echo -e "${GREEN}✓${NC} Label creation process completed"
+if [ "$DRY_RUN" = true ]; then
+    echo -e "${YELLOW}[DRY RUN]${NC} Label creation process completed (no changes made)"
+else
+    echo -e "${GREEN}✓${NC} Label creation process completed"
+fi
 echo ""
 echo "To view all labels, run:"
 echo "  gh label list"
