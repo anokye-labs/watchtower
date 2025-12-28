@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="WatchTower.Tests/WatchTower.Tests.csproj" />
   <Project Path="WatchTower/WatchTower.csproj" />
 </Solution>
