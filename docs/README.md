@@ -6,6 +6,7 @@ This directory contains technical documentation for the WatchTower application.
 
 | Document | Description |
 |----------|-------------|
+| [label-system.md](label-system.md) | GitHub label system with Akan names for agent workflow |
 | [game-controller-support.md](game-controller-support.md) | SDL2-based gamepad integration guide |
 | [splash-screen-startup.md](splash-screen-startup.md) | Startup flow and splash screen architecture |
 | [splash-screen-visual-guide.md](splash-screen-visual-guide.md) | Visual states and UI design for splash screen |
