@@ -122,7 +122,7 @@ public class ProxyServer
         }
 
         var keys = _pendingRequests.Keys.ToList();
-        foreach (var key in keys.Where(k => _pendingRequests.ContainsKey(k)))
+        foreach (var key in keys)
         {
             if (_pendingRequests.TryRemove(key, out var tcs))
             {
