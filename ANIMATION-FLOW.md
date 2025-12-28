@@ -13,7 +13,7 @@
 │ 2. CREATE SHELL WINDOW (Initial State)                         │
 │                                                                 │
 │    Screen Size: 1920x1080                                       │
-│    Window Size: 1344x756 (70% of screen)                       │
+│    Window Size: Frame-based (static components + min content)  │
 │    Position: Centered                                           │
 │    Content: SplashWindowViewModel                               │
 │                                                                 │
@@ -47,15 +47,12 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. ANIMATE EXPANSION (800ms)                                    │
+│ 5. ANIMATE EXPANSION (500ms)                                    │
 │                                                                 │
-│    Frame-by-frame (60 FPS):                                     │
+│    Uses Avalonia's Animation system:                            │
 │                                                                 │
-│    t=0ms:   Width=1344, Height=756, Pos=(288,162)             │
-│    t=200ms: Width=1488, Height=864, Pos=(216,108)             │
-│    t=400ms: Width=1632, Height=972, Pos=(144,54)              │
-│    t=600ms: Width=1776, Height=1024, Pos=(72,28)              │
-│    t=800ms: Width=1920, Height=1080, Pos=(0,0)                │
+│    t=0ms:   Splash size (frame-based)                          │
+│    t=500ms: Full-screen working area                           │
 │                                                                 │
 │    Easing: Cubic ease-out                                       │
 │    Frame image stretches uniformly                              │
@@ -100,11 +97,11 @@
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| Initial Size | 70% of screen | Configurable via `SplashSizeRatio` |
-| Duration | 800ms | Defined in `AnimationDurationMs` |
-| Frame Rate | ~60 FPS | 16ms per frame via DispatcherTimer |
+| Initial Size | Frame-based | Calculated from frame static components + min content area |
+| Duration | 500ms | Hardcoded in ShellWindow.axaml.cs |
+| Animation System | Avalonia Animation | Uses KeyFrame animations with RunAsync |
 | Easing | Cubic ease-out | Natural deceleration at end |
-| Final State | Maximized | Full-screen, borderless |
+| Final State | Full-screen | Fills screen working area |
 
 ## Frame Stretching
 
@@ -140,13 +137,13 @@ App.axaml.cs
 
 ShellWindow.axaml.cs
   ├─ SetSplashSize()
-  │   └─ Calculate 70% size, center position
+  │   └─ Calculate frame-based size, center position
   │
   └─ AnimateExpansionAsync()
-      ├─ DispatcherTimer (16ms interval)
-      ├─ CubicEaseOut(progress)
-      ├─ Interpolate Width, Height, Position
-      └─ WindowState.Maximized
+      ├─ Avalonia Animation system
+      ├─ CubicEaseOut easing
+      ├─ Animate Width, Height, Position (500ms)
+      └─ Fill screen working area
 
 ShellWindowViewModel.cs
   └─ TransitionToMainContent(mainViewModel)
@@ -155,11 +152,11 @@ ShellWindowViewModel.cs
 
 ## Testing Checklist
 
-- [ ] Window opens at splash size (centered, 70% of screen)
+- [ ] Window opens at frame-based splash size (centered)
 - [ ] Frame is visible around splash content
 - [ ] Splash shows loading animation and status
 - [ ] After ~3-5 seconds, checkmark appears
-- [ ] Window smoothly expands to full-screen over ~1 second
+- [ ] Window smoothly expands to full-screen over 500ms
 - [ ] Frame stretches with window (no gaps)
 - [ ] Main content appears after animation
 - [ ] No second window is created

@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
@@ -184,27 +182,9 @@ public partial class ShellWindow : AnimatableWindow
         }
     }
     
-    /// <summary>
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        // Unsubscribe from previous view model
-        if (_viewModel != null)
-        {
-            _viewModel.PropertyChanged -= OnShellViewModelPropertyChanged;
-        }
-
         _viewModel = DataContext as ShellWindowViewModel;
-
-        // Subscribe to new view model
-        if (_viewModel != null)
-        {
-            _viewModel.PropertyChanged += OnShellViewModelPropertyChanged;
-        }
-    }
-
-    private void OnShellViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // ShellWindow no longer handles overlay animations - MainWindow handles its own
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)

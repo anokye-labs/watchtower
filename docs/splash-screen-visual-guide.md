@@ -195,16 +195,15 @@
 
 ## Configuration
 
-### Window Sizing & Animation
+### Window Sizing
 
-The splash window size and animation duration can be configured in `appsettings.json`:
+The splash window size can be configured in `appsettings.json`:
 
 ```json
 {
   "Startup": {
     "MinContentWidth": 400,
-    "MinContentHeight": 300,
-    "AnimationDurationMs": 1000
+    "MinContentHeight": 300
   }
 }
 ```
@@ -251,25 +250,8 @@ Where:
 With default config:
 - Frame source: 6880×3800 pixels
 - Frame slices: Col0=1330, Col2=1680, Col4=1320, Row0=955, Row2=1015, Row4=940
-- FrameScale: 0.25
+- FrameScale: 0.20
 - DPI: 1.0
-
-**Animation Behavior:**
-1. Window opens at frame-based size (static components + min content area) centered on primary screen
-2. Splash screen displays with loading animation
-3. After startup completes, window animates to fullscreen over configured duration (default 1000ms)
-4. Uses cubic ease-out easing for smooth deceleration
-
-**Ctrl+F5 Replay:**
-- Contracts from fullscreen to frame-based splash size (1000ms)
-- Pauses for 200ms
-- Expands back to fullscreen (1000ms)
-
-**Monitor Switch:**
-- Zooms down to frame-based splash size on new monitor (250ms)
-- Recalculates frame size for new monitor's DPI
-- Zooms back up to fullscreen on new monitor (250ms)
-- Properly handles different DPI on different monitors
 
 **Size Constraints:**
 - Splash window is clamped to maximum 90% of screen size
