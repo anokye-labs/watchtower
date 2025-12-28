@@ -1,0 +1,69 @@
+name: "🏗️ Tech Design - Nhyehyɛe (Planning)"
+description: "Document architectural decisions before implementation"
+labels: ["Tech Design Needed", "nnipa-gyinae-hia"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Nhyehyɛe (Technical Design)
+        *English: Document design decisions before implementation*
+        
+        This template is for complex work requiring architectural planning.
+        The issue will be marked as requiring human review before agent work begins.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem Statement"
+      description: "What problem does this design solve?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed Solution"
+      description: "High-level description of the approach"
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture
+    attributes:
+      label: "Architecture Impact"
+      description: "How does this affect MVVM layers? Which services/ViewModels/Views change?"
+      placeholder: |
+        **Services affected:**
+        - IExampleService
+        
+        **ViewModels affected:**
+        - MainWindowViewModel
+        
+        **Views affected:**
+        - MainWindow.axaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: "Testing Strategy"
+      description: "How will this be tested?"
+      placeholder: |
+        - Unit tests for services
+        - ViewModel tests with mocked services
+        - Integration tests if needed
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "What other approaches were evaluated?"
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: "Risks & Mitigations"
+      description: "What could go wrong and how do we address it?"
