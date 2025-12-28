@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WatchTower.Tools.McpServer.Models;
@@ -92,6 +93,11 @@ public class ProxyServer
     /// <returns>True if the request was found and canceled; otherwise, false.</returns>
     public bool CancelPendingRequest(long correlationId, string reason)
     {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException("Cancellation reason cannot be null or empty.", nameof(reason));
+        }
+
         if (_pendingRequests.TryRemove(correlationId, out var tcs))
         {
             tcs.SetException(new OperationCanceledException(reason));
@@ -111,9 +117,15 @@ public class ProxyServer
     /// <param name="reason">The reason for clearing all requests.</param>
     public void ClearPendingRequests(string reason)
     {
-        foreach (var kvp in _pendingRequests)
+        if (string.IsNullOrWhiteSpace(reason))
         {
-            if (_pendingRequests.TryRemove(kvp.Key, out var tcs))
+            throw new ArgumentException("Cancellation reason cannot be null or empty.", nameof(reason));
+        }
+
+        var keys = _pendingRequests.Keys.ToList();
+        foreach (var key in keys)
+        {
+            if (_pendingRequests.TryRemove(key, out var tcs))
             {
                 tcs.SetException(new OperationCanceledException(reason));
             }
