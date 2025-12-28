@@ -69,7 +69,7 @@ public static class ServiceCollectionExtensions
         var configuration = new McpHandlerConfiguration
         {
             ApplicationName = "AvaloniaApp",
-            ProxyEndpoint = "tcp://localhost:5000"
+            ProxyEndpoint = "tcp://localhost:5100"
         };
 
         configureOptions?.Invoke(configuration);

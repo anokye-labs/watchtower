@@ -135,25 +135,29 @@ public class McpHandler : IMcpHandler
         _logger?.LogInformation("Sent registration message with {ToolCount} tools", _tools.Count);
     }
 
-    private async void OnMessageReceived(object? sender, string message)
+    private void OnMessageReceived(object? sender, string message)
     {
-        try
+        // Fire and forget pattern to avoid async void
+        _ = Task.Run(async () =>
         {
-            _logger?.LogDebug("Received message: {Message}", message);
-
-            // Parse message and handle tool invocation
-            var invocation = JsonSerializer.Deserialize<McpToolInvocation>(message);
-            if (invocation != null)
+            try
             {
-                var result = await ExecuteToolAsync(invocation);
-                var responseJson = JsonSerializer.Serialize(result);
-                await _transportClient!.SendMessageAsync(responseJson);
+                _logger?.LogDebug("Received message: {Message}", message);
+
+                // Parse message and handle tool invocation
+                var invocation = JsonSerializer.Deserialize<McpToolInvocation>(message);
+                if (invocation != null)
+                {
+                    var result = await ExecuteToolAsync(invocation);
+                    var responseJson = JsonSerializer.Serialize(result);
+                    await _transportClient!.SendMessageAsync(responseJson);
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error handling received message");
-        }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error handling received message");
+            }
+        });
     }
 
     private void OnTransportConnectionStateChanged(object? sender, bool isConnected)
@@ -166,7 +170,18 @@ public class McpHandler : IMcpHandler
     {
         if (_disposed) return;
 
-        DisconnectAsync().GetAwaiter().GetResult();
+        // Dispose synchronously - disconnect will be handled by finalizer or explicit DisposeAsync call
+        _transportClient?.Dispose();
+        _disposed = true;
+
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+
+        await DisconnectAsync();
         _transportClient?.Dispose();
         _disposed = true;
 

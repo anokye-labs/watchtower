@@ -56,7 +56,7 @@ public class StartupOrchestrator : IStartupOrchestrator
             services.AddMcpHandler(config =>
             {
                 config.ApplicationName = "WatchTower";
-                config.ProxyEndpoint = "tcp://localhost:5000";
+                config.ProxyEndpoint = "tcp://localhost:5100";
                 config.AutoConnect = true;
                 config.HeadlessMode = false;
             }, registerStandardTools: true);

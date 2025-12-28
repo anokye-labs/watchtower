@@ -159,7 +159,23 @@ public class TcpTransportClient : ITransportClient
     {
         if (_disposed) return;
 
-        DisconnectAsync().GetAwaiter().GetResult();
+        // Cancel the receive task
+        _receiveCts?.Cancel();
+        
+        // Clean up synchronously
+        _receiveCts?.Dispose();
+        _stream?.Dispose();
+        _client?.Dispose();
+        _disposed = true;
+
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+
+        await DisconnectAsync();
         _receiveCts?.Dispose();
         _stream?.Dispose();
         _client?.Dispose();

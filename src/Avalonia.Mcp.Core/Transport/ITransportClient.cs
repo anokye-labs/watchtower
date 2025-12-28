@@ -3,7 +3,7 @@ namespace Avalonia.Mcp.Core.Transport;
 /// <summary>
 /// Interface for transport clients that connect to the MCP proxy.
 /// </summary>
-public interface ITransportClient : IDisposable
+public interface ITransportClient : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Gets whether the client is connected.

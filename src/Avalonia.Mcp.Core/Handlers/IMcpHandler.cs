@@ -6,7 +6,7 @@ namespace Avalonia.Mcp.Core.Handlers;
 /// Interface for the embedded MCP handler in Avalonia applications.
 /// Handles registration of tools and execution of tool invocations.
 /// </summary>
-public interface IMcpHandler : IDisposable
+public interface IMcpHandler : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Gets the application name.

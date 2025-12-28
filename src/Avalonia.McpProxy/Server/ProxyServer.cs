@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -21,7 +22,7 @@ public class ProxyServer : IDisposable
     private CancellationTokenSource? _cts;
     private Task? _listenerTask;
     private Task? _stdinTask;
-    private readonly Dictionary<string, TcpClient> _appConnections = new();
+    private readonly ConcurrentDictionary<string, TcpClient> _appConnections = new();
     private bool _disposed;
 
     public ProxyServer(ProxyConfiguration config, AppRegistry registry, ILogger<ProxyServer> logger)
@@ -155,7 +156,7 @@ public class ProxyServer : IDisposable
         finally
         {
             _registry.MarkDisconnected(connectionId);
-            _appConnections.Remove(connectionId);
+            _appConnections.TryRemove(connectionId, out _);
             client.Close();
         }
     }
@@ -221,12 +222,13 @@ public class ProxyServer : IDisposable
 
     private async Task HandleAgentMessageAsync(string message, CancellationToken cancellationToken)
     {
+        JsonElement root = default;
         try
         {
             _logger.LogDebug("Received agent message: {Message}", message);
 
             var json = JsonDocument.Parse(message);
-            var root = json.RootElement;
+            root = json.RootElement;
 
             // MCP protocol: handle list tools, execute tool, etc.
             if (root.TryGetProperty("method", out var methodElement))
@@ -246,7 +248,8 @@ public class ProxyServer : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling agent message");
-            await SendErrorToAgentAsync("Error processing request", cancellationToken);
+            var requestId = root.TryGetProperty("id", out var idEl) ? (int?)idEl.GetInt32() : null;
+            await SendErrorToAgentAsync("Error processing request", requestId, cancellationToken);
         }
     }
 
@@ -281,12 +284,14 @@ public class ProxyServer : IDisposable
 
     private async Task HandleCallToolAsync(JsonElement request, CancellationToken cancellationToken)
     {
+        var requestId = request.TryGetProperty("id", out var idEl) ? (int?)idEl.GetInt32() : null;
+        
         try
         {
             if (!request.TryGetProperty("params", out var paramsEl) ||
                 !paramsEl.TryGetProperty("name", out var nameEl))
             {
-                await SendErrorToAgentAsync("Missing tool name", cancellationToken);
+                await SendErrorToAgentAsync("Missing tool name", requestId, cancellationToken);
                 return;
             }
 
@@ -295,7 +300,7 @@ public class ProxyServer : IDisposable
 
             if (app == null)
             {
-                await SendErrorToAgentAsync($"Tool not found: {toolName}", cancellationToken);
+                await SendErrorToAgentAsync($"Tool not found: {toolName}", requestId, cancellationToken);
                 return;
             }
 
@@ -304,7 +309,7 @@ public class ProxyServer : IDisposable
             var response = new
             {
                 jsonrpc = "2.0",
-                id = request.TryGetProperty("id", out var idEl) ? idEl.GetInt32() : 0,
+                id = requestId ?? 0,
                 result = new
                 {
                     content = new[]
@@ -319,6 +324,7 @@ public class ProxyServer : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling call tool");
+            await SendErrorToAgentAsync($"Error executing tool: {ex.Message}", requestId, cancellationToken);
         }
     }
 
@@ -328,11 +334,12 @@ public class ProxyServer : IDisposable
         await Console.Out.FlushAsync(cancellationToken);
     }
 
-    private async Task SendErrorToAgentAsync(string error, CancellationToken cancellationToken)
+    private async Task SendErrorToAgentAsync(string error, int? requestId, CancellationToken cancellationToken)
     {
         var response = new
         {
             jsonrpc = "2.0",
+            id = requestId,
             error = new { code = -32000, message = error }
         };
 
