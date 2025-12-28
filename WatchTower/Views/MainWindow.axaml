@@ -30,14 +30,54 @@
                     Background="Transparent"
                     CornerRadius="8"
                     Padding="10">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
-                             VerticalScrollBarVisibility="Auto">
-                    <ContentControl Content="{Binding RenderedCardControl}"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch"
-                                   Background="Transparent"
-                                   Name="CardContainer" />
-                </ScrollViewer>
+                <Panel>
+                    <!-- Card Content -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                                 VerticalScrollBarVisibility="Auto"
+                                 IsVisible="{Binding !HasRenderError}">
+                        <ContentControl Content="{Binding RenderedCardControl}"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch"
+                                       Background="Transparent"
+                                       Name="CardContainer" />
+                    </ScrollViewer>
+                    
+                    <!-- Error Display -->
+                    <Border Background="#1AFF4444"
+                            BorderBrush="#88FF4444"
+                            BorderThickness="2"
+                            CornerRadius="8"
+                            Padding="24"
+                            IsVisible="{Binding HasRenderError}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MaxWidth="500">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="⚠️ Card Rendering Error"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="#FFCCCC"
+                                       HorizontalAlignment="Center" />
+                            
+                            <TextBlock Text="{Binding RenderError}"
+                                       FontSize="14"
+                                       Foreground="#FFDDDD"
+                                       TextWrapping="Wrap"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center" />
+                            
+                            <Button Content="Retry"
+                                    Command="{Binding RetryRenderCommand}"
+                                    HorizontalAlignment="Center"
+                                    Padding="16,8"
+                                    MinWidth="120"
+                                    Background="{DynamicResource SystemAccentColor}"
+                                    CornerRadius="4"
+                                    FontSize="14"
+                                    FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </Panel>
             </Border>
         </Grid>
         

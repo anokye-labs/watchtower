@@ -31,6 +31,7 @@ public class MainWindowViewModel : ViewModelBase
     private TypedEventHandler<RenderedAdaptiveCard, AdaptiveActionEventArgs>? _cardActionHandler;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
+    private string? _renderError;
 
     public string StatusText
     {
@@ -90,6 +91,26 @@ public class MainWindowViewModel : ViewModelBase
         get => _renderedCardControl;
         private set => SetProperty(ref _renderedCardControl, value);
     }
+
+    /// <summary>
+    /// Gets the error message if card rendering failed, or null if no error.
+    /// </summary>
+    public string? RenderError
+    {
+        get => _renderError;
+        private set
+        {
+            if (SetProperty(ref _renderError, value))
+            {
+                OnPropertyChanged(nameof(HasRenderError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether there is a render error.
+    /// </summary>
+    public bool HasRenderError => !string.IsNullOrEmpty(RenderError);
 
     /// <summary>
     /// Gets the current theme mode display name.
@@ -187,6 +208,11 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     public ICommand ToggleThemeCommand { get; }
 
+    /// <summary>
+    /// Command to retry rendering the card after a failure.
+    /// </summary>
+    public ICommand RetryRenderCommand { get; }
+
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
         IAdaptiveCardService cardService,
@@ -221,6 +247,7 @@ public class MainWindowViewModel : ViewModelBase
         SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
         ToggleThemeCommand = new RelayCommand(ToggleTheme);
+        RetryRenderCommand = new RelayCommand(RetryRender);
 
         UpdateStatus();
         
@@ -255,6 +282,7 @@ public class MainWindowViewModel : ViewModelBase
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = null;
             return;
         }
 
@@ -263,6 +291,7 @@ public class MainWindowViewModel : ViewModelBase
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = "Unable to render card: Host configuration is not available.";
             return;
         }
 
@@ -293,6 +322,7 @@ public class MainWindowViewModel : ViewModelBase
             _currentRenderedCard = renderedCard;
 
             RenderedCardControl = renderedCard.Control;
+            RenderError = null; // Clear any previous error
             _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);
             
             // Log any warnings
@@ -305,6 +335,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Failed to render adaptive card");
             RenderedCardControl = null;
+            RenderError = $"Failed to render card: {ex.Message}";
         }
     }
 
@@ -425,6 +456,12 @@ public class MainWindowViewModel : ViewModelBase
         CurrentInputMode = CurrentInputMode == InputOverlayMode.EventLog
             ? InputOverlayMode.None
             : InputOverlayMode.EventLog;
+    }
+
+    private void RetryRender()
+    {
+        _logger.LogInformation("Retrying card render after error");
+        RenderCard();
     }
 
     #region Card Action Handlers
