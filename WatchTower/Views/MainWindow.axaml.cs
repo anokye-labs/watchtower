@@ -77,15 +77,6 @@ public partial class MainWindow : UserControl
         _eventLogPanel = this.FindControl<Border>("EventLogPanel");
         _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
         
-        // Log warning if animation controls not found
-        if (_overlayPanel == null || _overlayTransform == null)
-        {
-            System.Diagnostics.Debug.WriteLine("Warning: Input overlay animation controls not found in XAML");
-        }
-        if (_eventLogPanel == null || _eventLogTransform == null)
-        {
-            System.Diagnostics.Debug.WriteLine("Warning: Event log animation controls not found in XAML");
-        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -93,17 +84,6 @@ public partial class MainWindow : UserControl
         if (sender is not MainWindowViewModel vm)
         {
             return;
-        }
-
-        // Debug: Log when HostConfig changes
-        if (e.PropertyName == nameof(MainWindowViewModel.HostConfig))
-        {
-            System.Diagnostics.Debug.WriteLine($"HostConfig changed in ViewModel: {vm.HostConfig != null}");
-            if (vm.HostConfig != null)
-            {
-                var bgColor = vm.HostConfig.ContainerStyles?.Default?.BackgroundColor ?? "null";
-                System.Diagnostics.Debug.WriteLine($"HostConfig background: {bgColor}");
-            }
         }
 
         // Handle input overlay (Rich Text / Voice) - slides from bottom
