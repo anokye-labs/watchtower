@@ -337,7 +337,7 @@ public partial class ShellWindow : AnimatableWindow
 
     /// <summary>
     /// Sets the initial splash window size based on frame static components plus minimum content area.
-    /// Properly handles DPI scaling by converting physical pixels to logical pixels.
+    /// Window size is in logical pixels; position is in physical pixels (screen coordinates).
     /// </summary>
     private void SetSplashSize()
     {
@@ -383,6 +383,9 @@ public partial class ShellWindow : AnimatableWindow
             Width = FallbackWidth;
             Height = FallbackHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            // Initialize animated properties to 0,0 for position (will be set by CenterScreen)
+            AnimatedX = 0;
+            AnimatedY = 0;
             AnimatedWidth = FallbackWidth;
             AnimatedHeight = FallbackHeight;
         }
@@ -535,7 +538,7 @@ public partial class ShellWindow : AnimatableWindow
     /// <summary>
     /// Replays the splash animation: contracts to splash size, pauses, then expands back.
     /// Triggered by Ctrl+F5. Properly handles DPI scaling.
-    /// Uses Avalonia's Transitions system for smooth animation.
+    /// Uses Avalonia's Animation API with KeyFrame animations.
     /// </summary>
     private async Task ReplaySplashAnimationAsync()
     {
@@ -652,9 +655,9 @@ public partial class ShellWindow : AnimatableWindow
     }
 
     /// <summary>
-    /// Handles monitor switch by zooming down and back up on the new screen.
+    /// Handles monitor switch by smoothly resizing to the new screen's working area.
     /// Properly handles DPI scaling.
-    /// Uses Avalonia's Transitions system for smooth animation with faster 200ms timing.
+    /// Uses Avalonia's Animation API with 300ms timing.
     /// </summary>
     private async Task OnMonitorSwitchedAsync(Screen newScreen)
     {
