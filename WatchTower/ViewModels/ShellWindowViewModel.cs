@@ -468,9 +468,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         _splashViewModel.Cleanup();
         
         // Dispose MainWindowViewModel if it was created
-        if (_mainViewModel is IDisposable disposableViewModel)
-        {
-            disposableViewModel.Dispose();
-        }
+        _mainViewModel?.Dispose();
     }
 }
