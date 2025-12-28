@@ -426,10 +426,6 @@ public partial class ShellWindow : AnimatableWindow
         var totalWidth = frameLogicalWidth + padding.Left + padding.Right + _minContentWidth;
         var totalHeight = frameLogicalHeight + padding.Top + padding.Bottom + _minContentHeight;
         
-        System.Diagnostics.Debug.WriteLine($"SetSplashSize: Frame-based size calculated: {totalWidth:F0}x{totalHeight:F0} " +
-            $"(frame: {frameLogicalWidth:F0}x{frameLogicalHeight:F0}, padding: {padding.Left + padding.Right}x{padding.Top + padding.Bottom}, " +
-            $"content: {_minContentWidth}x{_minContentHeight}, scale: {frameScale}, dpi: {renderScale:F2})");
-        
         return new Size(totalWidth, totalHeight);
     }
 
@@ -508,9 +504,6 @@ public partial class ShellWindow : AnimatableWindow
             var targetY = workingArea.Y / scaling;
             var targetWidth = workingArea.Width / scaling;
             var targetHeight = workingArea.Height / scaling;
-
-            System.Diagnostics.Debug.WriteLine($"AnimateExpansion: Starting from {startX},{startY} {startWidth:F0}x{startHeight:F0}");
-            System.Diagnostics.Debug.WriteLine($"AnimateExpansion: Target {targetX},{targetY} {targetWidth:F0}x{targetHeight:F0}");
 
             // Run all animations in parallel
             await Task.WhenAll(
