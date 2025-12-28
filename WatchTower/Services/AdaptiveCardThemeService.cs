@@ -23,6 +23,7 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
     private AdaptiveHostConfig? _darkHostConfig;
     private AdaptiveHostConfig? _lightHostConfig;
     private AdaptiveHostConfig? _currentHostConfig;
+    private bool _disposed;
 
     private const string DarkThemePath = "avares://WatchTower/Assets/Themes/ancestral-futurism-dark.json";
     private const string LightThemePath = "avares://WatchTower/Assets/Themes/ancestral-futurism-light.json";
@@ -257,5 +258,19 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
         };
         config.FontTypes.Default.FontFamily = "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif";
         return config;
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        // Unsubscribe from system theme changes
+        if (Application.Current != null)
+        {
+            Application.Current.ActualThemeVariantChanged -= OnSystemThemeChanged;
+        }
+
+        _disposed = true;
     }
 }

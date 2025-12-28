@@ -7,7 +7,7 @@ namespace WatchTower.Services;
 /// <summary>
 /// Service for managing adaptive card theming with support for dark/light/system themes.
 /// </summary>
-public interface IAdaptiveCardThemeService
+public interface IAdaptiveCardThemeService : IDisposable
 {
     /// <summary>
     /// Gets the current AdaptiveHostConfig based on the active theme.
