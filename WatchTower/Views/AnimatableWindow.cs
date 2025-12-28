@@ -99,17 +99,14 @@ public class AnimatableWindow : Window
             var scaling = GetCurrentScaling();
             var physicalX = (int)(AnimatedX * scaling);
             var physicalY = (int)(AnimatedY * scaling);
-            System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedX/Y changed to logical ({AnimatedX:F0},{AnimatedY:F0}) -> physical ({physicalX},{physicalY})");
             Position = new PixelPoint(physicalX, physicalY);
         }
         else if (change.Property == AnimatedWidthProperty)
         {
-            System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedWidth changed to {AnimatedWidth:F0} (from {change.OldValue})");
             Width = AnimatedWidth;
         }
         else if (change.Property == AnimatedHeightProperty)
         {
-            System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedHeight changed to {AnimatedHeight:F0} (from {change.OldValue})");
             Height = AnimatedHeight;
         }
     }
