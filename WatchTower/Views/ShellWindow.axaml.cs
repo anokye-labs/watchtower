@@ -337,7 +337,7 @@ public partial class ShellWindow : AnimatableWindow
 
     /// <summary>
     /// Sets the initial splash window size based on frame static components plus minimum content area.
-    /// Window size is in logical pixels; position is in physical pixels (screen coordinates).
+    /// All values use logical coordinates/pixels consistently.
     /// </summary>
     private void SetSplashSize()
     {
@@ -347,7 +347,7 @@ public partial class ShellWindow : AnimatableWindow
             var workingArea = screen.WorkingArea;
             var scaling = screen.Scaling;
             
-            // Calculate frame-based minimum size
+            // Calculate frame-based minimum size (logical pixels)
             var frameSize = CalculateFrameBasedSplashSize(scaling);
             var logicalWidth = frameSize.Width;
             var logicalHeight = frameSize.Height;
@@ -359,21 +359,20 @@ public partial class ShellWindow : AnimatableWindow
             logicalWidth = Math.Min(logicalWidth, maxLogicalWidth * MaxScreenUsageRatio);
             logicalHeight = Math.Min(logicalHeight, maxLogicalHeight * MaxScreenUsageRatio);
             
-            // Calculate physical dimensions for positioning
-            var physicalWidth = logicalWidth * scaling;
-            var physicalHeight = logicalHeight * scaling;
+            // Calculate centered position in logical coordinates
+            var logicalScreenX = workingArea.X / scaling;
+            var logicalScreenY = workingArea.Y / scaling;
+            var logicalScreenWidth = workingArea.Width / scaling;
+            var logicalScreenHeight = workingArea.Height / scaling;
+            var logicalLeft = logicalScreenX + (logicalScreenWidth - logicalWidth) / 2;
+            var logicalTop = logicalScreenY + (logicalScreenHeight - logicalHeight) / 2;
             
-            // Center on the target screen (accounting for screen offset)
-            var left = workingArea.X + (int)((workingArea.Width - physicalWidth) / 2);
-            var top = workingArea.Y + (int)((workingArea.Height - physicalHeight) / 2);
-            
-            // Set both platform properties AND animated properties directly
-            // No transitions yet, so this happens instantly
+            // Set both platform properties AND animated properties
+            // AnimatableWindow converts logical to physical at the boundary
             Width = logicalWidth;
             Height = logicalHeight;
-            Position = new PixelPoint(left, top);
-            AnimatedX = left;
-            AnimatedY = top;
+            AnimatedX = logicalLeft;
+            AnimatedY = logicalTop;
             AnimatedWidth = logicalWidth;
             AnimatedHeight = logicalHeight;
         }
@@ -383,7 +382,6 @@ public partial class ShellWindow : AnimatableWindow
             Width = FallbackWidth;
             Height = FallbackHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            // Initialize animated properties to 0,0 for position (will be set by CenterScreen)
             AnimatedX = 0;
             AnimatedY = 0;
             AnimatedWidth = FallbackWidth;
@@ -469,7 +467,7 @@ public partial class ShellWindow : AnimatableWindow
 
     /// <summary>
     /// Animates the window expansion from splash size to full-screen.
-    /// Properly handles DPI scaling by converting physical pixels to logical pixels.
+    /// All values use logical coordinates/pixels consistently.
     /// Uses Avalonia's Animation system with KeyFrame animations.
     /// </summary>
     public async Task AnimateExpansionAsync()
@@ -499,15 +497,15 @@ public partial class ShellWindow : AnimatableWindow
             var workingArea = screen.WorkingArea;
             var scaling = screen.Scaling;
 
-            // Get starting values
+            // Get starting values (already in logical coordinates)
             var startX = AnimatedX;
             var startY = AnimatedY;
             var startWidth = AnimatedWidth;
             var startHeight = AnimatedHeight;
             
-            // Calculate target values
-            var targetX = (double)workingArea.X;
-            var targetY = (double)workingArea.Y;
+            // Calculate target values in logical coordinates
+            var targetX = workingArea.X / scaling;
+            var targetY = workingArea.Y / scaling;
             var targetWidth = workingArea.Width / scaling;
             var targetHeight = workingArea.Height / scaling;
 
@@ -537,7 +535,7 @@ public partial class ShellWindow : AnimatableWindow
 
     /// <summary>
     /// Replays the splash animation: contracts to splash size, pauses, then expands back.
-    /// Triggered by Ctrl+F5. Properly handles DPI scaling.
+    /// Triggered by Ctrl+F5. All values use logical coordinates/pixels consistently.
     /// Uses Avalonia's Animation API with KeyFrame animations.
     /// </summary>
     private async Task ReplaySplashAnimationAsync()
@@ -559,16 +557,18 @@ public partial class ShellWindow : AnimatableWindow
             var workingArea = screen.WorkingArea;
             var scaling = screen.Scaling;
             
-            // Calculate splash size based on frame (centered) in logical pixels
+            // Calculate splash size and position in logical coordinates
             var frameSize = CalculateFrameBasedSplashSize(scaling);
             var splashWidth = frameSize.Width;
             var splashHeight = frameSize.Height;
-            var physicalSplashWidth = splashWidth * scaling;
-            var physicalSplashHeight = splashHeight * scaling;
-            var splashLeft = (double)(workingArea.X + (int)((workingArea.Width - physicalSplashWidth) / 2));
-            var splashTop = (double)(workingArea.Y + (int)((workingArea.Height - physicalSplashHeight) / 2));
+            var logicalScreenX = workingArea.X / scaling;
+            var logicalScreenY = workingArea.Y / scaling;
+            var logicalScreenWidth = workingArea.Width / scaling;
+            var logicalScreenHeight = workingArea.Height / scaling;
+            var splashLeft = logicalScreenX + (logicalScreenWidth - splashWidth) / 2;
+            var splashTop = logicalScreenY + (logicalScreenHeight - splashHeight) / 2;
 
-            // Get current values
+            // Get current values (already in logical coordinates)
             var currentX = AnimatedX;
             var currentY = AnimatedY;
             var currentWidth = AnimatedWidth;
@@ -585,11 +585,11 @@ public partial class ShellWindow : AnimatableWindow
             // Phase 2: Brief pause at splash size (100ms)
             await Task.Delay(100);
 
-            // Phase 3: Expand back to working area (500ms)
-            var targetX = (double)workingArea.X;
-            var targetY = (double)workingArea.Y;
-            var targetWidth = workingArea.Width / scaling;
-            var targetHeight = workingArea.Height / scaling;
+            // Phase 3: Expand back to working area (500ms) - all in logical coordinates
+            var targetX = logicalScreenX;
+            var targetY = logicalScreenY;
+            var targetWidth = logicalScreenWidth;
+            var targetHeight = logicalScreenHeight;
             
             await Task.WhenAll(
                 CreateAnimation(AnimatedXProperty, splashLeft, targetX, 500).RunAsync(this),
@@ -656,7 +656,7 @@ public partial class ShellWindow : AnimatableWindow
 
     /// <summary>
     /// Handles monitor switch by smoothly resizing to the new screen's working area.
-    /// Properly handles DPI scaling.
+    /// All values use logical coordinates/pixels consistently.
     /// Uses Avalonia's Animation API with 300ms timing.
     /// </summary>
     private async Task OnMonitorSwitchedAsync(Screen newScreen)
@@ -668,18 +668,18 @@ public partial class ShellWindow : AnimatableWindow
         var workingArea = newScreen.WorkingArea;
         var scaling = newScreen.Scaling;
         
-        // Sync animated properties from actual window state
+        // Sync animated properties from actual window state (converts to logical coordinates)
         SyncFromWindowState();
         
-        // Get current values
+        // Get current values (already in logical coordinates)
         var currentX = AnimatedX;
         var currentY = AnimatedY;
         var currentWidth = AnimatedWidth;
         var currentHeight = AnimatedHeight;
 
-        // Calculate target position and size for new screen
-        var targetX = (double)workingArea.X;
-        var targetY = (double)workingArea.Y;
+        // Calculate target position and size in logical coordinates
+        var targetX = workingArea.X / scaling;
+        var targetY = workingArea.Y / scaling;
         var targetWidth = workingArea.Width / scaling;
         var targetHeight = workingArea.Height / scaling;
         

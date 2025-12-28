@@ -7,12 +7,16 @@ namespace WatchTower.Views;
 /// Custom Window base class with animatable proxy properties for window position and size.
 /// Provides StyledProperty definitions that integrate with Avalonia's animation system,
 /// syncing changes to the platform Window properties.
+/// 
+/// All animated properties use logical coordinates/pixels consistently:
+/// - AnimatedX/Y: logical coordinates, converted to physical pixels at the boundary
+/// - AnimatedWidth/Height: logical pixels, synced directly to Window.Width/Height
 /// </summary>
 public class AnimatableWindow : Window
 {
     /// <summary>
-    /// Defines the AnimatedX property (window X position coordinate).
-    /// Values are in logical coordinates and converted to physical pixels when synced to Window.Position.
+    /// Defines the AnimatedX property (window X position in logical coordinates).
+    /// Converted to physical pixels when synced to Window.Position.
     /// </summary>
     public static readonly StyledProperty<double> AnimatedXProperty =
         AvaloniaProperty.Register<AnimatableWindow, double>(
@@ -20,7 +24,7 @@ public class AnimatableWindow : Window
             defaultValue: 0);
 
     /// <summary>
-    /// Gets or sets the animated X position. Changes are synced to Window.Position.
+    /// Gets or sets the animated X position in logical coordinates.
     /// </summary>
     public double AnimatedX
     {
@@ -29,8 +33,8 @@ public class AnimatableWindow : Window
     }
 
     /// <summary>
-    /// Defines the AnimatedY property (window Y position coordinate).
-    /// Values are in logical coordinates and converted to physical pixels when synced to Window.Position.
+    /// Defines the AnimatedY property (window Y position in logical coordinates).
+    /// Converted to physical pixels when synced to Window.Position.
     /// </summary>
     public static readonly StyledProperty<double> AnimatedYProperty =
         AvaloniaProperty.Register<AnimatableWindow, double>(
@@ -38,7 +42,7 @@ public class AnimatableWindow : Window
             defaultValue: 0);
 
     /// <summary>
-    /// Gets or sets the animated Y position. Changes are synced to Window.Position.
+    /// Gets or sets the animated Y position in logical coordinates.
     /// </summary>
     public double AnimatedY
     {
@@ -55,7 +59,7 @@ public class AnimatableWindow : Window
             defaultValue: 800);
 
     /// <summary>
-    /// Gets or sets the animated width. Changes are synced to Window.Width.
+    /// Gets or sets the animated width in logical pixels.
     /// </summary>
     public double AnimatedWidth
     {
@@ -72,7 +76,7 @@ public class AnimatableWindow : Window
             defaultValue: 600);
 
     /// <summary>
-    /// Gets or sets the animated height. Changes are synced to Window.Height.
+    /// Gets or sets the animated height in logical pixels.
     /// </summary>
     public double AnimatedHeight
     {
@@ -83,6 +87,7 @@ public class AnimatableWindow : Window
     /// <summary>
     /// Syncs animated property values to platform window properties.
     /// Called automatically when animated properties change.
+    /// Converts logical coordinates to physical pixels for Window.Position.
     /// </summary>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -90,21 +95,20 @@ public class AnimatableWindow : Window
 
         if (change.Property == AnimatedXProperty || change.Property == AnimatedYProperty)
         {
-            // Sync AnimatedX/AnimatedY to Window.Position
-            var x = (int)AnimatedX;
-            var y = (int)AnimatedY;
-            System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedX/Y changed to {x},{y} (from {change.OldValue})");
-            Position = new PixelPoint(x, y);
+            // Convert logical coordinates to physical pixels for Window.Position
+            var scaling = GetCurrentScaling();
+            var physicalX = (int)(AnimatedX * scaling);
+            var physicalY = (int)(AnimatedY * scaling);
+            System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedX/Y changed to logical ({AnimatedX:F0},{AnimatedY:F0}) -> physical ({physicalX},{physicalY})");
+            Position = new PixelPoint(physicalX, physicalY);
         }
         else if (change.Property == AnimatedWidthProperty)
         {
-            // Sync AnimatedWidth to Window.Width
             System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedWidth changed to {AnimatedWidth:F0} (from {change.OldValue})");
             Width = AnimatedWidth;
         }
         else if (change.Property == AnimatedHeightProperty)
         {
-            // Sync AnimatedHeight to Window.Height
             System.Diagnostics.Debug.WriteLine($"AnimatableWindow: AnimatedHeight changed to {AnimatedHeight:F0} (from {change.OldValue})");
             Height = AnimatedHeight;
         }
@@ -113,12 +117,23 @@ public class AnimatableWindow : Window
     /// <summary>
     /// Initializes animated properties from current window state.
     /// Call this before starting animations to ensure correct starting values.
+    /// Converts physical pixels to logical coordinates for AnimatedX/Y.
     /// </summary>
     public void SyncFromWindowState()
     {
-        AnimatedX = Position.X;
-        AnimatedY = Position.Y;
+        var scaling = GetCurrentScaling();
+        AnimatedX = Position.X / scaling;
+        AnimatedY = Position.Y / scaling;
         AnimatedWidth = Width;
         AnimatedHeight = Height;
+    }
+
+    /// <summary>
+    /// Gets the current DPI scaling factor for this window.
+    /// </summary>
+    private double GetCurrentScaling()
+    {
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        return screen?.Scaling ?? 1.0;
     }
 }
