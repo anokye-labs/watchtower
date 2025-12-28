@@ -335,7 +335,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Failed to render adaptive card");
             RenderedCardControl = null;
-            RenderError = $"Failed to render card: {ex.Message}";
+            RenderError = "Failed to render card. Please check the logs for more details.";
         }
     }
 

@@ -43,6 +43,8 @@
                     </ScrollViewer>
                     
                     <!-- Error Display -->
+                    <!-- Note: Colors are hardcoded for now. Consider extracting to theme resources in the future. -->
+                    <!-- Background: Semi-transparent red (#1AFF4444), Border: More opaque red (#88FF4444) -->
                     <Border Background="#1AFF4444"
                             BorderBrush="#88FF4444"
                             BorderThickness="2"
