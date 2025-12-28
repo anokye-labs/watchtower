@@ -53,7 +53,8 @@
                             IsVisible="{Binding HasRenderError}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            MaxWidth="500">
+                            MaxWidth="500"
+                            AutomationProperties.Name="Card rendering error panel with retry option">
                         <StackPanel Spacing="16">
                             <TextBlock Text="⚠️ Card Rendering Error"
                                        FontSize="20"
@@ -76,7 +77,8 @@
                                     Background="{DynamicResource SystemAccentColor}"
                                     CornerRadius="4"
                                     FontSize="14"
-                                    FontWeight="SemiBold" />
+                                    FontWeight="SemiBold"
+                                    ToolTip.Tip="Retry rendering the card" />
                         </StackPanel>
                     </Border>
                 </Panel>

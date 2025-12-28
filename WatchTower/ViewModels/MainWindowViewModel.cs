@@ -460,6 +460,21 @@ public class MainWindowViewModel : ViewModelBase
 
     private void RetryRender()
     {
+        // Only retry if prerequisites are available; otherwise, report a clearer message.
+        if (CurrentCard is null || HostConfig is null)
+        {
+            var reason = CurrentCard is null && HostConfig is null
+                ? "card and configuration are still unavailable"
+                : CurrentCard is null
+                    ? "card is still unavailable"
+                    : "configuration is still unavailable";
+
+            _logger.LogWarning("Cannot retry render: {Reason}", reason);
+            RenderError = $"Cannot retry: {reason}.";
+            AddEvent($"Cannot retry: {reason}");
+            return;
+        }
+
         _logger.LogInformation("Retrying card render after error");
         RenderCard();
     }
