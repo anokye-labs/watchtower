@@ -41,7 +41,7 @@ public class ProxyServer
     /// <returns>A TaskCompletionSource that will be completed when the response is received.</returns>
     public TaskCompletionSource<McpResponse> RegisterPendingRequest(long correlationId)
     {
-        var tcs = new TaskCompletionSource<McpResponse>();
+        var tcs = new TaskCompletionSource<McpResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         if (!_pendingRequests.TryAdd(correlationId, tcs))
         {
             throw new InvalidOperationException($"Correlation ID {correlationId} is already in use.");
