@@ -1,0 +1,291 @@
+name: Nkɔsoɔ Metrics (Progress Dashboard)
+
+on:
+  pull_request:
+    types: [closed]
+  issues:
+    types: [closed]
+  workflow_dispatch:
+
+jobs:
+  generate-metrics:
+    name: "Generate Project Metrics"
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // Query project for metrics
+            const query = `
+              query GetProjectMetrics($org: String!, $projectNumber: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $projectNumber) {
+                    items(first: 100) {
+                      nodes {
+                        fieldValues(first: 10) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              field { 
+                                ... on ProjectV2SingleSelectField {
+                                  name
+                                }
+                              }
+                              name
+                            }
+                            ... on ProjectV2ItemFieldNumberValue {
+                              field {
+                                ... on ProjectV2Field {
+                                  name
+                                }
+                              }
+                              number
+                            }
+                          }
+                        }
+                        content {
+                          ... on Issue {
+                            number
+                            title
+                            closedAt
+                          }
+                          ... on PullRequest {
+                            number
+                            title
+                            closedAt
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            let result;
+            try {
+              result = await github.graphql(query, {
+                org: 'anokye-labs',
+                projectNumber: 1  // From project-config.yml
+              });
+            } catch (error) {
+              console.log('Note: GraphQL query failed. This may be because the project does not exist yet or permissions are not set.');
+              console.log('Error:', error.message);
+              // Create a minimal report for now
+              const minimalReport = `
+            ## Nkɔsoɔ Akontaabu (Progress Metrics)
+            *Generated: ${new Date().toISOString()}*
+            
+            ⚠️ Unable to fetch project metrics. This may be because:
+            - The GitHub Project (Project #1) has not been created yet
+            - The workflow does not have the necessary permissions
+            - Custom fields referenced in the query need to be set up first
+            
+            This workflow depends on:
+            - Issue #70: Create custom fields
+            - Issue #71: Export field IDs
+            
+            Once the project is properly configured, this workflow will generate:
+            - Nsoromma Distribution (Status counts)
+            - Asiw Amanneɛ (Blocked items)
+            - Completed items this week
+            - Velocity trends
+              `;
+              
+              console.log(minimalReport);
+              
+              // Post comment if triggered by issue/PR
+              if (context.eventName === 'issues' || context.eventName === 'pull_request') {
+                const issueNumber = context.payload.issue?.number || context.payload.pull_request?.number;
+                if (issueNumber) {
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      body: minimalReport
+                    });
+                  } catch (commentError) {
+                    console.log('Could not post comment:', commentError.message);
+                  }
+                }
+              }
+              return;
+            }
+            
+            // Calculate metrics
+            const items = result.organization.projectV2.items.nodes;
+            
+            // 1. Nsoromma distribution (count per status)
+            const statusCounts = {
+              'Afiase': 0,    // Backlog
+              'Siesie': 0,    // Ready
+              'Dwuma': 0,     // In Progress
+              'Hwehwɛ': 0,    // Review
+              'Asiw': 0,      // Blocked
+              'Wie': 0        // Done
+            };
+            
+            // 2. Average Mu by Fapem (Complexity by Component)
+            const complexityByComponent = {};
+            
+            // 3. Asiw (Blocked) count with issue links
+            const blockedItems = [];
+            
+            // 4. Ɔkyeame utilization (% by agent type)
+            const agentTypeCounts = {};
+            
+            // 5. This week's Wie count
+            let completedThisWeek = 0;
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            
+            // 6. Velocity trend (items/week over last 4 weeks)
+            const velocityTrend = [0, 0, 0, 0];  // Last 4 weeks
+            
+            // Process items
+            items.forEach(item => {
+              const fieldValues = item.fieldValues.nodes;
+              let status = null;
+              let complexity = null;
+              let component = null;
+              let agentType = null;
+              
+              fieldValues.forEach(fieldValue => {
+                const fieldName = fieldValue.field?.name;
+                
+                if (fieldName === 'Status' || fieldName === 'Nsoromma') {
+                  status = fieldValue.name;
+                  if (statusCounts.hasOwnProperty(status)) {
+                    statusCounts[status]++;
+                  }
+                  
+                  // Track blocked items
+                  if (status === 'Asiw' && item.content) {
+                    blockedItems.push({
+                      number: item.content.number,
+                      title: item.content.title
+                    });
+                  }
+                }
+                
+                if (fieldName === 'Complexity' || fieldName === 'Mu') {
+                  complexity = fieldValue.number;
+                }
+                
+                if (fieldName === 'Component' || fieldName === 'Fapem') {
+                  component = fieldValue.name;
+                }
+                
+                if (fieldName === 'Agent Type' || fieldName === 'Ɔkyeame') {
+                  agentType = fieldValue.name;
+                  agentTypeCounts[agentType] = (agentTypeCounts[agentType] || 0) + 1;
+                }
+              });
+              
+              // Track complexity by component
+              if (component && complexity) {
+                if (!complexityByComponent[component]) {
+                  complexityByComponent[component] = { total: 0, count: 0 };
+                }
+                complexityByComponent[component].total += complexity;
+                complexityByComponent[component].count++;
+              }
+              
+              // Track completed this week
+              if (status === 'Wie' && item.content?.closedAt) {
+                const closedDate = new Date(item.content.closedAt);
+                if (closedDate >= oneWeekAgo) {
+                  completedThisWeek++;
+                }
+                
+                // Calculate velocity trend (simple week-based)
+                const weeksAgo = Math.floor((Date.now() - closedDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                if (weeksAgo < 4) {
+                  velocityTrend[weeksAgo]++;
+                }
+              }
+            });
+            
+            // Format complexity by component
+            let complexityTable = '';
+            Object.keys(complexityByComponent).forEach(component => {
+              const data = complexityByComponent[component];
+              const average = (data.total / data.count).toFixed(1);
+              complexityTable += `| ${component} | ${average} |\n`;
+            });
+            if (!complexityTable) {
+              complexityTable = '| N/A | N/A |\n';
+            }
+            
+            // Format agent type utilization
+            let agentTypeTable = '';
+            const totalItems = items.length;
+            Object.keys(agentTypeCounts).forEach(agentType => {
+              const count = agentTypeCounts[agentType];
+              const percentage = totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : 0;
+              agentTypeTable += `| ${agentType} | ${count} | ${percentage}% |\n`;
+            });
+            if (!agentTypeTable) {
+              agentTypeTable = '| N/A | 0 | 0% |\n';
+            }
+            
+            // Format velocity trend (reverse to show most recent first)
+            const velocityLines = velocityTrend.reverse().map((v, i) => `Week -${i}: ${v} items`).join('\n');
+            
+            // Format report
+            const report = `
+            ## Nkɔsoɔ Akontaabu (Progress Metrics)
+            *Generated: ${new Date().toISOString()}*
+            
+            ### Nsoromma Distribution (Status)
+            | Status | Count |
+            |--------|-------|
+            | Afiase (Backlog) | ${statusCounts['Afiase']} |
+            | Siesie (Ready) | ${statusCounts['Siesie']} |
+            | Dwuma (In Progress) | ${statusCounts['Dwuma']} |
+            | Hwehwɛ (Review) | ${statusCounts['Hwehwɛ']} |
+            | Asiw (Blocked) | ${statusCounts['Asiw']} |
+            | Wie (Done) | ${statusCounts['Wie']} |
+            
+            ### Asiw Amanneɛ (Blocked Items)
+            ${blockedItems.length > 0 ? blockedItems.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'No blocked items 🎉'}
+            
+            ### Average Mu by Fapem (Complexity by Component)
+            | Component | Average Complexity |
+            |-----------|-------------------|
+            ${complexityTable}
+            
+            ### Ɔkyeame Utilization (Agent Type Distribution)
+            | Agent Type | Count | Percentage |
+            |------------|-------|------------|
+            ${agentTypeTable}
+            
+            ### Completed This Week
+            ${completedThisWeek} items moved to Wie
+            
+            ### Velocity Trend (Last 4 Weeks)
+            \`\`\`
+            ${velocityLines}
+            \`\`\`
+            `;
+            
+            // Post as comment or create discussion
+            console.log(report);
+            
+            // If triggered by issue/PR close, comment on that item
+            if (context.eventName === 'issues' || context.eventName === 'pull_request') {
+              const issueNumber = context.payload.issue?.number || context.payload.pull_request?.number;
+              if (issueNumber) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: report
+                });
+              }
+            }
