@@ -45,9 +45,13 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("Phase 3/4: Registering application services...");
             
             // Register core services
+            services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+            services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
             
+            logger.Info("UserPreferencesService registered");
+            logger.Info("AdaptiveCardThemeService registered");
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
             
