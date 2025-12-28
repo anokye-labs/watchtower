@@ -20,7 +20,7 @@ These labels indicate agent readiness and workflow state:
 | `stale` | stale | No activity >5 days | ![#FBCA04](https://via.placeholder.com/15/FBCA04/000000?text=+) `#FBCA04` (yellow) | Automation applies when issue inactive for 5+ days |
 | `needs-fix` | needs-fix | PR checks failed | ![#E4E669](https://via.placeholder.com/15/E4E669/000000?text=+) `#E4E669` (light yellow) | Automation applies when CI/PR checks fail |
 | `asiw:external` | blocked:external | Waiting on third-party dependency | ![#B60205](https://via.placeholder.com/15/B60205/000000?text=+) `#B60205` (red) | Applied when blocked by external dependency |
-| `nsakrae:api` | breaking:api-change | Major version bump required | ![#D93F0B](https://via.placeholder.com/15/D93F0B/000000?text=+) `#D93F0B` (orange) | Applied when changes break public API |
+| `nsakrae:api` | breaking:api-change | Major version bump required | ![#D93F0B](https://via.placeholder.com/15/D93F0B/000000?text=+) `#D93F0B` (red-orange) | Applied when changes break public API |
 | `nhwɛsoɔ-hia` | requires:testing | Must include unit tests (Complexity ≥5) | ![#5319E7](https://via.placeholder.com/15/5319E7/000000?text=+) `#5319E7` (purple) | Applied to complex issues requiring test coverage |
 
 ### Priority Labels (Tumi Field)
@@ -90,9 +90,13 @@ The label colors follow a semantic system:
 
 - **Green** (`#0E8A16`): Ready state - work can proceed
 - **Blue** (`#1D76DB`): Active work in progress
-- **Red** (`#B60205`, `#D93F0B`): Blocked or requires attention
+- **Red** (`#B60205`): Critical blocking issue
+- **Red-Orange** (`#D93F0B`): Requires attention/decision
+  - Used for both `nnipa-gyinae-hia` and `nsakrae:api` as both indicate critical situations requiring human attention
 - **Yellow** (`#FBCA04`, `#E4E669`): Warning or needs action
 - **Purple** (`#5319E7`): Quality requirements
+
+**Note**: The red-orange color (`#D93F0B`) is intentionally shared between `nnipa-gyinae-hia` (human decision required) and `nsakrae:api` (breaking change) as both represent critical situations that require careful human consideration and cannot proceed automatically.
 
 ## Akan Names
 
