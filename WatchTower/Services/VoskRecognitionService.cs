@@ -12,10 +12,14 @@ namespace WatchTower.Services;
 
 /// <summary>
 /// Offline speech recognition service using Vosk.
-/// Provides cross-platform speech-to-text without requiring internet connection.
+/// Provides speech-to-text without requiring internet connection.
+/// Note: Currently Windows-only due to NAudio dependency for audio capture.
 /// </summary>
 public class VoskRecognitionService : IVoiceRecognitionService
 {
+    // Voice activity detection threshold - empirically chosen for typical microphone levels
+    private const float VoiceActivityThreshold = 0.01f;
+    
     private readonly ILogger<VoskRecognitionService> _logger;
     private readonly IConfiguration _configuration;
     private Model? _model;
@@ -180,7 +184,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
 
             // Simple voice activity detection based on audio level
             float level = CalculateAudioLevel(e.Buffer, e.BytesRecorded);
-            bool isActive = level > 0.01f; // Threshold for voice activity
+            bool isActive = level > VoiceActivityThreshold;
             
             VoiceActivityDetected?.Invoke(this, new VoiceActivityEventArgs(isActive, level));
         }
@@ -194,8 +198,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
     {
         try
         {
-            // Parse Vosk JSON result
-            // Simple parsing - in production, use JSON library
+            // Parse Vosk JSON result using System.Text.Json
             var text = ExtractTextFromJson(jsonResult);
             
             if (!string.IsNullOrWhiteSpace(text))
@@ -203,7 +206,9 @@ public class VoskRecognitionService : IVoiceRecognitionService
                 var result = new VoiceRecognitionResult
                 {
                     Text = text,
-                    Confidence = 0.9f, // Vosk doesn't provide confidence in simple format
+                    // Placeholder confidence: Vosk doesn't provide per-result confidence in simple format
+                    // To get confidence scores, use full result format with alternatives
+                    Confidence = 0.9f,
                     IsFinal = isFinal,
                     Source = ServiceName,
                     Timestamp = DateTime.UtcNow

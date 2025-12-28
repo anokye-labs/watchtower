@@ -71,10 +71,11 @@ public class StartupOrchestrator : IStartupOrchestrator
             }
             else if (voiceMode.Equals("hybrid", StringComparison.OrdinalIgnoreCase))
             {
-                // Register offline services as primary (hybrid fallback logic in orchestrator)
+                // Hybrid mode is not yet implemented; falls back to offline behavior
+                logger.Warn("Hybrid voice mode is not fully implemented; defaulting to offline voice services");
                 services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
                 services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
-                logger.Info("Hybrid voice mode: offline services registered with online fallback capability");
+                logger.Info("Offline voice services registered (Vosk + Piper) for requested hybrid mode");
             }
             else
             {

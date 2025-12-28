@@ -156,7 +156,9 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
             var result = new VoiceRecognitionResult
             {
                 Text = e.Result.Text,
-                Confidence = 0.5f, // Interim results have lower confidence
+                // Placeholder confidence for interim results
+                // Azure SDK provides confidence, but not directly exposed in this event
+                Confidence = 0.5f,
                 IsFinal = false,
                 Source = ServiceName,
                 Timestamp = DateTime.UtcNow
@@ -174,7 +176,9 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
             var result = new VoiceRecognitionResult
             {
                 Text = e.Result.Text,
-                Confidence = 0.9f, // Final results have high confidence
+                // Placeholder confidence for final results
+                // Azure SDK provides detailed confidence via e.Result.Best() but requires different result format
+                Confidence = 0.9f,
                 IsFinal = true,
                 Source = ServiceName,
                 Timestamp = DateTime.UtcNow
