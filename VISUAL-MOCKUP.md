@@ -161,7 +161,7 @@ Content transitions to main application view.
 ## Legend
 
 - `┏━━━┓` / `┗━━━┛` : Window border (transparent, no chrome)
-- `╔═══╗` / `╚═══╝` : Decorative frame image (main-frame-complete-2.svg)
+- `╔═══╗` / `╚═══╝` : Decorative frame image (main-frame.png)
 - `╭───╮` / `╰───╯` : Content area (splash or main)
 - `⚪` : Animated spinner (pulsing)
 - `✓` : Success checkmark
