@@ -1,21 +1,11 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:WatchTower.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
-        x:Class="WatchTower.Views.SplashWindow"
-        x:DataType="vm:SplashWindowViewModel"
-        Title="WatchTower"
-        Width="600"
-        Height="400"
-        WindowStartupLocation="CenterScreen"
-        CanResize="False"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
-        SystemDecorations="None"
-        Background="Transparent"
-        TransparencyLevelHint="Transparent">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchTower.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="WatchTower.Views.SplashWindow"
+             x:DataType="vm:SplashWindowViewModel">
 
     <Border Background="#EE0A0A0A"
             CornerRadius="12"
@@ -198,4 +188,4 @@
                       FontStyle="Italic"/>
         </Grid>
     </Border>
-</Window>
+</UserControl>

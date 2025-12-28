@@ -3,9 +3,9 @@
 ## Overview
 
 This implementation replaces the separate SplashWindow and MainWindow with a unified ShellWindow that:
-1. Opens at 70% of screen size with a decorative frame
+1. Opens at frame-based splash size (calculated from frame static components + minimum content area)
 2. Displays splash content during initialization
-3. Animates smoothly to full-screen over 800ms
+3. Animates smoothly to full-screen over 500ms using Avalonia's Animation system
 4. Transitions to main application content
 
 ## Key Components
@@ -22,11 +22,10 @@ This implementation replaces the separate SplashWindow and MainWindow with a uni
 - Handles content switching and animation coordination
 
 ### Animation Logic (`Views/ShellWindow.axaml.cs`)
-- **SetSplashSize()**: Calculates initial window size (70% of screen, centered)
-- **AnimateExpansionAsync()**: Smoothly interpolates width, height, and position over 800ms
+- **SetSplashSize()**: Calculates initial window size based on frame static components + minimum content area
+- **AnimateExpansionAsync()**: Smoothly animates width, height, and position over 500ms using Avalonia's Animation system
 - Uses cubic ease-out easing for natural motion
-- ~60 FPS animation via DispatcherTimer
-- Maximizes window after animation completes
+- Properly handles DPI scaling and multi-monitor setups
 
 ### Startup Flow (`App.axaml.cs`)
 1. Create ShellWindow with SplashWindowViewModel content
@@ -51,14 +50,14 @@ To prevent corner distortion during the window expansion animation, the frame is
 - **LRU-5 cache** stores sliced frames for different display resolutions
 - **Content padding** configurable via Frame.Padding settings
 
-This ensures the decorative corners maintain their detail while the edges stretch smoothly as the window animates from 70% to full-screen size.
+This ensures the decorative corners maintain their detail while the edges stretch smoothly as the window animates from splash size to full-screen.
 
 ## Testing
 
 ### Expected Behavior
-1. **Launch**: Window appears centered at ~70% screen size with frame visible
+1. **Launch**: Window appears centered at frame-based splash size with frame visible
 2. **Splash**: Shows WatchTower logo, spinner, and status messages
-3. **Animation**: After ~3-5 seconds, window smoothly expands to full-screen over 0.8 seconds
+3. **Animation**: After ~3-5 seconds, window smoothly expands to full-screen over 500ms
 4. **Main Content**: Adaptive card interface appears inside the frame
 
 ### Keyboard Shortcuts (Splash Mode)
@@ -98,11 +97,11 @@ The frame uses a 9-slice Grid layout for perfect scaling:
 
 ## Known Limitations
 
-1. **Cross-Platform**: Animation timing may vary slightly on different platforms due to rendering performance. The implementation targets 60 FPS but will adapt based on system capabilities.
+1. **Cross-Platform**: Animation timing may vary slightly on different platforms due to rendering performance.
 
-2. **Screen Resolution**: The 70% splash size works well on most displays. On very small screens (<1024px), the splash may appear cramped. Consider adding minimum size constraints if needed.
+2. **Screen Resolution**: The frame-based splash size is clamped to 90% of screen size to prevent oversized windows on small displays.
 
-3. **Frame Asset**: Frame created at 1920x1080 with 28px borders. The 9-slice implementation ensures it scales properly to any resolution without corner distortion.
+3. **Frame Asset**: Frame uses 5x5 grid slicing for resolution-independent scaling. The implementation properly handles different DPI settings across monitors.
 
 ## Architecture Compliance
 

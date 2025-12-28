@@ -14,7 +14,7 @@ using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
-public partial class MainWindow : Window
+public partial class MainWindow : UserControl
 {
     private Border? _overlayPanel;
     private TranslateTransform? _overlayTransform;
@@ -35,16 +35,16 @@ public partial class MainWindow : Window
         // Subscribe to keyboard events for overlay shortcuts
         KeyDown += OnKeyDown;
         
-        // Cleanup subscriptions when the window is closed
-        Closed += OnWindowClosed;
+        // Cleanup subscriptions when the control is unloaded
+        Unloaded += OnUnloaded;
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
-        // Unsubscribe from window-level events to avoid potential memory leaks
+        // Unsubscribe from control-level events to avoid potential memory leaks
         DataContextChanged -= OnDataContextChanged;
         KeyDown -= OnKeyDown;
-        Closed -= OnWindowClosed;
+        Unloaded -= OnUnloaded;
 
         // Ensure we detach from the last ViewModel as well
         if (_previousViewModel != null)
@@ -93,6 +93,17 @@ public partial class MainWindow : Window
         if (sender is not MainWindowViewModel vm)
         {
             return;
+        }
+
+        // Debug: Log when HostConfig changes
+        if (e.PropertyName == nameof(MainWindowViewModel.HostConfig))
+        {
+            System.Diagnostics.Debug.WriteLine($"HostConfig changed in ViewModel: {vm.HostConfig != null}");
+            if (vm.HostConfig != null)
+            {
+                var bgColor = vm.HostConfig.ContainerStyles?.Default?.BackgroundColor ?? "null";
+                System.Diagnostics.Debug.WriteLine($"HostConfig background: {bgColor}");
+            }
         }
 
         // Handle input overlay (Rich Text / Voice) - slides from bottom

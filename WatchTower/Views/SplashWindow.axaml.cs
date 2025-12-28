@@ -7,7 +7,7 @@ using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
-public partial class SplashWindow : Window
+public partial class SplashWindow : UserControl
 {
     private ScrollViewer? _diagnosticsScroller;
 
@@ -18,8 +18,8 @@ public partial class SplashWindow : Window
         // Subscribe to keyboard events
         KeyDown += OnKeyDown;
         
-        // Cleanup when window closes
-        Closed += OnWindowClosed;
+        // Cleanup when control is unloaded
+        Unloaded += OnUnloaded;
 
         // Setup auto-scroll for diagnostics
         Loaded += OnLoaded;
@@ -44,11 +44,11 @@ public partial class SplashWindow : Window
         }
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         // Unsubscribe from events
         KeyDown -= OnKeyDown;
-        Closed -= OnWindowClosed;
+        Unloaded -= OnUnloaded;
         Loaded -= OnLoaded;
 
         // Cleanup ViewModel timer and collection change handler

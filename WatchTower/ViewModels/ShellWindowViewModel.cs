@@ -150,6 +150,16 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         set => SetProperty(ref _backgroundColor, value);
     }
     
+    /// <summary>
+    /// Gets the frame slice definition used for the current frame.
+    /// </summary>
+    public FrameSliceDefinition? FrameSliceDefinition => _frameSliceDefinition;
+    
+    /// <summary>
+    /// Gets the source size of the loaded frame image.
+    /// </summary>
+    public Size FrameSourceSize => _frameSourceSize;
+    
     // Frame bitmap sources - dynamically sliced from source image (16 pieces for 5x5 grid)
     
     // Row 0: Top edge (5 pieces)
