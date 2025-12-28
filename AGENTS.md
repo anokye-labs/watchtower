@@ -140,10 +140,16 @@ Use xUnit or NUnit for unit testing. Use Avalonia.Headless for UI testing withou
 ### Testing ViewModels
 
 ```csharp
-var logger = Mock.Of<ILogger<AdaptiveCardService>>();
-var service = new AdaptiveCardService(logger);
-var vmLogger = Mock.Of<ILogger<MainWindowViewModel>>();
-var viewModel = new MainWindowViewModel(service, vmLogger);
+var gameControllerService = Mock.Of<IGameControllerService>();
+var adaptiveCardService = Mock.Of<IAdaptiveCardService>();
+var adaptiveCardThemeService = Mock.Of<IAdaptiveCardThemeService>();
+var logger = Mock.Of<ILogger<MainWindowViewModel>>();
+
+var viewModel = new MainWindowViewModel(
+    gameControllerService,
+    adaptiveCardService,
+    adaptiveCardThemeService,
+    logger);
 
 Assert.NotNull(viewModel.CurrentCard);
 ```

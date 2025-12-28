@@ -183,7 +183,7 @@ The Adaptive Card system renders Microsoft Adaptive Cards with custom theming.
 
 **Components**:
 
-`IAdaptiveCardService` loads cards from JSON and handles actions including Submit, OpenUrl, Execute, and ShowCard. `IAdaptiveCardThemeService` generates `AdaptiveHostConfig` with Ancestral Futurism colors, fonts, and spacing. `IFocusNavigationService` manages UI focus with gamepad input, integrating with Avalonia's XYFocus system.
+`IAdaptiveCardService` loads cards from JSON and handles actions including Submit, OpenUrl, Execute, and ShowCard. `IAdaptiveCardThemeService` generates `AdaptiveHostConfig` with Ancestral Futurism colors, fonts, and spacing. Focus navigation with gamepad input is handled directly by Avalonia's built-in XYFocus system.
 
 ## Dependency Injection
 

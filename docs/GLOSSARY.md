@@ -194,11 +194,11 @@ A configuration object that defines how Adaptive Cards are rendered. It specifie
 
 **See**: `docs/ADAPTIVE-CARD-THEME-PLAN.md`
 
-### IFocusNavigationService
+### IFocusNavigationService (planned)
 
-The interface for managing UI focus with gamepad input. It provides `MoveFocus(direction)` and `ActivateFocusedElement()` methods and integrates with Avalonia's XYFocus system.
+A planned interface for managing UI focus with gamepad input. It is intended to provide `MoveFocus(direction)` and `ActivateFocusedElement()` methods and integrate with Avalonia's XYFocus system, but is not yet implemented in the current codebase.
 
-**See**: `docs/ADAPTIVE-CARD-THEME-PLAN.md`
+**See (design/plan)**: `docs/ADAPTIVE-CARD-THEME-PLAN.md`
 
 ## Voice System
 
@@ -248,13 +248,13 @@ A feature that determines how the system handles interruptions. When enabled, re
 
 ### Adinkra Elements
 
-Custom Adaptive Card elements representing Adinkra symbols from West African visual traditions. Examples include GyeNyame, Sankofa, and Dwennimmen. Implemented via the `AdinkraIcon` control.
+Planned custom Adaptive Card elements representing Adinkra symbols from West African visual traditions. Examples include GyeNyame, Sankofa, and Dwennimmen. Planned implementation via an `AdinkraIcon` control.
 
 **See**: `docs/ADAPTIVE-CARD-THEME-PLAN.md`, `concept-art/Adinkra Symbols/`
 
 ### XYFocus
 
-Avalonia's directional focus navigation system. It enables D-Pad and analog stick navigation between UI elements. Integrated with `IFocusNavigationService` to map gamepad inputs to focus movement.
+Avalonia's directional focus navigation system. It enables D-Pad and analog stick navigation between UI elements.
 
 **See**: `docs/ADAPTIVE-CARD-THEME-PLAN.md`
 
