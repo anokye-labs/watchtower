@@ -194,19 +194,23 @@ public class PiperTextToSpeechService : ITextToSpeechService
 
     private async Task PlayAudioAsync(byte[] audioData)
     {
+        // Piper outputs raw PCM audio at 22050 Hz, 16-bit, mono
+        using var memoryStream = new MemoryStream(audioData);
+        using var rawSource = new RawSourceWaveStream(memoryStream, new WaveFormat(22050, 16, 1));
+        
+        // Create wave output for playback (using local variable with using statement)
+        using var waveOut = new WaveOutEvent();
+        
+        // Store reference for StopAsync to access
+        _waveOut = waveOut;
+        
         try
         {
-            // Piper outputs raw PCM audio at 22050 Hz, 16-bit, mono
-            using var memoryStream = new MemoryStream(audioData);
-            using var rawSource = new RawSourceWaveStream(memoryStream, new WaveFormat(22050, 16, 1));
-
-            // Create wave output for playback
-            _waveOut = new WaveOutEvent();
-            _waveOut.Init(rawSource);
+            waveOut.Init(rawSource);
 
             // Set up completion handler
             var tcs = new TaskCompletionSource<bool>();
-            _waveOut.PlaybackStopped += (s, e) =>
+            waveOut.PlaybackStopped += (s, e) =>
             {
                 if (e.Exception != null)
                 {
@@ -220,7 +224,7 @@ public class PiperTextToSpeechService : ITextToSpeechService
             };
 
             // Start playback
-            _waveOut.Play();
+            waveOut.Play();
 
             // Wait for completion
             await tcs.Task;
@@ -232,7 +236,6 @@ public class PiperTextToSpeechService : ITextToSpeechService
         }
         finally
         {
-            _waveOut?.Dispose();
             _waveOut = null;
         }
     }
