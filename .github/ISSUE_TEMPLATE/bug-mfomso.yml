@@ -58,3 +58,5 @@ body:
         - Views
         - Models
         - Unknown
+    validations:
+      required: true
