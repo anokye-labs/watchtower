@@ -254,6 +254,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (CurrentCard == null)
         {
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
             return;
@@ -262,6 +263,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (HostConfig == null)
         {
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
             return;
@@ -274,10 +276,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             _logger.LogInformation("Rendering card with HostConfig - BG: {BgColor}, FG: {FgColor}", bgColor, fgColor);
 
             // Unsubscribe from previous rendered card to avoid memory leak
-            if (_currentRenderedCard != null && _cardActionHandler != null)
-            {
-                _currentRenderedCard.OnAction -= _cardActionHandler;
-            }
+            DetachRenderedCardHandler();
 
             var renderer = new AdaptiveCardRenderer(HostConfig);
             var renderedCard = renderer.RenderCard(CurrentCard);
@@ -499,6 +498,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
 
     #endregion
 
+    /// <summary>
+    /// Detaches the action handler from the current rendered card to prevent memory leaks.
+    /// </summary>
+    private void DetachRenderedCardHandler()
+    {
+        if (_currentRenderedCard != null && _cardActionHandler != null)
+        {
+            _currentRenderedCard.OnAction -= _cardActionHandler;
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -521,10 +531,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _cardService.ShowCardAction -= OnCardShowCard;
 
         // Unsubscribe from rendered card events
-        if (_currentRenderedCard != null && _cardActionHandler != null)
-        {
-            _currentRenderedCard.OnAction -= _cardActionHandler;
-        }
+        DetachRenderedCardHandler();
 
         _disposed = true;
     }
