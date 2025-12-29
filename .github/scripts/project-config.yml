@@ -5,61 +5,61 @@
 project:
   owner: "anokye-labs"  # GitHub organization
   repo: "watchtower"    # Repository name
-  id: "PVT_kwDONc6RBc4A0MJL"  # Project ID
-  number: 1      # Project number
+  id: "PVT_kwDODbLOnM4BLchY"  # Project ID
+  number: 2      # Project number
 
 fields:
   nsoromma:  # Status
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrI"
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHPM"
     options:
-      afiase: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMg"      # Backlog
-      siesie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMh"      # Ready
-      dwuma: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMi"       # In Progress
-      hwehwe: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMj"      # Review
-      asiw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMk"        # Blocked
-      wie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMl"         # Done
-      gyaw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMm"        # Abandoned
+      afiase: "f75ad846"      # Backlog
+      siesie: "e18bf179"      # Ready
+      dwuma: "47fc9ee4"       # In Progress
+      hwehwe: "aba860b9"      # In review
+      asiw: "f0511bc2"        # Blocked
+      wie: "98236657"         # Done
+      gyaw: "9bd32825"        # Abandoned
   
   tumi:  # Priority
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrJ"
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHUU"
     options:
-      p0_hene: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNa"
-      p1_abusuapanyin: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNb"
-      p2_obi: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNc"
-      p3_akwadaa: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNd"
+      p0_hene: "79628723"
+      p1_abusuapanyin: "0a877460"
+      p2_obi: "da944a9c"
+      p3_akwadaa: "ff01dc29"
   
   mu:  # Complexity (number field)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrK"
+    id: "PVTF_lADODbLOnM4BLchYzg7BHUc"
   
   okyeame:  # Agent Type
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrL"
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI1s"
     options:
-      copilot: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNe"
-      claude_opus: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNf"
-      task_maestro: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNg"
-      nnipa_hia: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNh"
-      biara: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNi"
+      copilot: "807e206b"
+      claude_opus: "c36f2b25"
+      task_maestro: "1463e4d8"
+      nnipa_hia: "115f1b81"
+      biara: "cc729823"
   
   fapem:  # Component
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrM"
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI6Y"
     options:
-      services: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNj"
-      viewmodels: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNk"
-      views: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNl"
-      models: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNm"
-      testing: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNn"
-      infrastructure: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNo"
-      docs: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNp"
-      build: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNq"
+      services: "e564590b"
+      viewmodels: "21b57a83"
+      views: "f84d3558"
+      models: "6ae6375e"
+      testing: "1bc11c29"
+      infrastructure: "6ae10d24"
+      docs: "fe624e7f"
+      build: "910a429f"
   
   nkabom:  # Dependencies (text)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrN"
+    id: "PVTF_lADODbLOnM4BLchYzg7DI88"
   
   da_akyire:  # Last Activity (date)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrO"
+    id: "PVTF_lADODbLOnM4BLchYzg7DJR8"
   
   pr_nkitahodi:  # PR Link (text)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrP"
+    id: "PVTF_lADODbLOnM4BLchYzg7DJHo"
 
 # Automation settings
 assignee_on_blocked: "hoopsomuah"

@@ -106,7 +106,8 @@ Maps labels to components:
 - `testing` → testing
 - `ui`, `ux` → views
 - `docs`, `documentation` → docs
-- Default → services
+- No labels → unclassified
+- Labels exist but don't match above → services
 
 ### Agent Type (Ɔkyeame)
 - Has "Tech Design Needed" or "nnipa-gyinae-hia" label → `nnipa_hia` (Human Required)
@@ -127,7 +128,7 @@ Returns comma-separated list or "None" if no dependencies found.
 
 ## Rate Limiting
 
-The script includes a 500ms delay between each issue update to respect GitHub API rate limits.
+The script applies a 500ms delay only after failed issue update attempts to respect GitHub API rate limits. Successful updates have no delay between them, relying on GitHub's rate limit tolerance for normal operations.
 
 ## Troubleshooting
 

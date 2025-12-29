@@ -70,16 +70,16 @@ if (hasPlaceholders && !isDryRun) {
   process.exit(1);
 }
 
-// Validate owner and repo fields
-if (!config.project?.owner || !config.project?.repo) {
-  console.error('❌ Error: Missing repository owner and/or name in project-config.yml');
-  console.error('  Please set "project.owner" and "project.repo" in the config file.');
+// Validate project configuration fields
+if (!config.project?.owner || !config.project?.repo || !config.project?.id) {
+  console.error('❌ Error: Missing project configuration in project-config.yml');
+  console.error('  Please set "project.owner", "project.repo", and "project.id" in the config file.');
   process.exit(1);
 }
 
 // Initialize clients
 const octokit = new Octokit({ auth: token });
-const graphql = new ProjectGraphQLClient(token, config.project?.id);
+const graphql = new ProjectGraphQLClient(token, config.project.id);
 
 async function fetchOpenIssues() {
   console.log('\n📋 Fetching open issues...');
@@ -163,11 +163,15 @@ async function main() {
     }
   }
   
-  // Migrate each issue
+  // Migrate each issue with small delay for rate limiting
   const results = [];
   for (const issue of issues) {
     const result = await migrateIssue(issue);
     results.push(result);
+    // Small delay between all migrations to prevent rate limiting
+    if (results.length < issues.length) {
+      await delay(200);
+    }
   }
   
   // Print summary
@@ -192,7 +196,7 @@ async function main() {
   console.log(`  P3 (Low): ${results.filter(r => r.priority === 'p3_akwadaa').length}`);
   
   console.log(`\n📂 By Component:`);
-  const components = ['services', 'infrastructure', 'testing', 'views', 'docs', 'viewmodels', 'models', 'build'];
+  const components = ['services', 'infrastructure', 'testing', 'views', 'docs', 'viewmodels', 'models', 'build', 'unclassified'];
   for (const comp of components) {
     const count = results.filter(r => r.component === comp).length;
     if (count > 0) console.log(`  ${comp}: ${count}`);

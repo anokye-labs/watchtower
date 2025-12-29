@@ -91,10 +91,11 @@ export function inferAgentType(labels, body, complexity) {
   // Testing = any agent
   if (safeLabels.includes('testing')) return 'biara';
   
-  // Check body for explicit agent mentions
-  if (body?.includes('Copilot')) return 'copilot';
-  if (body?.includes('Claude-Opus') || body?.includes('Claude')) return 'claude_opus';
-  if (body?.includes('Task-Maestro')) return 'task_maestro';
+  // Check body for explicit agent mentions (case-insensitive)
+  const lowerBody = body?.toLowerCase() || '';
+  if (lowerBody.includes('copilot')) return 'copilot';
+  if (lowerBody.includes('claude-opus') || lowerBody.includes('claude opus') || lowerBody.includes('claude')) return 'claude_opus';
+  if (lowerBody.includes('task-maestro') || lowerBody.includes('task maestro')) return 'task_maestro';
   
   // Low complexity = Copilot eligible
   if (complexity <= 3) return 'copilot';
@@ -163,6 +164,6 @@ export function inferAllFields(issue) {
     agent_type: inferAgentType(labels, body, complexity),
     dependencies: parseDependencies(body),
     last_activity: formatDate(issue.updated_at),
-    pr_link: ''  // Empty initially
+    pr_link: ''  // Intentionally empty for initial migration; PR links are populated by separate automation
   };
 }
