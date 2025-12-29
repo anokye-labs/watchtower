@@ -7,19 +7,19 @@
 /**
  * Infer Priority from existing labels
  * @param {string[]} labels - Array of label names
- * @returns {string} Priority option key (p0_critical, p1_high, p2_medium, p3_low)
+ * @returns {string} Priority option key (p0_hene, p1_abusuapanyin, p2_obi, p3_akwadaa)
  * 
  * Test cases:
- * - inferPriority(['P0', 'bug']) → 'p0_critical'
- * - inferPriority(['P1', 'enhancement']) → 'p1_high'
- * - inferPriority(['P2']) → 'p2_medium'
- * - inferPriority(['bug']) → 'p3_low' (default)
+ * - inferPriority(['P0', 'bug']) → 'p0_hene'
+ * - inferPriority(['P1', 'enhancement']) → 'p1_abusuapanyin'
+ * - inferPriority(['P2']) → 'p2_obi'
+ * - inferPriority(['bug']) → 'p3_akwadaa' (default)
  */
 export function inferPriority(labels) {
-  if (labels.includes('P0')) return 'p0_critical';
-  if (labels.includes('P1')) return 'p1_high';
-  if (labels.includes('P2')) return 'p2_medium';
-  return 'p3_low';  // Default
+  if (labels.includes('P0')) return 'p0_hene';
+  if (labels.includes('P1')) return 'p1_abusuapanyin';
+  if (labels.includes('P2')) return 'p2_obi';
+  return 'p3_akwadaa';  // Default
 }
 
 /**
@@ -96,10 +96,10 @@ export function inferComponent(labels) {
  * @returns {string} Agent type option key
  * 
  * Test cases:
- * - inferAgentType(['Tech Design Needed'], '', 8) → 'human_required'
- * - inferAgentType(['tech-design-needed'], '', 8) → 'human_required'
- * - inferAgentType(['nnipa-gyinae-hia'], '', 5) → 'human_required'
- * - inferAgentType(['testing'], '', 3) → 'any_agent'
+ * - inferAgentType(['Tech Design Needed'], '', 8) → 'nnipa_hia'
+ * - inferAgentType(['tech-design-needed'], '', 8) → 'nnipa_hia'
+ * - inferAgentType(['nnipa-gyinae-hia'], '', 5) → 'nnipa_hia'
+ * - inferAgentType(['testing'], '', 3) → 'biara'
  * - inferAgentType([], 'Copilot should do this', 3) → 'copilot'
  * - inferAgentType([], 'Claude-Opus preferred', 5) → 'claude_opus'
  * - inferAgentType([], 'Task-Maestro will handle', 5) → 'task_maestro'
@@ -111,16 +111,26 @@ export function inferAgentType(labels, body, complexity) {
   if (labels.includes('Tech Design Needed') || 
       labels.includes('tech-design-needed') ||
       labels.includes('nnipa-gyinae-hia')) {
-    return 'human_required';
+    return 'nnipa_hia';
   }
   
   // Testing = any agent
-  if (labels.includes('testing')) return 'any_agent';
+  if (labels.includes('testing')) return 'biara';
   
-  // Check body for explicit agent mentions
-  if (body?.includes('Copilot')) return 'copilot';
-  if (body?.includes('Claude-Opus') || body?.includes('Claude')) return 'claude_opus';
-  if (body?.includes('Task-Maestro')) return 'task_maestro';
+  // Normalize body for robust, case-insensitive matching
+  const normalizedBody = (body || '').toLowerCase();
+  
+  // Check body for explicit agent mentions (case-insensitive, tolerant of hyphen/space variations)
+  if (normalizedBody.includes('copilot')) return 'copilot';
+  if (normalizedBody.includes('claude-opus') ||
+      normalizedBody.includes('claude opus') ||
+      normalizedBody.includes('claude')) {
+    return 'claude_opus';
+  }
+  if (normalizedBody.includes('task-maestro') ||
+      normalizedBody.includes('task maestro')) {
+    return 'task_maestro';
+  }
   
   // Low complexity = Copilot eligible
   if (complexity <= 3) return 'copilot';
@@ -148,24 +158,51 @@ export function parseDependencies(body) {
   
   const deps = new Set();
   
-  // Pattern 1: "Depends on: #70" or "Depends on: repo#70" (captures first occurrence)
-  const mainPattern = /(?:depends on|blocked by|blocking)[:\s]+([^\n]+)/gi;
-  let mainMatch;
-  while ((mainMatch = mainPattern.exec(body)) !== null) {
-    const dependencyText = mainMatch[1];
-    // Extract all #numbers from this line
-    const issuePattern = /(?:[\w-]+\/[\w-]+)?#(\d+)/g;
-    let issueMatch;
-    while ((issueMatch = issuePattern.exec(dependencyText)) !== null) {
-      deps.add(`#${issueMatch[1]}`);
-    }
-  }
+  // Work line-by-line so that list items are only associated with
+  // a dependency section ("Depends on:", "Blocked by:", "Blocking").
+  const lines = body.split('\n');
   
-  // Pattern 2: List format "- #70" or "- repo#70"
-  const listPattern = /^\s*-\s*(?:[\w-]+\/[\w-]+)?#(\d+)/gm;
-  let listMatch;
-  while ((listMatch = listPattern.exec(body)) !== null) {
-    deps.add(`#${listMatch[1]}`);
+  // Match dependency headers, e.g. "Depends on:", "Blocked by:", "Blocking:"
+  // and capture any inline text after the header on the same line.
+  const headerRegex = /^\s*(depends on|blocked by|blocking)\s*:?\s*(.*)$/i;
+  
+  // Match bullet lines following a dependency header, e.g. "- #70" or "- repo#70".
+  const bulletRegex = /^\s*-\s+(.*)$/;
+  
+  // Shared issue reference pattern: "#123" or "owner/repo#123"
+  const issuePattern = /(?:[\w-]+\/[\w-]+)?#(\d+)/g;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const headerMatch = headerRegex.exec(line);
+    if (!headerMatch) {
+      continue;
+    }
+    
+    // 1) Extract any inline dependencies on the header line itself.
+    const inlineText = headerMatch[2];
+    if (inlineText) {
+      issuePattern.lastIndex = 0;
+      let match;
+      while ((match = issuePattern.exec(inlineText)) !== null) {
+        deps.add(`#${match[1]}`);
+      }
+    }
+    
+    // 2) Extract dependencies from immediately following bullet list items.
+    let j = i + 1;
+    while (j < lines.length && bulletRegex.test(lines[j])) {
+      const bulletText = lines[j].replace(/^\s*-\s+/, '');
+      issuePattern.lastIndex = 0;
+      let bulletMatch;
+      while ((bulletMatch = issuePattern.exec(bulletText)) !== null) {
+        deps.add(`#${bulletMatch[1]}`);
+      }
+      j++;
+    }
+    
+    // Skip over the bullet block we just processed.
+    i = j - 1;
   }
   
   return deps.size > 0 ? Array.from(deps).join(', ') : 'None';
@@ -201,7 +238,7 @@ export function formatDate(dateString) {
  *     number: 89,
  *     title: 'Create inference module',
  *     status: 'backlog',
- *     priority: 'p1_high',
+ *     priority: 'p1_abusuapanyin',
  *     complexity: 1,
  *     component: 'services',
  *     agent_type: 'copilot',
