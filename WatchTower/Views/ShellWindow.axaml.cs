@@ -94,8 +94,6 @@ public partial class ShellWindow : AnimatableWindow
     {
         // Get frame grid
         _frameGrid = this.FindControl<Grid>("FrameGrid");
-        
-        System.Diagnostics.Debug.WriteLine($"InitializeFrameElements: frameGrid={_frameGrid != null}");
     }
     
     /// <summary>
@@ -106,7 +104,6 @@ public partial class ShellWindow : AnimatableWindow
     {
         if (_viewModel == null)
         {
-            System.Diagnostics.Debug.WriteLine("LoadFrameImage: ViewModel is null");
             return;
         }
         
@@ -135,8 +132,6 @@ public partial class ShellWindow : AnimatableWindow
         var paddingBottom = _configuration?.GetValue<double>("Frame:Padding:Bottom") ?? 0;
         var backgroundColor = _configuration?.GetValue<string>("Frame:BackgroundColor") ?? "#1A1A1A";
         
-        System.Diagnostics.Debug.WriteLine($"LoadFrameImage: source={frameSourceUri}, slice X=L:{sliceLeft} LI:{sliceLeftInner} RI:{sliceRightInner} R:{sliceRight}, Y=T:{sliceTop} TI:{sliceTopInner} BI:{sliceBottomInner} B:{sliceBottom}, scale={frameScale}, padding=({paddingLeft},{paddingTop},{paddingRight},{paddingBottom}), bg={backgroundColor}");
-        
         var sliceDefinition = new FrameSliceDefinition
         {
             Left = sliceLeft,
@@ -155,11 +150,6 @@ public partial class ShellWindow : AnimatableWindow
             _viewModel.RenderScale = RenderScaling;
             _viewModel.ContentPadding = new Thickness(paddingLeft, paddingTop, paddingRight, paddingBottom);
             _viewModel.BackgroundColor = backgroundColor;
-            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Successfully loaded and sliced frame image (5x5)");
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine("LoadFrameImage: Failed to load frame image");
         }
     }
     
@@ -398,7 +388,6 @@ public partial class ShellWindow : AnimatableWindow
         // Check if frame is loaded with slice definition
         if (_viewModel?.FrameSliceDefinition == null || _viewModel.FrameSourceSize == default)
         {
-            System.Diagnostics.Debug.WriteLine("SetSplashSize: Frame not loaded yet, using fallback");
             return new Size(FallbackWidth, FallbackHeight);
         }
         
