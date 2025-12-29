@@ -146,19 +146,26 @@ export function inferAgentType(labels, body, complexity) {
 export function parseDependencies(body) {
   if (!body) return 'None';
   
-  // Match various dependency patterns
-  const patterns = [
-    /(?:depends on|blocked by|blocking)[:\s]+(?:[\w-]+\/[\w-]+)?#(\d+)/gi,  // With or without repo reference
-    /depends on:\s*\n\s*-\s*(?:[\w-]+\/[\w-]+)?#(\d+)/gi,  // List format with optional repo
-    /- (?:[\w-]+\/[\w-]+)?#(\d+)/g  // List items with issue refs and optional repo
-  ];
-  
   const deps = new Set();
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(body)) !== null) {
-      deps.add(`#${match[1]}`);
+  
+  // Pattern 1: "Depends on: #70" or "Depends on: repo#70" (captures first occurrence)
+  const mainPattern = /(?:depends on|blocked by|blocking)[:\s]+([^\n]+)/gi;
+  let mainMatch;
+  while ((mainMatch = mainPattern.exec(body)) !== null) {
+    const dependencyText = mainMatch[1];
+    // Extract all #numbers from this line
+    const issuePattern = /(?:[\w-]+\/[\w-]+)?#(\d+)/g;
+    let issueMatch;
+    while ((issueMatch = issuePattern.exec(dependencyText)) !== null) {
+      deps.add(`#${issueMatch[1]}`);
     }
+  }
+  
+  // Pattern 2: List format "- #70" or "- repo#70"
+  const listPattern = /^\s*-\s*(?:[\w-]+\/[\w-]+)?#(\d+)/gm;
+  let listMatch;
+  while ((listMatch = listPattern.exec(body)) !== null) {
+    deps.add(`#${listMatch[1]}`);
   }
   
   return deps.size > 0 ? Array.from(deps).join(', ') : 'None';
