@@ -42,23 +42,29 @@ export function inferComplexity(labels, body) {
  * @returns {string} Component option key
  */
 export function inferComponent(labels) {
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  
   // Service-related
-  if (labels.includes('services') || labels.includes('voice')) return 'services';
+  if (safeLabels.includes('services') || safeLabels.includes('voice')) return 'services';
   
   // Infrastructure-related
-  if (labels.includes('mcp-proxy') || labels.includes('architecture') || 
-      labels.includes('infrastructure')) return 'infrastructure';
+  if (safeLabels.includes('mcp-proxy') || safeLabels.includes('architecture') || 
+      safeLabels.includes('infrastructure')) return 'infrastructure';
   
   // Testing
-  if (labels.includes('testing')) return 'testing';
+  if (safeLabels.includes('testing')) return 'testing';
   
   // UI-related
-  if (labels.includes('ui') || labels.includes('ux')) return 'views';
+  if (safeLabels.includes('ui') || safeLabels.includes('ux')) return 'views';
   
   // Documentation
-  if (labels.includes('docs') || labels.includes('documentation')) return 'docs';
+  if (safeLabels.includes('docs') || safeLabels.includes('documentation')) return 'docs';
   
-  // Default to services (most common in WatchTower)
+  // If there are no labels at all, cannot confidently infer a component
+  if (safeLabels.length === 0) return 'unclassified';
+  
+  // Default to services when labels exist but do not match known components
+  // (most common category in WatchTower)
   return 'services';
 }
 
@@ -94,17 +100,17 @@ export function inferAgentType(labels, body, complexity) {
 
 /**
  * Parse Dependencies from issue body
- * Looks for "Depends on: #X" or "Blocked by: #X" patterns
+ * Looks for "Depends on: #X", "Blocked by: #X", or "Blocking #X" patterns
  * @param {string} body - Issue body text
  * @returns {string} Comma-separated issue references or "None"
  */
 export function parseDependencies(body) {
   if (!body) return 'None';
   
-  // Match various dependency patterns
+  // Match various dependency patterns (inline and list formats)
+  // Handles: "Depends on: #123", "Blocking #456", "Depends on:\n- #789"
   const patterns = [
-    /(?:depends on|blocked by|blocking)[:\s]+#(\d+)/gi,
-    /depends on:\s*\n\s*-\s*#(\d+)/gi,
+    /(?:depends on|blocked by|blocking)[:\s]*(?:\n\s*-\s*)?#(\d+)/gi,
   ];
   
   const deps = new Set();
@@ -120,6 +126,9 @@ export function parseDependencies(body) {
 
 /**
  * Format date for Last Activity field
+ * Falls back to current date if dateString is missing, which preserves existing
+ * behavior but may make issues appear more recently active than they actually were.
+ * In practice, GitHub API always provides updated_at, so this is a defensive fallback.
  * @param {string} dateString - ISO date string
  * @returns {string} YYYY-MM-DD format
  */

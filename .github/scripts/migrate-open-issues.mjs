@@ -20,9 +20,28 @@ import { ProjectGraphQLClient, delay } from './graphql-client.mjs';
 // Parse command line args
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
-const singleIssue = args.includes('--issue') 
-  ? parseInt(args[args.indexOf('--issue') + 1]) 
-  : null;
+
+// Validate --issue argument
+const issueIndex = args.indexOf('--issue');
+let singleIssue = null;
+if (issueIndex !== -1) {
+  const issueArg = args[issueIndex + 1];
+  
+  if (!issueArg || issueArg.startsWith('--')) {
+    console.error('❌ Error: --issue option requires a positive integer argument');
+    console.error('   Usage: node migrate-open-issues.mjs --issue 76');
+    process.exit(1);
+  }
+  
+  const parsedIssue = Number(issueArg);
+  if (!Number.isInteger(parsedIssue) || parsedIssue <= 0) {
+    console.error(`❌ Error: Invalid issue number "${issueArg}". Expected a positive integer.`);
+    console.error('   Usage: node migrate-open-issues.mjs --issue 76');
+    process.exit(1);
+  }
+  
+  singleIssue = parsedIssue;
+}
 
 // Validate environment
 const token = process.env.GITHUB_TOKEN;
@@ -51,6 +70,13 @@ if (hasPlaceholders && !isDryRun) {
   process.exit(1);
 }
 
+// Validate owner and repo fields
+if (!config.project?.owner || !config.project?.repo) {
+  console.error('❌ Error: Missing repository owner and/or name in project-config.yml');
+  console.error('  Please set "project.owner" and "project.repo" in the config file.');
+  process.exit(1);
+}
+
 // Initialize clients
 const octokit = new Octokit({ auth: token });
 const graphql = new ProjectGraphQLClient(token, config.project?.id);
@@ -59,8 +85,8 @@ async function fetchOpenIssues() {
   console.log('\n📋 Fetching open issues...');
   
   const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-    owner: config.project.owner,
-    repo: config.project.repo,
+    owner: config.project?.owner,
+    repo: config.project?.repo,
     state: 'open',
     per_page: 100
   });
@@ -102,12 +128,11 @@ async function migrateIssue(issue) {
     await graphql.updateAllFields(itemId, fields, config);
     console.log('  ✓ Fields updated successfully');
     
-    // Rate limit delay
-    await delay(500);
-    
     return { ...fields, migrated: true, itemId };
   } catch (error) {
     console.error(`  ❌ Error: ${error.message}`);
+    // Apply backoff delay after failed update to reduce API pressure
+    await delay(500);
     return { ...fields, migrated: false, error: error.message };
   }
 }

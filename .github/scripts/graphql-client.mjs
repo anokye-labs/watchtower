@@ -215,80 +215,158 @@ export class ProjectGraphQLClient {
   async updateAllFields(itemId, fields, config) {
     const updates = [];
     
+    const logFieldSkip = (fieldName, reason) => {
+      console.warn(`  ⚠️  Skipping ${fieldName}: ${reason}`);
+    };
+    
     // Nsoromma (Status) - single-select
-    if (config.fields.nsoromma?.options?.[fields.status]) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.nsoromma.id,
-        config.fields.nsoromma.options[fields.status]
-      ));
+    const nsorommaField = config.fields.nsoromma;
+    if (nsorommaField?.options?.[fields.status]) {
+      updates.push({
+        name: 'Status',
+        promise: this.updateSingleSelect(
+          itemId,
+          nsorommaField.id,
+          nsorommaField.options[fields.status]
+        )
+      });
+    } else if (fields.status) {
+      if (!nsorommaField?.options) {
+        logFieldSkip('Status', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Status', `no option found for value "${fields.status}"`);
+      }
     }
     
     // Tumi (Priority) - single-select
-    if (config.fields.tumi?.options?.[fields.priority]) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.tumi.id,
-        config.fields.tumi.options[fields.priority]
-      ));
+    const tumiField = config.fields.tumi;
+    if (tumiField?.options?.[fields.priority]) {
+      updates.push({
+        name: 'Priority',
+        promise: this.updateSingleSelect(
+          itemId,
+          tumiField.id,
+          tumiField.options[fields.priority]
+        )
+      });
+    } else if (fields.priority) {
+      if (!tumiField?.options) {
+        logFieldSkip('Priority', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Priority', `no option found for value "${fields.priority}"`);
+      }
     }
     
     // Mu (Complexity) - number
     if (config.fields.mu?.id) {
-      updates.push(this.updateNumber(
-        itemId,
-        config.fields.mu.id,
-        fields.complexity
-      ));
+      updates.push({
+        name: 'Complexity',
+        promise: this.updateNumber(
+          itemId,
+          config.fields.mu.id,
+          fields.complexity
+        )
+      });
+    } else if (fields.complexity != null) {
+      logFieldSkip('Complexity', 'field ID not configured');
     }
     
     // Fapem (Component) - single-select
-    if (config.fields.fapem?.options?.[fields.component]) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.fapem.id,
-        config.fields.fapem.options[fields.component]
-      ));
+    const fapemField = config.fields.fapem;
+    if (fapemField?.options?.[fields.component]) {
+      updates.push({
+        name: 'Component',
+        promise: this.updateSingleSelect(
+          itemId,
+          fapemField.id,
+          fapemField.options[fields.component]
+        )
+      });
+    } else if (fields.component) {
+      if (!fapemField?.options) {
+        logFieldSkip('Component', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Component', `no option found for value "${fields.component}"`);
+      }
     }
     
     // Ɔkyeame (Agent Type) - single-select
-    if (config.fields.okyeame?.options?.[fields.agent_type]) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.okyeame.id,
-        config.fields.okyeame.options[fields.agent_type]
-      ));
+    const okyeameField = config.fields.okyeame;
+    if (okyeameField?.options?.[fields.agent_type]) {
+      updates.push({
+        name: 'Agent Type',
+        promise: this.updateSingleSelect(
+          itemId,
+          okyeameField.id,
+          okyeameField.options[fields.agent_type]
+        )
+      });
+    } else if (fields.agent_type) {
+      if (!okyeameField?.options) {
+        logFieldSkip('Agent Type', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Agent Type', `no option found for value "${fields.agent_type}"`);
+      }
     }
     
     // Nkabom (Dependencies) - text
     if (config.fields.nkabom?.id) {
-      updates.push(this.updateText(
-        itemId,
-        config.fields.nkabom.id,
-        fields.dependencies
-      ));
+      updates.push({
+        name: 'Dependencies',
+        promise: this.updateText(
+          itemId,
+          config.fields.nkabom.id,
+          fields.dependencies
+        )
+      });
+    } else if (fields.dependencies && fields.dependencies !== 'None') {
+      logFieldSkip('Dependencies', 'field ID not configured');
     }
     
     // Da-Akyire (Last Activity) - date
     if (config.fields.da_akyire?.id) {
-      updates.push(this.updateDate(
-        itemId,
-        config.fields.da_akyire.id,
-        fields.last_activity
-      ));
+      updates.push({
+        name: 'Last Activity',
+        promise: this.updateDate(
+          itemId,
+          config.fields.da_akyire.id,
+          fields.last_activity
+        )
+      });
+    } else if (fields.last_activity) {
+      logFieldSkip('Last Activity', 'field ID not configured');
     }
     
     // PR Nkitahodi (PR Link) - text - skip if empty
     if (config.fields.pr_nkitahodi?.id && fields.pr_link) {
-      updates.push(this.updateText(
-        itemId,
-        config.fields.pr_nkitahodi.id,
-        fields.pr_link
-      ));
+      updates.push({
+        name: 'PR Link',
+        promise: this.updateText(
+          itemId,
+          config.fields.pr_nkitahodi.id,
+          fields.pr_link
+        )
+      });
     }
     
-    // Execute all updates in parallel (within rate limits)
-    await Promise.all(updates);
+    // Check if we have any updates to perform
+    if (updates.length === 0) {
+      console.warn(`  ⚠️  No field updates queued for item ${itemId}. Check project config and inferred values.`);
+      return;
+    }
+    
+    // Execute all updates with Promise.allSettled to allow partial success
+    const results = await Promise.allSettled(updates.map(u => u.promise));
+    
+    // Report any failures
+    const failures = results
+      .map((result, index) => ({ result, name: updates[index].name }))
+      .filter(({ result }) => result.status === 'rejected');
+    
+    if (failures.length > 0) {
+      const errors = failures.map(({ name, result }) => `${name}: ${result.reason.message}`).join('; ');
+      throw new Error(`Failed to update ${failures.length} field(s): ${errors}`);
+    }
   }
 }
 
