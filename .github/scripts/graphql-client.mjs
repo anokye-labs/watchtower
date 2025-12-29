@@ -19,6 +19,7 @@ export class ProjectGraphQLClient {
    * Get project item ID for an issue
    * @param {string} issueNodeId - The node_id of the issue
    * @returns {Promise<string|null>} Project item ID or null if not in project
+   * @note This method fetches the first 100 items. For larger projects, the issue may not be found.
    */
   async getProjectItemId(issueNodeId) {
     const query = `
@@ -270,7 +271,18 @@ export class ProjectGraphQLClient {
     }
     
     // Execute all updates in parallel (within rate limits)
-    await Promise.all(updates);
+    // Use allSettled to handle individual failures gracefully
+    const results = await Promise.allSettled(updates);
+    
+    // Check for any failures
+    const failures = results.filter(r => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error(`${failures.length} field update(s) failed:`);
+      failures.forEach((f, i) => {
+        console.error(`  - Update ${i + 1}: ${f.reason?.message || f.reason}`);
+      });
+      throw new Error(`Failed to update ${failures.length} field(s)`);
+    }
   }
 }
 

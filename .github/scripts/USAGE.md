@@ -86,9 +86,29 @@ Updates a date field (Last Activity). Date must be ISO format (YYYY-MM-DD).
 
 ### `updateAllFields(itemId, fields, config)`
 Batch updates all fields for an issue using the field values and config.
+Uses `Promise.allSettled()` to handle individual failures gracefully.
+Throws an error if any field update fails, with details logged to console.
 
 ### `delay(ms)`
 Promise-based delay for rate limiting.
+
+## Error Handling
+
+The `updateAllFields` method uses `Promise.allSettled()` to attempt all field updates even if some fail. If any updates fail, the method will:
+1. Log details of each failure to console.error
+2. Throw an error indicating how many updates failed
+
+Example error output:
+```
+2 field update(s) failed:
+  - Update 1: GraphQL error message
+  - Update 3: Network error
+Error: Failed to update 2 field(s)
+```
+
+## Limitations
+
+- `getProjectItemId` only fetches the first 100 project items. For larger projects (>100 items), issues beyond this limit may not be found and will need to be added via `addIssueToProject`.
 
 ## Field Mapping
 
