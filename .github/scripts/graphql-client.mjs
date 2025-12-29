@@ -11,12 +11,6 @@ import { Octokit } from '@octokit/rest';
  */
 export class ProjectGraphQLClient {
   constructor(token, projectId) {
-    if (typeof token !== 'string' || token.trim() === '') {
-      throw new Error('GitHub token is required and must be a non-empty string.');
-    }
-    if (typeof projectId !== 'string' || projectId.trim() === '') {
-      throw new Error('projectId is required and must be a non-empty string.');
-    }
     this.octokit = new Octokit({ auth: token });
     this.projectId = projectId;
   }
@@ -25,14 +19,17 @@ export class ProjectGraphQLClient {
    * Get project item ID for an issue
    * @param {string} issueNodeId - The node_id of the issue
    * @returns {Promise<string|null>} Project item ID or null if not in project
-   * @note This method fetches the first 100 items. For larger projects, the issue may not be found.
    */
   async getProjectItemId(issueNodeId) {
     const query = `
-      query GetProjectItem($projectId: ID!) {
+      query GetProjectItem($projectId: ID!, $cursor: String) {
         node(id: $projectId) {
           ... on ProjectV2 {
-            items(first: 100) {
+            items(first: 100, after: $cursor) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
               nodes {
                 id
                 content {
@@ -47,13 +44,26 @@ export class ProjectGraphQLClient {
       }
     `;
     
-    const result = await this.octokit.graphql(query, {
-      projectId: this.projectId
-    });
+    let hasNextPage = true;
+    let cursor = null;
     
-    const items = result.node?.items?.nodes || [];
-    const item = items.find(i => i.content?.id === issueNodeId);
-    return item?.id || null;
+    while (hasNextPage) {
+      const result = await this.octokit.graphql(query, {
+        projectId: this.projectId,
+        cursor
+      });
+      
+      const items = result.node?.items?.nodes || [];
+      const item = items.find(i => i.content?.id === issueNodeId);
+      if (item) {
+        return item.id;
+      }
+      
+      hasNextPage = result.node?.items?.pageInfo?.hasNextPage || false;
+      cursor = result.node?.items?.pageInfo?.endCursor;
+    }
+    
+    return null;
   }
   
   /**
@@ -80,11 +90,7 @@ export class ProjectGraphQLClient {
       contentId: issueNodeId
     });
     
-    const itemId = result?.addProjectV2ItemById?.item?.id;
-    if (!itemId) {
-      throw new Error('Failed to add issue to project: missing item id in GraphQL response.');
-    }
-    return itemId;
+    return result.addProjectV2ItemById.item.id;
   }
   
   /**
@@ -208,116 +214,157 @@ export class ProjectGraphQLClient {
   async updateAllFields(itemId, fields, config) {
     const updates = [];
     
-    // Status (single-select) - nsoromma
-    if (config.fields.nsoromma?.options?.[fields.status] && fields.status) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.nsoromma.id,
-        config.fields.nsoromma.options[fields.status]
-      ));
-    }
+    const logFieldSkip = (fieldName, reason) => {
+      console.warn(`  ⚠️  Skipping ${fieldName}: ${reason}`);
+    };
     
-    // Priority (single-select) - tumi
-    if (config.fields.tumi?.options?.[fields.priority] && fields.priority) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.tumi.id,
-        config.fields.tumi.options[fields.priority]
-      ));
-    }
-    
-    // Complexity (number) - mu
-    if (
-      config.fields.mu?.id &&
-      typeof fields.complexity === 'number' &&
-      !isNaN(fields.complexity) &&
-      fields.complexity >= 1
-    ) {
-      updates.push(this.updateNumber(
-        itemId,
-        config.fields.mu.id,
-        fields.complexity
-      ));
-    }
-    
-    // Component (single-select) - fapem
-    if (config.fields.fapem?.options?.[fields.component] && fields.component) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.fapem.id,
-        config.fields.fapem.options[fields.component]
-      ));
-    }
-    
-    // Agent Type (single-select) - okyeame
-    if (config.fields.okyeame?.options?.[fields.agent_type] && fields.agent_type) {
-      updates.push(this.updateSingleSelect(
-        itemId,
-        config.fields.okyeame.id,
-        config.fields.okyeame.options[fields.agent_type]
-      ));
-    }
-    
-    // Dependencies (text) - nkabom
-    if (config.fields.nkabom?.id && fields.dependencies && String(fields.dependencies).trim()) {
-      updates.push(this.updateText(
-        itemId,
-        config.fields.nkabom.id,
-        fields.dependencies
-      ));
-    }
-    
-    // Last Activity (date) - da_akyire
-    if (config.fields.da_akyire?.id && fields.last_activity) {
-      const lastActivity = String(fields.last_activity).trim();
-      const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!isoDateRegex.test(lastActivity) || isNaN(Date.parse(lastActivity))) {
-        throw new Error(`Invalid last_activity date format: "${fields.last_activity}". Expected ISO format YYYY-MM-DD.`);
-      }
-      updates.push(this.updateDate(
-        itemId,
-        config.fields.da_akyire.id,
-        lastActivity
-      ));
-    }
-    
-    // PR Link (text) - pr_nkitahodi
-    if (config.fields.pr_nkitahodi?.id && fields.pr_link && String(fields.pr_link).trim()) {
-      updates.push(this.updateText(
-        itemId,
-        config.fields.pr_nkitahodi.id,
-        fields.pr_link
-      ));
-    }
-    
-    // Execute all updates with rate limiting between batches
-    // Use try-catch to handle individual failures gracefully
-    // Add a small delay between updates to avoid rate limits
-    const RATE_LIMIT_DELAY = 100; // milliseconds between updates
-    const results = [];
-    
-    for (let i = 0; i < updates.length; i++) {
-      try {
-        await updates[i];
-        results.push({ status: 'fulfilled' });
-      } catch (error) {
-        results.push({ status: 'rejected', reason: error });
-      }
-      
-      // Add delay between updates (but not after the last one)
-      if (i < updates.length - 1) {
-        await delay(RATE_LIMIT_DELAY);
-      }
-    }
-    
-    // Check for any failures
-    const failures = results.filter(r => r.status === 'rejected');
-    if (failures.length > 0) {
-      console.error(`${failures.length} field update(s) failed:`);
-      failures.forEach((f, i) => {
-        console.error(`  - Update ${i + 1}: ${f.reason?.message || f.reason}`);
+    // Nsoromma (Status) - single-select
+    const nsorommaField = config.fields.nsoromma;
+    if (nsorommaField?.options?.[fields.status]) {
+      updates.push({
+        name: 'Status',
+        promise: this.updateSingleSelect(
+          itemId,
+          nsorommaField.id,
+          nsorommaField.options[fields.status]
+        )
       });
-      throw new Error(`Failed to update ${failures.length} field(s)`);
+    } else if (fields.status) {
+      if (!nsorommaField?.options) {
+        logFieldSkip('Status', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Status', `no option found for value "${fields.status}"`);
+      }
+    }
+    
+    // Tumi (Priority) - single-select
+    const tumiField = config.fields.tumi;
+    if (tumiField?.options?.[fields.priority]) {
+      updates.push({
+        name: 'Priority',
+        promise: this.updateSingleSelect(
+          itemId,
+          tumiField.id,
+          tumiField.options[fields.priority]
+        )
+      });
+    } else if (fields.priority) {
+      if (!tumiField?.options) {
+        logFieldSkip('Priority', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Priority', `no option found for value "${fields.priority}"`);
+      }
+    }
+    
+    // Mu (Complexity) - number
+    if (config.fields.mu?.id) {
+      updates.push({
+        name: 'Complexity',
+        promise: this.updateNumber(
+          itemId,
+          config.fields.mu.id,
+          fields.complexity
+        )
+      });
+    } else if (fields.complexity != null) {
+      logFieldSkip('Complexity', 'field ID not configured');
+    }
+    
+    // Fapem (Component) - single-select
+    const fapemField = config.fields.fapem;
+    if (fapemField?.options?.[fields.component]) {
+      updates.push({
+        name: 'Component',
+        promise: this.updateSingleSelect(
+          itemId,
+          fapemField.id,
+          fapemField.options[fields.component]
+        )
+      });
+    } else if (fields.component) {
+      if (!fapemField?.options) {
+        logFieldSkip('Component', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Component', `no option found for value "${fields.component}"`);
+      }
+    }
+    
+    // Ɔkyeame (Agent Type) - single-select
+    const okyeameField = config.fields.okyeame;
+    if (okyeameField?.options?.[fields.agent_type]) {
+      updates.push({
+        name: 'Agent Type',
+        promise: this.updateSingleSelect(
+          itemId,
+          okyeameField.id,
+          okyeameField.options[fields.agent_type]
+        )
+      });
+    } else if (fields.agent_type) {
+      if (!okyeameField?.options) {
+        logFieldSkip('Agent Type', 'config missing or no options defined');
+      } else {
+        logFieldSkip('Agent Type', `no option found for value "${fields.agent_type}"`);
+      }
+    }
+    
+    // Nkabom (Dependencies) - text
+    if (config.fields.nkabom?.id) {
+      updates.push({
+        name: 'Dependencies',
+        promise: this.updateText(
+          itemId,
+          config.fields.nkabom.id,
+          fields.dependencies
+        )
+      });
+    } else if (fields.dependencies && fields.dependencies !== 'None') {
+      logFieldSkip('Dependencies', 'field ID not configured');
+    }
+    
+    // Da-Akyire (Last Activity) - date
+    if (config.fields.da_akyire?.id) {
+      updates.push({
+        name: 'Last Activity',
+        promise: this.updateDate(
+          itemId,
+          config.fields.da_akyire.id,
+          fields.last_activity
+        )
+      });
+    } else if (fields.last_activity) {
+      logFieldSkip('Last Activity', 'field ID not configured');
+    }
+    
+    // PR Nkitahodi (PR Link) - text - skip if empty
+    if (config.fields.pr_nkitahodi?.id && fields.pr_link) {
+      updates.push({
+        name: 'PR Link',
+        promise: this.updateText(
+          itemId,
+          config.fields.pr_nkitahodi.id,
+          fields.pr_link
+        )
+      });
+    }
+    
+    // Check if we have any updates to perform
+    if (updates.length === 0) {
+      console.warn(`  ⚠️  No field updates queued for item ${itemId}. Check project config and inferred values.`);
+      return;
+    }
+    
+    // Execute all updates with Promise.allSettled to allow partial success
+    const results = await Promise.allSettled(updates.map(u => u.promise));
+    
+    // Report any failures
+    const failures = results
+      .map((result, index) => ({ result, name: updates[index].name }))
+      .filter(({ result }) => result.status === 'rejected');
+    
+    if (failures.length > 0) {
+      const errors = failures.map(({ name, result }) => `${name}: ${result.reason.message}`).join('\n  - ');
+      throw new Error(`Failed to update ${failures.length} field(s):\n  - ${errors}`);
     }
   }
 }
