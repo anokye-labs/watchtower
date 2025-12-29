@@ -1,5 +1,33 @@
 # WatchTower Documentation
 
+This directory contains technical documentation for the WatchTower application.
+
+## Quick Reference
+
+| Document | Description |
+|----------|-------------|
+| [label-system.md](label-system.md) | GitHub label system with Akan names for agent workflow |
+| [game-controller-support.md](game-controller-support.md) | SDL2-based gamepad integration guide |
+| [splash-screen-startup.md](splash-screen-startup.md) | Startup flow and splash screen architecture |
+| [splash-screen-visual-guide.md](splash-screen-visual-guide.md) | Visual states and UI design for splash screen |
+| [fluent-icons-usage.md](fluent-icons-usage.md) | Fluent UI icons integration guide |
+| [ADAPTIVECARD_DISPLAY_ENGINE.md](ADAPTIVECARD_DISPLAY_ENGINE.md) | Adaptive Card rendering system overview |
+| [ADAPTIVE-CARD-THEME-PLAN.md](ADAPTIVE-CARD-THEME-PLAN.md) | Theming system implementation plan |
+
+## Root-Level Documentation
+
+Additional documentation is available in the repository root:
+
+| Document | Description |
+|----------|-------------|
+| [README.md](../README.md) | Project overview and quick start |
+| [AGENTS.md](../AGENTS.md) | AI agent development guidelines |
+| [ANIMATION-FLOW.md](../ANIMATION-FLOW.md) | Startup animation sequence diagrams |
+| [IMPLEMENTATION-ANIMATED-SHELL.md](../IMPLEMENTATION-ANIMATED-SHELL.md) | Shell window animation implementation |
+| [IMPLEMENTATION-SUMMARY.md](../IMPLEMENTATION-SUMMARY.md) | Game controller implementation summary |
+| [IMPLEMENTATION-SUMMARY-SPLASH.md](../IMPLEMENTATION-SUMMARY-SPLASH.md) | Splash screen implementation summary |
+| [QUICK-START-ANIMATION.md](../QUICK-START-ANIMATION.md) | Animation feature quick start |
+| [VISUAL-MOCKUP.md](../VISUAL-MOCKUP.md) | Animation sequence visual mockups |
 This directory contains technical documentation for the WatchTower application. The documentation is organized into several categories to help you find the information you need quickly.
 
 ## Getting Started
