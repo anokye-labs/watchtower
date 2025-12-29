@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>avalonia-mcp-proxy</ToolCommandName>
+    <Description>Standalone MCP proxy server for federating Avalonia application MCP handlers</Description>
+    <PackageProjectUrl>https://github.com/anokye-labs/watchtower</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/anokye-labs/watchtower</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Avalonia.Mcp.Core\Avalonia.Mcp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

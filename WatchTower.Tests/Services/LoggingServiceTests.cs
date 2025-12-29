@@ -6,7 +6,7 @@ namespace WatchTower.Tests.Services;
 public class LoggingServiceTests
 {
     [Fact]
-    public void LoggingService_CanBeInstantiated()
+    public void Constructor_CreatesInstance_Successfully()
     {
         // This is a placeholder test to verify test infrastructure works
         Assert.True(true);

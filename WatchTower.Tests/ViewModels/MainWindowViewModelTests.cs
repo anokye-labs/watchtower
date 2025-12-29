@@ -5,7 +5,7 @@ namespace WatchTower.Tests.ViewModels;
 public class MainWindowViewModelTests
 {
     [Fact]
-    public void MainWindowViewModel_Placeholder()
+    public void TestInfrastructure_WhenRunning_IsConfiguredCorrectly()
     {
         // This is a placeholder test to verify test infrastructure works
         Assert.True(true);

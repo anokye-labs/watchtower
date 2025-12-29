@@ -1,0 +1,78 @@
+name: "✨ Feature - Adwuma (Work)"
+description: "Propose new functionality for WatchTower"
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Adwuma (Feature Work)
+        *English: Propose a new feature or enhancement*
+        
+        Please provide enough detail for agents or developers to implement.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: "Objective"
+      description: "What should this feature accomplish?"
+      placeholder: "Enable users to..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: fapem
+    attributes:
+      label: "Fapem (Component)"
+      description: "Which area of the codebase is affected?"
+      options:
+        - Services
+        - ViewModels
+        - Views
+        - Models
+        - Testing
+        - Infrastructure
+        - Docs
+        - Build
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mu
+    attributes:
+      label: "Mu (Complexity Estimate)"
+      description: "How complex is this work? (1-2: Simple, 3-5: Moderate, 8-13: Complex)"
+      options:
+        - "1 - Trivial (single file, clear change)"
+        - "2 - Simple (1-2 files, well-defined)"
+        - "3 - Moderate (2-3 files, some decisions)"
+        - "5 - Medium (3-5 files, coordination needed)"
+        - "8 - Complex (5+ files, architectural)"
+        - "13 - Very Complex (major feature, design needed)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: nkabom
+    attributes:
+      label: "Nkabom (Dependencies)"
+      description: "List issue numbers this depends on, or 'None'"
+      placeholder: "#42, anokye-labs/watchtower#53 or None"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Acceptance Criteria"
+      description: "How do we know this is complete?"
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: "Implementation Notes"
+      description: "Any technical considerations, file references, or patterns to follow"

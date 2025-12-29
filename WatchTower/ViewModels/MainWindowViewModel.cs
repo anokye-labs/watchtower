@@ -15,7 +15,7 @@ namespace WatchTower.ViewModels;
 /// ViewModel for the main application window.
 /// Manages the input overlay state, game controller integration, and Adaptive Card display.
 /// </summary>
-public class MainWindowViewModel : ViewModelBase
+public class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private readonly IGameControllerService _gameControllerService;
     private readonly IAdaptiveCardService _cardService;
@@ -31,6 +31,8 @@ public class MainWindowViewModel : ViewModelBase
     private TypedEventHandler<RenderedAdaptiveCard, AdaptiveActionEventArgs>? _cardActionHandler;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
+    private string? _renderError;
+    private bool _disposed;
 
     public string StatusText
     {
@@ -90,6 +92,26 @@ public class MainWindowViewModel : ViewModelBase
         get => _renderedCardControl;
         private set => SetProperty(ref _renderedCardControl, value);
     }
+
+    /// <summary>
+    /// Gets the error message if card rendering failed, or null if no error.
+    /// </summary>
+    public string? RenderError
+    {
+        get => _renderError;
+        private set
+        {
+            if (SetProperty(ref _renderError, value))
+            {
+                OnPropertyChanged(nameof(HasRenderError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether there is a render error.
+    /// </summary>
+    public bool HasRenderError => !string.IsNullOrEmpty(RenderError);
 
     /// <summary>
     /// Gets the current theme mode display name.
@@ -187,6 +209,11 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     public ICommand ToggleThemeCommand { get; }
 
+    /// <summary>
+    /// Command to retry rendering the card after a failure.
+    /// </summary>
+    public ICommand RetryRenderCommand { get; }
+
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
         IAdaptiveCardService cardService,
@@ -221,6 +248,7 @@ public class MainWindowViewModel : ViewModelBase
         SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
         ToggleThemeCommand = new RelayCommand(ToggleTheme);
+        RetryRenderCommand = new RelayCommand(RetryRender);
 
         UpdateStatus();
         
@@ -253,16 +281,20 @@ public class MainWindowViewModel : ViewModelBase
         if (CurrentCard == null)
         {
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = null;
             return;
         }
 
         if (HostConfig == null)
         {
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = "Unable to render card: Host configuration is not available.";
             return;
         }
 
@@ -273,10 +305,7 @@ public class MainWindowViewModel : ViewModelBase
             _logger.LogInformation("Rendering card with HostConfig - BG: {BgColor}, FG: {FgColor}", bgColor, fgColor);
 
             // Unsubscribe from previous rendered card to avoid memory leak
-            if (_currentRenderedCard != null && _cardActionHandler != null)
-            {
-                _currentRenderedCard.OnAction -= _cardActionHandler;
-            }
+            DetachRenderedCardHandler();
 
             var renderer = new AdaptiveCardRenderer(HostConfig);
             var renderedCard = renderer.RenderCard(CurrentCard);
@@ -293,6 +322,7 @@ public class MainWindowViewModel : ViewModelBase
             _currentRenderedCard = renderedCard;
 
             RenderedCardControl = renderedCard.Control;
+            RenderError = null; // Clear any previous error
             _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);
             
             // Log any warnings
@@ -305,6 +335,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Failed to render adaptive card");
             RenderedCardControl = null;
+            RenderError = "Failed to render card. Please check the logs for more details.";
         }
     }
 
@@ -427,6 +458,27 @@ public class MainWindowViewModel : ViewModelBase
             : InputOverlayMode.EventLog;
     }
 
+    private void RetryRender()
+    {
+        // Only retry if prerequisites are available; otherwise, report a clearer message.
+        if (CurrentCard is null || HostConfig is null)
+        {
+            var reason = CurrentCard is null && HostConfig is null
+                ? "card and configuration are still unavailable"
+                : CurrentCard is null
+                    ? "card is still unavailable"
+                    : "configuration is still unavailable";
+
+            _logger.LogWarning("Cannot retry render: {Reason}", reason);
+            RenderError = $"Cannot retry: {reason}.";
+            AddEvent($"Cannot retry: {reason}");
+            return;
+        }
+
+        _logger.LogInformation("Retrying card render after error");
+        RenderCard();
+    }
+
     #region Card Action Handlers
 
     private void OnCardActionInvoked(object? sender, AdaptiveCardActionEventArgs e)
@@ -497,4 +549,42 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     #endregion
+
+    /// <summary>
+    /// Detaches the action handler from the current rendered card to prevent memory leaks.
+    /// </summary>
+    private void DetachRenderedCardHandler()
+    {
+        if (_currentRenderedCard != null && _cardActionHandler != null)
+        {
+            _currentRenderedCard.OnAction -= _cardActionHandler;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        // Unsubscribe from controller events
+        _gameControllerService.ButtonPressed -= OnButtonPressed;
+        _gameControllerService.ButtonReleased -= OnButtonReleased;
+        _gameControllerService.ControllerConnected -= OnControllerConnected;
+        _gameControllerService.ControllerDisconnected -= OnControllerDisconnected;
+
+        // Unsubscribe from theme changes
+        _themeService.ThemeChanged -= OnThemeChanged;
+
+        // Unsubscribe from card action events
+        _cardService.ActionInvoked -= OnCardActionInvoked;
+        _cardService.SubmitAction -= OnCardSubmit;
+        _cardService.OpenUrlAction -= OnCardOpenUrl;
+        _cardService.ExecuteAction -= OnCardExecute;
+        _cardService.ShowCardAction -= OnCardShowCard;
+
+        // Unsubscribe from rendered card events
+        DetachRenderedCardHandler();
+
+        _disposed = true;
+    }
 }
