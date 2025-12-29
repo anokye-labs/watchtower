@@ -3,6 +3,8 @@
 # DO NOT EDIT MANUALLY - regenerate from GraphQL if fields change
 
 project:
+  owner: "anokye-labs"  # GitHub organization
+  repo: "watchtower"    # Repository name
   id: "PVT_kwDONc6RBc4A0MJL"  # Project ID
   number: 1      # Project number
 
