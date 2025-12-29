@@ -262,7 +262,7 @@ jobs:
     if: |
       github.event_name == 'check_suite' && 
       github.event.check_suite.conclusion == 'success' &&
-      github.event.check_suite.pull_requests[0] != null
+      github.event.check_suite.pull_requests && github.event.check_suite.pull_requests.length > 0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -434,7 +434,7 @@ jobs:
     if: |
       github.event_name == 'check_suite' && 
       github.event.check_suite.conclusion == 'failure' &&
-      github.event.check_suite.pull_requests[0] != null
+      github.event.check_suite.pull_requests && github.event.check_suite.pull_requests.length > 0
     runs-on: ubuntu-latest
     steps:
       - name: Add needs-fix label and comment
@@ -689,7 +689,7 @@ jobs:
                       # NOTE: Only the first 100 project items are processed here.
                       # Older items beyond this limit are not checked for staleness.
                       # To process more items, pagination support would need to be added.
-                      items(first: 100) {
+                      items(first: 100, orderBy: {field: UPDATED_AT, direction: ASC}) {
                         nodes {
                           id
                           content {
@@ -817,12 +817,12 @@ jobs:
                     // Comment on issue
                     const comment = `⚠️ **Asiw (Blocked): No activity for ${STALE_THRESHOLD_DAYS} days**
 
-This issue has been in Dwuma (In Progress) for more than ${STALE_THRESHOLD_DAYS} days without activity.
+This issue has remained in the Dwuma (In progress) status for more than ${STALE_THRESHOLD_DAYS} days without activity.
 
 Please:
-1. Check the Nkabom (Dependencies) field for blockers
-2. Update status if blocked externally
-3. Or continue work if still active
+1. Check the Nkabom field for any blockers
+2. Update the status to Blocked (Asiw) if it is blocked externally
+3. Or continue work if the item is still active
 
 Assigning to @${STALE_ASSIGNEE} for review.`;
                     
@@ -855,7 +855,7 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
           ARCHIVE_THRESHOLD_DAYS: ${{ vars.ARCHIVE_THRESHOLD_DAYS || 30 }}
         with:
           script: |
-            const ARCHIVE_THRESHOLD_DAYS = Number.parseInt(process.env.ARCHIVE_THRESHOLD_DAYS, 10) || 30;
+            const ARCHIVE_THRESHOLD_DAYS = parseInt(process.env.ARCHIVE_THRESHOLD_DAYS, 10) || 30;
             
             // Get project data
             const projectQuery = `
@@ -866,8 +866,9 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
                       id
                       number
                       # NOTE: This workflow only fetches and checks the first 100 project items for archival.
-                      # Older items beyond this limit are not evaluated unless pagination support is added.
-                      items(first: 100) {
+                      # Items are ordered by UPDATED_AT ascending so the oldest items are processed first.
+                      # Older items beyond this limit are still not evaluated unless pagination support is added.
+                      items(first: 100, orderBy: {field: UPDATED_AT, direction: ASC}) {
                         nodes {
                           id
                           content {
@@ -948,14 +949,16 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
                   console.log(`Archiving item: #${item.content.number} (completed: ${completionDate})`);
                   
                   try {
-                    // Archive (delete from project)
+                    // Archive (move to project's archived items)
                     const archiveMutation = `
                       mutation ArchiveItem($projectId: ID!, $itemId: ID!) {
-                        deleteProjectV2Item(input: {
+                        archiveProjectV2Item(input: {
                           projectId: $projectId
                           itemId: $itemId
                         }) {
-                          deletedItemId
+                          item {
+                            id
+                          }
                         }
                       }
                     `;
