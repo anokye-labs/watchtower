@@ -1,0 +1,1054 @@
+name: Nsumankwahene Automation (Spiritual Guardian Flow)
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+  pull_request_target:
+    types: [closed]
+  check_suite:
+    types: [completed]
+  issue_comment:
+    types: [created]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly: Sunday midnight UTC
+    - cron: '0 0 1 * *'  # Monthly: 1st of month midnight UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  pr-linked-to-issue:
+    name: "In Progress - PR Links Issue"
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Parse PR body for linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prNumber = context.payload.pull_request.number;
+            
+            // Parse PR body for "Closes #X", "Fixes #X", "Resolves #X"
+            const issueRefs = prBody.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
+            
+            if (issueRefs.length === 0) {
+              console.log('No linked issues found in PR body');
+              return;
+            }
+            
+            console.log(`Found ${issueRefs.length} linked issue(s)`);
+            
+            // Query for project information
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                              id
+                              name
+                            }
+                          }
+                          ... on ProjectV2Field {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            let projectData;
+            try {
+              projectData = await github.graphql(projectQuery, {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+            } catch (error) {
+              console.log('Could not fetch project data:', error.message);
+              return;
+            }
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found for this repository');
+              return;
+            }
+            
+            // Find the status field and "In progress" option
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const prLinkField = project.fields.nodes.find(f => f.name === 'pr_link');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            
+            if (!statusField) {
+              console.log('Status field not found in project');
+              return;
+            }
+            
+            const inProgressOption = statusField.options?.find(o => o.name === 'In progress');
+            if (!inProgressOption) {
+              console.log('In progress status option not found');
+              return;
+            }
+            
+            // Process each linked issue
+            for (const ref of issueRefs) {
+              const issueNumber = parseInt(ref.match(/#(\d+)/)[1]);
+              
+              try {
+                // Get the project item ID for this issue
+                const itemQuery = `
+                  query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!, $projectNumber: Int!) {
+                    repository(owner: $owner, name: $repo) {
+                      issue(number: $issueNumber) {
+                        id
+                        projectItems(first: 10) {
+                          nodes {
+                            id
+                            project {
+                              number
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `;
+                
+                const itemData = await github.graphql(itemQuery, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issueNumber: issueNumber,
+                  projectNumber: project.number
+                });
+                
+                const projectItem = itemData.repository.issue.projectItems.nodes.find(
+                  item => item.project.number === project.number
+                );
+                
+                if (!projectItem) {
+                  console.log(`Issue #${issueNumber} is not in the project`);
+                  continue;
+                }
+                
+                // Update status to "In progress"
+                const updateStatusMutation = `
+                  mutation UpdateStatus($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `;
+                
+                await github.graphql(updateStatusMutation, {
+                  projectId: project.id,
+                  itemId: projectItem.id,
+                  fieldId: statusField.id,
+                  optionId: inProgressOption.id
+                });
+                
+                console.log(`✓ Updated issue #${issueNumber} to "In progress"`);
+                
+                // Update PR link field if it exists
+                if (prLinkField) {
+                  const prUrl = context.payload.pull_request.html_url;
+                  const updatePrLinkMutation = `
+                    mutation UpdatePrLink($projectId: ID!, $itemId: ID!, $fieldId: ID!, $text: String!) {
+                      updateProjectV2ItemFieldValue(input: {
+                        projectId: $projectId
+                        itemId: $itemId
+                        fieldId: $fieldId
+                        value: { text: $text }
+                      }) {
+                        projectV2Item { id }
+                      }
+                    }
+                  `;
+                  
+                  await github.graphql(updatePrLinkMutation, {
+                    projectId: project.id,
+                    itemId: projectItem.id,
+                    fieldId: prLinkField.id,
+                    text: prUrl
+                  });
+                  
+                  console.log(`✓ Updated PR link for issue #${issueNumber}`);
+                }
+                
+                // Update last_activity field if it exists
+                if (lastActivityField) {
+                  const today = new Date().toISOString().split('T')[0];
+                  const updateActivityMutation = `
+                    mutation UpdateActivity($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
+                      updateProjectV2ItemFieldValue(input: {
+                        projectId: $projectId
+                        itemId: $itemId
+                        fieldId: $fieldId
+                        value: { date: $date }
+                      }) {
+                        projectV2Item { id }
+                      }
+                    }
+                  `;
+                  
+                  await github.graphql(updateActivityMutation, {
+                    projectId: project.id,
+                    itemId: projectItem.id,
+                    fieldId: lastActivityField.id,
+                    date: today
+                  });
+                  
+                  console.log(`✓ Updated last activity for issue #${issueNumber}`);
+                }
+                
+                // Add ɔkyeame:dwuma label to issue
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: ['ɔkyeame:dwuma']
+                });
+                
+                // Remove ɔkyeame:siesie label if present
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'ɔkyeame:siesie'
+                  });
+                } catch (e) {
+                  // Label might not exist, ignore
+                }
+                
+              } catch (error) {
+                console.log(`Error updating issue #${issueNumber}:`, error.message);
+              }
+            }
+
+  pr-checks-passed:
+    name: "In Review - Checks Passed"
+    if: |
+      github.event_name == 'check_suite' && 
+      github.event.check_suite.conclusion == 'success' &&
+      github.event.check_suite.pull_requests[0] != null
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update status to In Review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.check_suite.pull_requests[0]?.number;
+            if (!prNumber) {
+              console.log('No PR associated with this check suite');
+              return;
+            }
+            
+            // Get PR details
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            // Only proceed if PR is marked as ready for review (not draft)
+            if (pr.data.draft) {
+              console.log('PR is still in draft mode, not moving to review');
+              return;
+            }
+            
+            const prBody = pr.data.body || '';
+            const issueRefs = prBody.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
+            
+            if (issueRefs.length === 0) {
+              console.log('No linked issues found');
+              return;
+            }
+            
+            // Get project data
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                              id
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const projectData = await github.graphql(projectQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found');
+              return;
+            }
+            
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const inReviewOption = statusField?.options?.find(o => o.name === 'In review');
+            
+            if (!statusField || !inReviewOption) {
+              console.log('Status field or In review option not found');
+              return;
+            }
+            
+            // Update each linked issue
+            for (const ref of issueRefs) {
+              const issueNumber = parseInt(ref.match(/#(\d+)/)[1]);
+              
+              try {
+                const itemQuery = `
+                  query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
+                    repository(owner: $owner, name: $repo) {
+                      issue(number: $issueNumber) {
+                        projectItems(first: 10) {
+                          nodes {
+                            id
+                            project {
+                              number
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `;
+                
+                const itemData = await github.graphql(itemQuery, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issueNumber: issueNumber
+                });
+                
+                const projectItem = itemData.repository.issue.projectItems.nodes.find(
+                  item => item.project.number === project.number
+                );
+                
+                if (!projectItem) continue;
+                
+                const updateMutation = `
+                  mutation UpdateStatus($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `;
+                
+                await github.graphql(updateMutation, {
+                  projectId: project.id,
+                  itemId: projectItem.id,
+                  fieldId: statusField.id,
+                  optionId: inReviewOption.id
+                });
+                
+                console.log(`✓ Updated issue #${issueNumber} to "In review"`);
+                
+                // Remove needs-fix and ɔkyeame:dwuma labels
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'needs-fix'
+                  });
+                } catch (e) {}
+                
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'ɔkyeame:dwuma'
+                  });
+                } catch (e) {}
+                
+              } catch (error) {
+                console.log(`Error updating issue #${issueNumber}:`, error.message);
+              }
+            }
+
+  pr-checks-failed:
+    name: "Needs Fix - Checks Failed"
+    if: |
+      github.event_name == 'check_suite' && 
+      github.event.check_suite.conclusion == 'failure' &&
+      github.event.check_suite.pull_requests[0] != null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add needs-fix label and comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.check_suite.pull_requests[0]?.number;
+            if (!prNumber) {
+              console.log('No PR associated with this check suite');
+              return;
+            }
+            
+            // Add needs-fix label to PR
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['needs-fix']
+            });
+            
+            // Get check suite details
+            const checkSuite = context.payload.check_suite;
+            const checkRuns = await github.rest.checks.listForSuite({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_suite_id: checkSuite.id
+            });
+            
+            // Build failure summary
+            const failedChecks = checkRuns.data.check_runs.filter(
+              run => run.conclusion === 'failure'
+            );
+            
+            let failureSummary = '⚠️ **Checks Failed**\n\n';
+            failureSummary += 'The following checks failed:\n\n';
+            
+            for (const check of failedChecks) {
+              failureSummary += `- **${check.name}**: [View details](${check.html_url})\n`;
+            }
+            
+            failureSummary += '\nPlease review the CI output and fix the issues.';
+            
+            // Comment on PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: failureSummary
+            });
+            
+            console.log(`Added needs-fix label and commented on PR #${prNumber}`);
+
+  pr-merged:
+    name: "Done - PR Merged"
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update status to Done
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const issueRefs = prBody.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
+            
+            if (issueRefs.length === 0) {
+              console.log('No linked issues found');
+              return;
+            }
+            
+            // Get project data
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                              id
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const projectData = await github.graphql(projectQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found');
+              return;
+            }
+            
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const doneOption = statusField?.options?.find(o => o.name === 'Done');
+            
+            if (!statusField || !doneOption) {
+              console.log('Status field or Done option not found');
+              return;
+            }
+            
+            // Update each linked issue
+            for (const ref of issueRefs) {
+              const issueNumber = parseInt(ref.match(/#(\d+)/)[1]);
+              
+              try {
+                const itemQuery = `
+                  query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
+                    repository(owner: $owner, name: $repo) {
+                      issue(number: $issueNumber) {
+                        projectItems(first: 10) {
+                          nodes {
+                            id
+                            project {
+                              number
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `;
+                
+                const itemData = await github.graphql(itemQuery, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issueNumber: issueNumber
+                });
+                
+                const projectItem = itemData.repository.issue.projectItems.nodes.find(
+                  item => item.project.number === project.number
+                );
+                
+                if (!projectItem) continue;
+                
+                const updateMutation = `
+                  mutation UpdateStatus($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `;
+                
+                await github.graphql(updateMutation, {
+                  projectId: project.id,
+                  itemId: projectItem.id,
+                  fieldId: statusField.id,
+                  optionId: doneOption.id
+                });
+                
+                console.log(`✓ Updated issue #${issueNumber} to "Done"`);
+                
+                // Remove ɔkyeame:dwuma label
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'ɔkyeame:dwuma'
+                  });
+                } catch (e) {}
+                
+                // Close the issue if not already closed
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                
+                if (issue.data.state === 'open') {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    state: 'closed'
+                  });
+                  console.log(`✓ Closed issue #${issueNumber}`);
+                }
+                
+              } catch (error) {
+                console.log(`Error updating issue #${issueNumber}:`, error.message);
+              }
+            }
+
+  weekly-stale-check:
+    name: "Blocked - Stale Detection"
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'stale')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Detect and mark stale items
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const STALE_THRESHOLD_DAYS = 5;
+            
+            // Get project data
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                              id
+                              name
+                            }
+                          }
+                          ... on ProjectV2Field {
+                            id
+                            name
+                          }
+                        }
+                      }
+                      items(first: 100) {
+                        nodes {
+                          id
+                          content {
+                            ... on Issue {
+                              number
+                              title
+                              updatedAt
+                            }
+                          }
+                          fieldValues(first: 20) {
+                            nodes {
+                              ... on ProjectV2ItemFieldSingleSelectValue {
+                                field {
+                                  ... on ProjectV2SingleSelectField {
+                                    name
+                                  }
+                                }
+                                name
+                              }
+                              ... on ProjectV2ItemFieldDateValue {
+                                field {
+                                  ... on ProjectV2Field {
+                                    name
+                                  }
+                                }
+                                date
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const projectData = await github.graphql(projectQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found');
+              return;
+            }
+            
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            const blockedOption = statusField?.options?.find(o => o.name === 'Blocked');
+            
+            if (!statusField || !blockedOption) {
+              console.log('Status field or Blocked option not found');
+              return;
+            }
+            
+            const now = new Date();
+            const thresholdDate = new Date(now.getTime() - STALE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
+            
+            // Find items in "In progress" status
+            for (const item of project.items.nodes) {
+              if (!item.content?.number) continue;
+              
+              let status = null;
+              let lastActivity = null;
+              
+              for (const fieldValue of item.fieldValues.nodes) {
+                const fieldName = fieldValue.field?.name;
+                
+                if (fieldName === 'status') {
+                  status = fieldValue.name;
+                }
+                
+                if (fieldName === 'last_activity' && fieldValue.date) {
+                  lastActivity = new Date(fieldValue.date);
+                }
+              }
+              
+              // Check if item is in "In progress" and stale
+              if (status === 'In progress') {
+                const activityDate = lastActivity || new Date(item.content.updatedAt);
+                
+                if (activityDate < thresholdDate) {
+                  console.log(`Found stale item: #${item.content.number} (last activity: ${activityDate})`);
+                  
+                  try {
+                    // Update status to Blocked
+                    const updateMutation = `
+                      mutation UpdateStatus($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                        updateProjectV2ItemFieldValue(input: {
+                          projectId: $projectId
+                          itemId: $itemId
+                          fieldId: $fieldId
+                          value: { singleSelectOptionId: $optionId }
+                        }) {
+                          projectV2Item { id }
+                        }
+                      }
+                    `;
+                    
+                    await github.graphql(updateMutation, {
+                      projectId: project.id,
+                      itemId: item.id,
+                      fieldId: statusField.id,
+                      optionId: blockedOption.id
+                    });
+                    
+                    // Add stale label
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: item.content.number,
+                      labels: ['stale']
+                    });
+                    
+                    // Assign to hoopsomuah
+                    await github.rest.issues.addAssignees({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: item.content.number,
+                      assignees: ['hoopsomuah']
+                    });
+                    
+                    // Comment on issue
+                    const comment = `⚠️ **Asiw (Blocked): No activity for ${STALE_THRESHOLD_DAYS} days**
+
+This issue has been in Dwuma (In Progress) for more than ${STALE_THRESHOLD_DAYS} days without activity.
+
+Please:
+1. Check the Nkabom (Dependencies) field for blockers
+2. Update status if blocked externally
+3. Or continue work if still active
+
+Assigning to @hoopsomuah for review.`;
+                    
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: item.content.number,
+                      body: comment
+                    });
+                    
+                    console.log(`✓ Marked issue #${item.content.number} as stale/blocked`);
+                    
+                  } catch (error) {
+                    console.log(`Error marking issue #${item.content.number} as stale:`, error.message);
+                  }
+                }
+              }
+            }
+
+  monthly-archive:
+    name: "Archive - Done Items Cleanup"
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'archive')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Archive old completed items
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ARCHIVE_THRESHOLD_DAYS = 30;
+            
+            // Get project data
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      items(first: 100) {
+                        nodes {
+                          id
+                          content {
+                            ... on Issue {
+                              number
+                              title
+                              closedAt
+                            }
+                          }
+                          fieldValues(first: 20) {
+                            nodes {
+                              ... on ProjectV2ItemFieldSingleSelectValue {
+                                field {
+                                  ... on ProjectV2SingleSelectField {
+                                    name
+                                  }
+                                }
+                                name
+                              }
+                              ... on ProjectV2ItemFieldDateValue {
+                                field {
+                                  ... on ProjectV2Field {
+                                    name
+                                  }
+                                }
+                                date
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const projectData = await github.graphql(projectQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found');
+              return;
+            }
+            
+            const now = new Date();
+            const thresholdDate = new Date(now.getTime() - ARCHIVE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
+            
+            let archivedCount = 0;
+            
+            // Find items in "Done" status that are old
+            for (const item of project.items.nodes) {
+              if (!item.content?.number) continue;
+              
+              let status = null;
+              let lastActivity = null;
+              
+              for (const fieldValue of item.fieldValues.nodes) {
+                const fieldName = fieldValue.field?.name;
+                
+                if (fieldName === 'status') {
+                  status = fieldValue.name;
+                }
+                
+                if (fieldName === 'last_activity' && fieldValue.date) {
+                  lastActivity = new Date(fieldValue.date);
+                }
+              }
+              
+              // Check if item is Done and old enough to archive
+              if (status === 'Done') {
+                const completionDate = lastActivity || (item.content.closedAt ? new Date(item.content.closedAt) : null);
+                
+                if (completionDate && completionDate < thresholdDate) {
+                  console.log(`Archiving item: #${item.content.number} (completed: ${completionDate})`);
+                  
+                  try {
+                    // Archive (delete from project)
+                    const archiveMutation = `
+                      mutation ArchiveItem($projectId: ID!, $itemId: ID!) {
+                        deleteProjectV2Item(input: {
+                          projectId: $projectId
+                          itemId: $itemId
+                        }) {
+                          deletedItemId
+                        }
+                      }
+                    `;
+                    
+                    await github.graphql(archiveMutation, {
+                      projectId: project.id,
+                      itemId: item.id
+                    });
+                    
+                    archivedCount++;
+                    console.log(`✓ Archived issue #${item.content.number}`);
+                    
+                  } catch (error) {
+                    console.log(`Error archiving issue #${item.content.number}:`, error.message);
+                  }
+                }
+              }
+            }
+            
+            console.log(`Archive complete: ${archivedCount} items archived`);
+
+  update-activity:
+    name: "Da-Akyire Update - Comment Activity"
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update last activity date
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.payload.issue.number;
+            
+            // Get project data
+            const projectQuery = `
+              query GetProject($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  projectsV2(first: 1) {
+                    nodes {
+                      id
+                      number
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2Field {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const projectData = await github.graphql(projectQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const project = projectData.repository.projectsV2.nodes[0];
+            if (!project) {
+              console.log('No project found');
+              return;
+            }
+            
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            if (!lastActivityField) {
+              console.log('last_activity field not found');
+              return;
+            }
+            
+            // Get project item for this issue
+            const itemQuery = `
+              query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  issue(number: $issueNumber) {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                        project {
+                          number
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const itemData = await github.graphql(itemQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issueNumber: issueNumber
+            });
+            
+            const projectItem = itemData.repository.issue.projectItems.nodes.find(
+              item => item.project.number === project.number
+            );
+            
+            if (!projectItem) {
+              console.log('Issue not in project');
+              return;
+            }
+            
+            // Update last_activity to today
+            const today = new Date().toISOString().split('T')[0];
+            const updateMutation = `
+              mutation UpdateActivity($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { date: $date }
+                }) {
+                  projectV2Item { id }
+                }
+              }
+            `;
+            
+            await github.graphql(updateMutation, {
+              projectId: project.id,
+              itemId: projectItem.id,
+              fieldId: lastActivityField.id,
+              date: today
+            });
+            
+            console.log(`✓ Updated last_activity for issue #${issueNumber} to ${today}`);
