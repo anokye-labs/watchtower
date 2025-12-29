@@ -19,6 +19,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isAnimating;
     private readonly SplashWindowViewModel _splashViewModel;
     private readonly IFrameSliceService _frameSliceService;
+    private MainWindowViewModel? _mainViewModel;
+    private bool _cleanedUp;
     
     // Cached frame configuration for re-slicing on monitor switch
     private string? _frameSourceUri;
@@ -427,6 +429,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             throw new ArgumentNullException(nameof(mainViewModel));
         }
 
+        _mainViewModel = mainViewModel;
+        
         Dispatcher.UIThread.Post(() =>
         {
             CurrentContent = mainViewModel;
@@ -457,7 +461,15 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Cleanup()
     {
+        if (_cleanedUp)
+            return;
+        _cleanedUp = true;
+
         _splashViewModel.ExitRequested -= OnSplashExitRequested;
         _splashViewModel.Cleanup();
+        
+        // Dispose MainWindowViewModel if it was created
+        _mainViewModel?.Dispose();
+        _mainViewModel = null;
     }
 }

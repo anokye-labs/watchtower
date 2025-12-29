@@ -15,7 +15,7 @@ namespace WatchTower.ViewModels;
 /// ViewModel for the main application window.
 /// Manages the input overlay state, game controller integration, and Adaptive Card display.
 /// </summary>
-public class MainWindowViewModel : ViewModelBase
+public class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private readonly IGameControllerService _gameControllerService;
     private readonly IAdaptiveCardService _cardService;
@@ -31,6 +31,7 @@ public class MainWindowViewModel : ViewModelBase
     private TypedEventHandler<RenderedAdaptiveCard, AdaptiveActionEventArgs>? _cardActionHandler;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
+    private bool _disposed;
 
     public string StatusText
     {
@@ -253,6 +254,7 @@ public class MainWindowViewModel : ViewModelBase
         if (CurrentCard == null)
         {
             _logger.LogDebug("RenderCard: CurrentCard is null, clearing rendered control");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
             return;
@@ -261,6 +263,7 @@ public class MainWindowViewModel : ViewModelBase
         if (HostConfig == null)
         {
             _logger.LogWarning("RenderCard: HostConfig is null, cannot render card");
+            DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
             return;
@@ -273,10 +276,7 @@ public class MainWindowViewModel : ViewModelBase
             _logger.LogInformation("Rendering card with HostConfig - BG: {BgColor}, FG: {FgColor}", bgColor, fgColor);
 
             // Unsubscribe from previous rendered card to avoid memory leak
-            if (_currentRenderedCard != null && _cardActionHandler != null)
-            {
-                _currentRenderedCard.OnAction -= _cardActionHandler;
-            }
+            DetachRenderedCardHandler();
 
             var renderer = new AdaptiveCardRenderer(HostConfig);
             var renderedCard = renderer.RenderCard(CurrentCard);
@@ -497,4 +497,42 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     #endregion
+
+    /// <summary>
+    /// Detaches the action handler from the current rendered card to prevent memory leaks.
+    /// </summary>
+    private void DetachRenderedCardHandler()
+    {
+        if (_currentRenderedCard != null && _cardActionHandler != null)
+        {
+            _currentRenderedCard.OnAction -= _cardActionHandler;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        // Unsubscribe from controller events
+        _gameControllerService.ButtonPressed -= OnButtonPressed;
+        _gameControllerService.ButtonReleased -= OnButtonReleased;
+        _gameControllerService.ControllerConnected -= OnControllerConnected;
+        _gameControllerService.ControllerDisconnected -= OnControllerDisconnected;
+
+        // Unsubscribe from theme changes
+        _themeService.ThemeChanged -= OnThemeChanged;
+
+        // Unsubscribe from card action events
+        _cardService.ActionInvoked -= OnCardActionInvoked;
+        _cardService.SubmitAction -= OnCardSubmit;
+        _cardService.OpenUrlAction -= OnCardOpenUrl;
+        _cardService.ExecuteAction -= OnCardExecute;
+        _cardService.ShowCardAction -= OnCardShowCard;
+
+        // Unsubscribe from rendered card events
+        DetachRenderedCardHandler();
+
+        _disposed = true;
+    }
 }
