@@ -1,25 +1,28 @@
 #!/usr/bin/env node
 /**
- * Field Inference Module for Nsumankwahene Migration
+ * Field Inference Module for Watchtower Project Migration
  * Infers project field values from existing issue data
+ * 
+ * Field values match the "Watchtower Iterative Development" GitHub Project
+ * Project ID: PVT_kwDODbLOnM4BLchY
  */
 
 /**
  * Infer Priority from existing labels
  * @param {string[]} labels - Array of label names
- * @returns {string} Priority option key (p0_hene, p1_abusuapanyin, p2_obi, p3_akwadaa)
+ * @returns {string} Priority option name (P0, P1, P2, P3)
  * 
  * Test cases:
- * - inferPriority(['P0', 'bug']) → 'p0_hene'
- * - inferPriority(['P1', 'enhancement']) → 'p1_abusuapanyin'
- * - inferPriority(['P2']) → 'p2_obi'
- * - inferPriority(['bug']) → 'p3_akwadaa' (default)
+ * - inferPriority(['P0', 'bug']) → 'P0'
+ * - inferPriority(['P1', 'enhancement']) → 'P1'
+ * - inferPriority(['P2']) → 'P2'
+ * - inferPriority(['bug']) → 'P3' (default)
  */
 export function inferPriority(labels) {
-  if (labels.includes('P0')) return 'p0_hene';
-  if (labels.includes('P1')) return 'p1_abusuapanyin';
-  if (labels.includes('P2')) return 'p2_obi';
-  return 'p3_akwadaa';  // Default
+  if (labels.includes('P0')) return 'P0';
+  if (labels.includes('P1')) return 'P1';
+  if (labels.includes('P2')) return 'P2';
+  return 'P3';  // Default
 }
 
 /**
@@ -53,39 +56,50 @@ export function inferComplexity(labels, body) {
 /**
  * Infer Component from labels
  * @param {string[]} labels - Array of label names
- * @returns {string} Component option key
+ * @returns {string} Component option name (Services, View Model, Views, Models, Testing, Infrastructure, Docs, Build)
  * 
  * Test cases:
- * - inferComponent(['services']) → 'services'
- * - inferComponent(['voice']) → 'services'
- * - inferComponent(['mcp-proxy']) → 'infrastructure'
- * - inferComponent(['architecture']) → 'infrastructure'
- * - inferComponent(['testing']) → 'testing'
- * - inferComponent(['ui']) → 'views'
- * - inferComponent(['ux']) → 'views'
- * - inferComponent(['docs']) → 'docs'
- * - inferComponent(['documentation']) → 'docs'
- * - inferComponent(['bug']) → 'services' (default)
+ * - inferComponent(['services']) → 'Services'
+ * - inferComponent(['voice']) → 'Services'
+ * - inferComponent(['viewmodels']) → 'View Model'
+ * - inferComponent(['mcp-proxy']) → 'Infrastructure'
+ * - inferComponent(['architecture']) → 'Infrastructure'
+ * - inferComponent(['testing']) → 'Testing'
+ * - inferComponent(['ui']) → 'Views'
+ * - inferComponent(['ux']) → 'Views'
+ * - inferComponent(['docs']) → 'Docs'
+ * - inferComponent(['documentation']) → 'Docs'
+ * - inferComponent(['build']) → 'Build'
+ * - inferComponent(['bug']) → 'Services' (default)
  */
 export function inferComponent(labels) {
   // Service-related
-  if (labels.includes('services') || labels.includes('voice')) return 'services';
+  if (labels.includes('services') || labels.includes('voice')) return 'Services';
+  
+  // ViewModel-related
+  if (labels.includes('viewmodels') || labels.includes('viewmodel')) return 'View Model';
   
   // Infrastructure-related
   if (labels.includes('mcp-proxy') || labels.includes('architecture') || 
-      labels.includes('infrastructure')) return 'infrastructure';
+      labels.includes('infrastructure')) return 'Infrastructure';
   
   // Testing
-  if (labels.includes('testing')) return 'testing';
+  if (labels.includes('testing')) return 'Testing';
   
   // UI-related
-  if (labels.includes('ui') || labels.includes('ux')) return 'views';
+  if (labels.includes('ui') || labels.includes('ux')) return 'Views';
+  
+  // Models
+  if (labels.includes('models') || labels.includes('model')) return 'Models';
   
   // Documentation
-  if (labels.includes('docs') || labels.includes('documentation')) return 'docs';
+  if (labels.includes('docs') || labels.includes('documentation')) return 'Docs';
   
-  // Default to services (most common in WatchTower)
-  return 'services';
+  // Build
+  if (labels.includes('build') || labels.includes('ci') || labels.includes('cd')) return 'Build';
+  
+  // Default to Services (most common in WatchTower)
+  return 'Services';
 }
 
 /**
@@ -93,50 +107,51 @@ export function inferComponent(labels) {
  * @param {string[]} labels - Array of label names
  * @param {string} body - Issue body text
  * @param {number} complexity - Inferred complexity score
- * @returns {string} Agent type option key
+ * @returns {string} Agent type option name (Copilot, Copilot + Thinking, Task-Maestro, Human Required, Any Agent)
  * 
  * Test cases:
- * - inferAgentType(['Tech Design Needed'], '', 8) → 'nnipa_hia'
- * - inferAgentType(['tech-design-needed'], '', 8) → 'nnipa_hia'
- * - inferAgentType(['nnipa-gyinae-hia'], '', 5) → 'nnipa_hia'
- * - inferAgentType(['testing'], '', 3) → 'biara'
- * - inferAgentType([], 'Copilot should do this', 3) → 'copilot'
- * - inferAgentType([], 'Claude-Opus preferred', 5) → 'claude_opus'
- * - inferAgentType([], 'Task-Maestro will handle', 5) → 'task_maestro'
- * - inferAgentType([], '', 2) → 'copilot' (low complexity)
- * - inferAgentType([], '', 5) → 'claude_opus' (high complexity)
+ * - inferAgentType(['Tech Design Needed'], '', 8) → 'Human Required'
+ * - inferAgentType(['tech-design-needed'], '', 8) → 'Human Required'
+ * - inferAgentType(['nnipa-gyinae-hia'], '', 5) → 'Human Required'
+ * - inferAgentType(['testing'], '', 3) → 'Any Agent'
+ * - inferAgentType([], 'Copilot should do this', 3) → 'Copilot'
+ * - inferAgentType([], 'Claude-Opus preferred', 5) → 'Copilot + Thinking'
+ * - inferAgentType([], 'Task-Maestro will handle', 5) → 'Task-Maestro'
+ * - inferAgentType([], '', 2) → 'Copilot' (low complexity)
+ * - inferAgentType([], '', 5) → 'Copilot + Thinking' (high complexity)
  */
 export function inferAgentType(labels, body, complexity) {
   // Tech Design Needed or nnipa-gyinae-hia = Human Required
   if (labels.includes('Tech Design Needed') || 
       labels.includes('tech-design-needed') ||
       labels.includes('nnipa-gyinae-hia')) {
-    return 'nnipa_hia';
+    return 'Human Required';
   }
   
   // Testing = any agent
-  if (labels.includes('testing')) return 'biara';
+  if (labels.includes('testing')) return 'Any Agent';
   
   // Normalize body for robust, case-insensitive matching
   const normalizedBody = (body || '').toLowerCase();
   
   // Check body for explicit agent mentions (case-insensitive, tolerant of hyphen/space variations)
-  if (normalizedBody.includes('copilot')) return 'copilot';
+  if (normalizedBody.includes('copilot') && !normalizedBody.includes('thinking')) return 'Copilot';
   if (normalizedBody.includes('claude-opus') ||
       normalizedBody.includes('claude opus') ||
-      normalizedBody.includes('claude')) {
-    return 'claude_opus';
+      normalizedBody.includes('claude') ||
+      normalizedBody.includes('thinking')) {
+    return 'Copilot + Thinking';
   }
   if (normalizedBody.includes('task-maestro') ||
       normalizedBody.includes('task maestro')) {
-    return 'task_maestro';
+    return 'Task-Maestro';
   }
   
   // Low complexity = Copilot eligible
-  if (complexity <= 3) return 'copilot';
+  if (complexity <= 3) return 'Copilot';
   
-  // Higher complexity = Claude
-  return 'claude_opus';
+  // Higher complexity = Copilot + Thinking (replaces Claude Opus)
+  return 'Copilot + Thinking';
 }
 
 /**
@@ -225,7 +240,7 @@ export function formatDate(dateString) {
 /**
  * Infer all fields for a single issue
  * @param {Object} issue - GitHub issue object
- * @returns {Object} Inferred field values
+ * @returns {Object} Inferred field values matching GitHub Project field names
  * 
  * Test case:
  * - inferAllFields({
@@ -237,11 +252,11 @@ export function formatDate(dateString) {
  *   }) → {
  *     number: 89,
  *     title: 'Create inference module',
- *     status: 'backlog',
- *     priority: 'p1_abusuapanyin',
+ *     status: 'Backlog',
+ *     priority: 'P1',
  *     complexity: 1,
- *     component: 'services',
- *     agent_type: 'copilot',
+ *     component: 'Services',
+ *     agent_type: 'Copilot',
  *     dependencies: 'None',
  *     last_activity: '2025-12-29',
  *     pr_link: ''
@@ -256,8 +271,8 @@ export function inferAllFields(issue) {
     number: issue.number,
     title: issue.title,
     
-    // Inferred fields
-    status: 'backlog',  // All start in Backlog
+    // Inferred fields (values match GitHub Project option names)
+    status: 'Backlog',  // All start in Backlog
     priority: inferPriority(labels),
     complexity: complexity,
     component: inferComponent(labels),
