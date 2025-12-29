@@ -31,6 +31,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private TypedEventHandler<RenderedAdaptiveCard, AdaptiveActionEventArgs>? _cardActionHandler;
     private InputOverlayMode _currentInputMode = InputOverlayMode.None;
     private string _inputText = string.Empty;
+    private string? _renderError;
     private bool _disposed;
 
     public string StatusText
@@ -91,6 +92,26 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         get => _renderedCardControl;
         private set => SetProperty(ref _renderedCardControl, value);
     }
+
+    /// <summary>
+    /// Gets the error message if card rendering failed, or null if no error.
+    /// </summary>
+    public string? RenderError
+    {
+        get => _renderError;
+        private set
+        {
+            if (SetProperty(ref _renderError, value))
+            {
+                OnPropertyChanged(nameof(HasRenderError));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether there is a render error.
+    /// </summary>
+    public bool HasRenderError => !string.IsNullOrEmpty(RenderError);
 
     /// <summary>
     /// Gets the current theme mode display name.
@@ -188,6 +209,11 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     /// </summary>
     public ICommand ToggleThemeCommand { get; }
 
+    /// <summary>
+    /// Command to retry rendering the card after a failure.
+    /// </summary>
+    public ICommand RetryRenderCommand { get; }
+
     public MainWindowViewModel(
         IGameControllerService gameControllerService, 
         IAdaptiveCardService cardService,
@@ -222,6 +248,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         SubmitInputCommand = new RelayCommand(SubmitInput, CanSubmitInput);
         ToggleEventLogCommand = new RelayCommand(ToggleEventLog);
         ToggleThemeCommand = new RelayCommand(ToggleTheme);
+        RetryRenderCommand = new RelayCommand(RetryRender);
 
         UpdateStatus();
         
@@ -257,6 +284,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = null;
             return;
         }
 
@@ -266,6 +294,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             DetachRenderedCardHandler();
             RenderedCardControl = null;
             _currentRenderedCard = null;
+            RenderError = "Unable to render card: Host configuration is not available.";
             return;
         }
 
@@ -293,6 +322,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             _currentRenderedCard = renderedCard;
 
             RenderedCardControl = renderedCard.Control;
+            RenderError = null; // Clear any previous error
             _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);
             
             // Log any warnings
@@ -305,6 +335,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         {
             _logger.LogError(ex, "Failed to render adaptive card");
             RenderedCardControl = null;
+            RenderError = "Failed to render card. Please check the logs for more details.";
         }
     }
 
@@ -425,6 +456,27 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         CurrentInputMode = CurrentInputMode == InputOverlayMode.EventLog
             ? InputOverlayMode.None
             : InputOverlayMode.EventLog;
+    }
+
+    private void RetryRender()
+    {
+        // Only retry if prerequisites are available; otherwise, report a clearer message.
+        if (CurrentCard is null || HostConfig is null)
+        {
+            var reason = CurrentCard is null && HostConfig is null
+                ? "card and configuration are still unavailable"
+                : CurrentCard is null
+                    ? "card is still unavailable"
+                    : "configuration is still unavailable";
+
+            _logger.LogWarning("Cannot retry render: {Reason}", reason);
+            RenderError = $"Cannot retry: {reason}.";
+            AddEvent($"Cannot retry: {reason}");
+            return;
+        }
+
+        _logger.LogInformation("Retrying card render after error");
+        RenderCard();
     }
 
     #region Card Action Handlers
