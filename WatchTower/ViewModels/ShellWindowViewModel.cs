@@ -19,6 +19,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isAnimating;
     private readonly SplashWindowViewModel _splashViewModel;
     private readonly IFrameSliceService _frameSliceService;
+    private MainWindowViewModel? _mainViewModel;
+    private bool _cleanedUp;
     
     // Cached frame configuration for re-slicing on monitor switch
     private string? _frameSourceUri;
@@ -344,7 +346,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         
         if (frameSlices == null)
         {
-            System.Diagnostics.Debug.WriteLine("ShellWindowViewModel: Failed to load and slice frame image");
             return false;
         }
         
@@ -377,7 +378,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         
         UpdateFrameDimensions();
         
-        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame loaded (5x5) - SourceSize={_frameSourceSize}, TopLeft={frameSlices.TopLeft.Size}");
         return true;
     }
     
@@ -406,8 +406,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         Col0Width = new GridLength((def.Left * frameScale) / scale, GridUnitType.Pixel);
         Col2Width = new GridLength(((def.RightInner - def.LeftInner) * frameScale) / scale, GridUnitType.Pixel);
         Col4Width = new GridLength(((_frameSourceSize.Width - def.Right) * frameScale) / scale, GridUnitType.Pixel);
-        
-        System.Diagnostics.Debug.WriteLine($"ShellWindowViewModel: Frame dimensions (5x5) for Scale={scale}, FrameScale={frameScale}: R0={Row0Height.Value:F1}, R2={Row2Height.Value:F1}, R4={Row4Height.Value:F1}, C0={Col0Width.Value:F1}, C2={Col2Width.Value:F1}, C4={Col4Width.Value:F1}");
     }
 
     /// <summary>
@@ -431,6 +429,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             throw new ArgumentNullException(nameof(mainViewModel));
         }
 
+        _mainViewModel = mainViewModel;
+        
         Dispatcher.UIThread.Post(() =>
         {
             CurrentContent = mainViewModel;
@@ -461,7 +461,15 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
 
     public void Cleanup()
     {
+        if (_cleanedUp)
+            return;
+        _cleanedUp = true;
+
         _splashViewModel.ExitRequested -= OnSplashExitRequested;
         _splashViewModel.Cleanup();
+        
+        // Dispose MainWindowViewModel if it was created
+        _mainViewModel?.Dispose();
+        _mainViewModel = null;
     }
 }

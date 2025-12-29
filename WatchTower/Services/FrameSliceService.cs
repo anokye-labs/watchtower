@@ -39,14 +39,11 @@ public class FrameSliceService : IFrameSliceService
             var sourceBitmap = LoadBitmap(sourceUri);
             if (sourceBitmap == null)
             {
-                System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to load source image from {sourceUri}");
                 return null;
             }
             
             var sourceWidth = (int)sourceBitmap.Size.Width;
             var sourceHeight = (int)sourceBitmap.Size.Height;
-            
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Loaded source {sourceWidth}x{sourceHeight}, slicing 5x5 at L={sliceDefinition.Left}, LI={sliceDefinition.LeftInner}, RI={sliceDefinition.RightInner}, R={sliceDefinition.Right}, T={sliceDefinition.Top}, TI={sliceDefinition.TopInner}, BI={sliceDefinition.BottomInner}, B={sliceDefinition.Bottom}");
             
             // Validate slice definition (absolute coordinates for 5x5 grid)
             if (!ValidateSliceDefinition(sliceDefinition, sourceWidth, sourceHeight))
@@ -63,12 +60,10 @@ public class FrameSliceService : IFrameSliceService
             
             slices = slices with { SourceSize = sourceBitmap.Size };
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced 5x5 - TopLeft={slices.TopLeft.Size}");
             return slices;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Error slicing image: {ex.Message}");
             return null;
         }
     }
@@ -84,7 +79,6 @@ public class FrameSliceService : IFrameSliceService
             def.RightInner >= def.Right ||
             def.Right >= sourceWidth)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid X coordinates - must be 0 < {def.Left} < {def.LeftInner} < {def.RightInner} < {def.Right} < {sourceWidth}");
             return false;
         }
         
@@ -94,7 +88,6 @@ public class FrameSliceService : IFrameSliceService
             def.BottomInner >= def.Bottom ||
             def.Bottom >= sourceHeight)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid Y coordinates - must be 0 < {def.Top} < {def.TopInner} < {def.BottomInner} < {def.Bottom} < {sourceHeight}");
             return false;
         }
         
@@ -119,8 +112,6 @@ public class FrameSliceService : IFrameSliceService
         var row2Height = def.BottomInner - def.TopInner;    // Center
         var row3Height = def.Bottom - def.BottomInner;      // Bottom stretch
         var row4Height = sourceHeight - def.Bottom;         // Bottom corner
-        
-        System.Diagnostics.Debug.WriteLine($"FrameSliceService: Cols={col0Width},{col1Width},{col2Width},{col3Width},{col4Width} Rows={row0Height},{row1Height},{row2Height},{row3Height},{row4Height}");
         
         // Row 0: Top edge (5 cells)
         var topLeft = ExtractRegion(source, 0, 0, col0Width, row0Height);
@@ -152,7 +143,6 @@ public class FrameSliceService : IFrameSliceService
             rightTopStretch == null || rightCenter == null || rightBottomStretch == null ||
             bottomLeft == null || bottomLeftStretch == null || bottomCenter == null || bottomRightStretch == null || bottomRight == null)
         {
-            System.Diagnostics.Debug.WriteLine("FrameSliceService: Failed to extract one or more 5x5 regions");
             return null;
         }
         
@@ -199,9 +189,8 @@ public class FrameSliceService : IFrameSliceService
                 return new Bitmap(uri);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to load bitmap from {uri}: {ex.Message}");
             return null;
         }
     }
@@ -213,7 +202,6 @@ public class FrameSliceService : IFrameSliceService
     {
         if (width <= 0 || height <= 0)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid region dimensions {width}x{height}");
             return null;
         }
         
@@ -234,9 +222,8 @@ public class FrameSliceService : IFrameSliceService
             
             return renderTarget;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to extract region at ({x},{y}) size {width}x{height}: {ex.Message}");
             return null;
         }
     }
@@ -249,7 +236,6 @@ public class FrameSliceService : IFrameSliceService
         
         if (targetWidth <= 0 || targetHeight <= 0)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Invalid target dimensions {targetWidth}x{targetHeight}");
             return null;
         }
         
@@ -261,7 +247,6 @@ public class FrameSliceService : IFrameSliceService
             // Move to end of LRU order (most recently used)
             _cacheOrder.Remove(cacheKey);
             _cacheOrder.AddLast(cacheKey);
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Cache hit for {targetWidth}x{targetHeight}");
             return cachedSlices;
         }
         
@@ -272,14 +257,12 @@ public class FrameSliceService : IFrameSliceService
             if (_cachedSourceUri == sourceUri && _cachedSourceBitmap != null)
             {
                 sourceBitmap = _cachedSourceBitmap;
-                System.Diagnostics.Debug.WriteLine($"FrameSliceService: Using cached source bitmap");
             }
             else
             {
                 sourceBitmap = LoadBitmap(sourceUri);
                 if (sourceBitmap == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to load source image from {sourceUri}");
                     return null;
                 }
                 _cachedSourceBitmap = sourceBitmap;
@@ -290,13 +273,10 @@ public class FrameSliceService : IFrameSliceService
             var sourceWidth = (int)sourceBitmap.Size.Width;
             var sourceHeight = (int)sourceBitmap.Size.Height;
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Source {sourceWidth}x{sourceHeight} -> Target {targetWidth}x{targetHeight}");
-            
             // Resize the source bitmap to target dimensions
             var resizedBitmap = ResizeBitmap(sourceBitmap, targetWidth, targetHeight);
             if (resizedBitmap == null)
             {
-                System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to resize bitmap");
                 return null;
             }
             
@@ -315,8 +295,6 @@ public class FrameSliceService : IFrameSliceService
                 BottomInner = (int)(sliceDefinition.BottomInner * scaleY),
                 Bottom = (int)(sliceDefinition.Bottom * scaleY)
             };
-            
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Scaled slices L={scaledSliceDefinition.Left}, LI={scaledSliceDefinition.LeftInner}, RI={scaledSliceDefinition.RightInner}, R={scaledSliceDefinition.Right}");
             
             // Validate scaled slice definition
             if (!ValidateSliceDefinition(scaledSliceDefinition, targetWidth, targetHeight))
@@ -341,12 +319,10 @@ public class FrameSliceService : IFrameSliceService
             // Add to cache
             AddToCache(cacheKey, slices);
             
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Successfully sliced resized image - TopLeft={slices.TopLeft.Size}");
             return slices;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Error in LoadResizeAndSlice: {ex.Message}");
             return null;
         }
     }
@@ -359,7 +335,6 @@ public class FrameSliceService : IFrameSliceService
         _cachedSourceBitmap = null;
         _cachedSourceUri = null;
         _cachedSliceDefinition = null;
-        System.Diagnostics.Debug.WriteLine("FrameSliceService: Cache cleared");
     }
     
     /// <summary>
@@ -373,12 +348,10 @@ public class FrameSliceService : IFrameSliceService
             var oldest = _cacheOrder.First.Value;
             _cacheOrder.RemoveFirst();
             _cache.Remove(oldest);
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Evicted cache entry {oldest.width}x{oldest.height}");
         }
         
         _cache[key] = slices;
         _cacheOrder.AddLast(key);
-        System.Diagnostics.Debug.WriteLine($"FrameSliceService: Cached slices for {key.width}x{key.height} (cache size: {_cache.Count})");
     }
     
     /// <summary>
@@ -401,9 +374,8 @@ public class FrameSliceService : IFrameSliceService
             
             return renderTarget;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"FrameSliceService: Failed to resize bitmap to {targetWidth}x{targetHeight}: {ex.Message}");
             return null;
         }
     }

@@ -44,7 +44,7 @@ public class StartupOrchestrator : IStartupOrchestrator
             // Phase 3: Services Registration
             logger.Info("Phase 3/4: Registering application services...");
             
-            // Register services
+            // Register core services
             services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
             services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
@@ -55,8 +55,46 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
             
+            // Register voice services based on configured mode
+            var voiceMode = configuration.GetValue<string>("Voice:Mode") ?? "offline";
+            logger.Info($"Voice mode: {voiceMode}");
+            
+            if (voiceMode.Equals("offline", StringComparison.OrdinalIgnoreCase))
+            {
+                // Register offline voice services
+                services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
+                services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
+                logger.Info("Offline voice services registered (Vosk + Piper)");
+            }
+            else if (voiceMode.Equals("online", StringComparison.OrdinalIgnoreCase))
+            {
+                // Register online voice services
+                services.AddSingleton<IVoiceRecognitionService, AzureSpeechRecognitionService>();
+                services.AddSingleton<ITextToSpeechService, AzureSpeechSynthesisService>();
+                logger.Info("Online voice services registered (Azure Speech)");
+            }
+            else if (voiceMode.Equals("hybrid", StringComparison.OrdinalIgnoreCase))
+            {
+                // Hybrid mode is not yet implemented; falls back to offline behavior
+                logger.Warn("Hybrid voice mode is not fully implemented; defaulting to offline voice services");
+                services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
+                services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
+                logger.Info("Offline voice services registered (Vosk + Piper) for requested hybrid mode");
+            }
+            else
+            {
+                logger.Warn($"Unknown voice mode '{voiceMode}', defaulting to offline");
+                services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
+                services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
+            }
+            
+            // Register voice orchestration service
+            services.AddSingleton<IVoiceOrchestrationService, VoiceOrchestrationService>();
+            logger.Info("VoiceOrchestrationService registered");
+            
             // Register ViewModels
             services.AddTransient<ViewModels.MainWindowViewModel>();
+            services.AddTransient<ViewModels.VoiceControlViewModel>();
             logger.Info("ViewModels registered");
             
             // Build service provider
@@ -80,6 +118,20 @@ public class StartupOrchestrator : IStartupOrchestrator
             else
             {
                 logger.Warn("Game controller service initialization failed");
+            }
+            
+            // Initialize voice orchestration service
+            var voiceService = serviceProvider.GetRequiredService<IVoiceOrchestrationService>();
+            logger.Info("Initializing voice orchestration service...");
+            
+            if (await voiceService.InitializeAsync())
+            {
+                logger.Info("Voice orchestration service initialized successfully");
+            }
+            else
+            {
+                logger.Warn("Voice orchestration service initialization failed");
+                logger.Warn("Voice features may not be available");
             }
             
             logger.Info("=== Startup Complete ===");
