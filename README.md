@@ -10,6 +10,30 @@ WatchTower serves as a platform for displaying dynamic, full-screen Adaptive Car
 
 The application provides Adaptive Card rendering with a custom "Ancestral Futurism" theme featuring holographic cyan, Ashanti gold, mahogany, and void black color schemes. It offers gamepad-first navigation through full SDL2 integration for game controller input with XYFocus navigation and visual feedback. Cross-platform deployment produces single-file, self-contained executables for Windows (win-x64), macOS (osx-x64), and Linux (linux-x64). Dynamic UI overlays include animated input panels for rich text and voice input, plus an event log with smooth transitions. The adaptive frame system provides resolution-independent decorative borders using 5x5 grid image slicing.
 
+## Features
+
+- **Cross-platform**: Windows, macOS, Linux support
+- **MVVM Architecture**: Strict separation of concerns
+- **Game Controller Support**: Navigate with gamepad
+- **AI Agent Integration**: MCP (Model Context Protocol) support for AI-assisted development
+- **Adaptive Cards**: Rich UI component rendering
+
+## MCP Proxy Platform
+
+WatchTower includes the **Avalonia MCP Proxy Platform** - a reusable, open-source solution that enables AI agents (Claude, GitHub Copilot, etc.) to interact with Avalonia applications.
+
+**What it does:**
+- Allows agents to inspect UI state, click elements, type text, capture screenshots
+- Provides a unified interface for agents to work with multiple Avalonia apps
+- Enables iterative development: agent sees UI → suggests changes → developer implements → agent verifies
+
+**Components:**
+- `Avalonia.Mcp.Core` - Library for embedding MCP handlers in Avalonia apps
+- `Avalonia.McpProxy` - Standalone proxy server that federates app handlers
+- WatchTower - First app using the platform
+
+See [docs/mcp-proxy-architecture.md](docs/mcp-proxy-architecture.md) for detailed architecture.
+
 ## Quick Start
 
 ### Prerequisites
@@ -229,6 +253,7 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | Detailed system architecture and design |
 | [Glossary](docs/GLOSSARY.md) | Codebase-specific terms and definitions |
+| [MCP Proxy Architecture](docs/mcp-proxy-architecture.md) | AI agent integration via MCP protocol |
 | [Game Controller Support](docs/game-controller-support.md) | SDL2 gamepad integration guide |
 | [Voice Setup Guide](docs/voice-setup-guide.md) | Voice feature configuration |
 | [Splash Screen Startup](docs/splash-screen-startup.md) | Startup flow and splash screen |

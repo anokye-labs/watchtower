@@ -46,4 +46,8 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\src\Avalonia.Mcp.Core\Avalonia.Mcp.Core.csproj" />
+  </ItemGroup>
+
 </Project>

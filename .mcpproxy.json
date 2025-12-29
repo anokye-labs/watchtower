@@ -1,0 +1,14 @@
+{
+  "Proxy": {
+    "BindAddress": "localhost:5100",
+    "LogLevel": "Information",
+    "MaxConnections": 50,
+    "Apps": [
+      {
+        "Name": "WatchTower",
+        "Endpoint": "tcp://localhost:5000",
+        "Description": "Main WatchTower application - AI-powered monitoring and development tool"
+      }
+    ]
+  }
+}
