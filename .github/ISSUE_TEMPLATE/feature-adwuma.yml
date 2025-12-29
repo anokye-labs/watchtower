@@ -20,9 +20,9 @@ body:
       required: true
 
   - type: dropdown
-    id: fapem
+    id: component
     attributes:
-      label: "Fapem (Component)"
+      label: "Component"
       description: "Which area of the codebase is affected?"
       options:
         - Services
@@ -37,9 +37,9 @@ body:
       required: true
 
   - type: dropdown
-    id: mu
+    id: complexity
     attributes:
-      label: "Mu (Complexity Estimate)"
+      label: "Complexity"
       description: "How complex is this work? (1-2: Simple, 3-5: Moderate, 8-13: Complex)"
       options:
         - "1 - Trivial (single file, clear change)"
@@ -52,11 +52,11 @@ body:
       required: true
 
   - type: textarea
-    id: nkabom
+    id: dependencies
     attributes:
-      label: "Nkabom (Dependencies)"
+      label: "Dependencies"
       description: "List issue numbers this depends on, or 'None'"
-      placeholder: "#42, anokye-labs/watchtower#53 or None"
+      placeholder: "#42, #53 or None"
     validations:
       required: true
 
