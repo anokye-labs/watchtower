@@ -1,0 +1,14 @@
+{
+  "name": "nsumankwahene-migration",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Migration script for Nsumankwahene flow system",
+  "scripts": {
+    "migrate": "node migrate-open-issues.mjs",
+    "dry-run": "node migrate-open-issues.mjs --dry-run"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.0",
+    "js-yaml": "^4.1.0"
+  }
+}
