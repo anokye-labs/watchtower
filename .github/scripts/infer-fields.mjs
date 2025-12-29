@@ -7,7 +7,7 @@
 /**
  * Infer Priority from existing labels
  * @param {string[]} labels - Array of label names
- * @returns {string} Priority option key (p0_critical, p1_high, p2_medium, p3_low)
+ * @returns {string} Priority option key (p0_hene, p1_abusuapanyin, p2_obi, p3_akwadaa)
  */
 export function inferPriority(labels) {
   if (labels.includes('P0')) return 'p0_hene';
