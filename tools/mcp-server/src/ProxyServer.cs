@@ -79,8 +79,7 @@ public class ProxyServer
     {
         if (_pendingRequests.TryRemove(response.CorrelationId, out var tcs))
         {
-            tcs.SetResult(response);
-            return true;
+            return tcs.TrySetResult(response);
         }
         return false;
     }
