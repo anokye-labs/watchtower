@@ -11,6 +11,12 @@ import { Octokit } from '@octokit/rest';
  */
 export class ProjectGraphQLClient {
   constructor(token, projectId) {
+    if (typeof token !== 'string' || token.trim() === '') {
+      throw new Error('GitHub token is required and must be a non-empty string.');
+    }
+    if (typeof projectId !== 'string' || projectId.trim() === '') {
+      throw new Error('projectId is required and must be a non-empty string.');
+    }
     this.octokit = new Octokit({ auth: token });
     this.projectId = projectId;
   }
@@ -74,7 +80,11 @@ export class ProjectGraphQLClient {
       contentId: issueNodeId
     });
     
-    return result.addProjectV2ItemById.item.id;
+    const itemId = result?.addProjectV2ItemById?.item?.id;
+    if (!itemId) {
+      throw new Error('Failed to add issue to project: missing item id in GraphQL response.');
+    }
+    return itemId;
   }
   
   /**
@@ -217,7 +227,12 @@ export class ProjectGraphQLClient {
     }
     
     // Complexity (number) - mu
-    if (config.fields.mu?.id && typeof fields.complexity === 'number' && !isNaN(fields.complexity)) {
+    if (
+      config.fields.mu?.id &&
+      typeof fields.complexity === 'number' &&
+      !isNaN(fields.complexity) &&
+      fields.complexity >= 1
+    ) {
       updates.push(this.updateNumber(
         itemId,
         config.fields.mu.id,
@@ -244,7 +259,7 @@ export class ProjectGraphQLClient {
     }
     
     // Dependencies (text) - nkabom
-    if (config.fields.nkabom?.id && fields.dependencies) {
+    if (config.fields.nkabom?.id && fields.dependencies && String(fields.dependencies).trim()) {
       updates.push(this.updateText(
         itemId,
         config.fields.nkabom.id,
@@ -254,15 +269,20 @@ export class ProjectGraphQLClient {
     
     // Last Activity (date) - da_akyire
     if (config.fields.da_akyire?.id && fields.last_activity) {
+      const lastActivity = String(fields.last_activity).trim();
+      const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!isoDateRegex.test(lastActivity) || Number.isNaN(Date.parse(lastActivity))) {
+        throw new Error(`Invalid last_activity date format: "${fields.last_activity}". Expected ISO format YYYY-MM-DD.`);
+      }
       updates.push(this.updateDate(
         itemId,
         config.fields.da_akyire.id,
-        fields.last_activity
+        lastActivity
       ));
     }
     
     // PR Link (text) - pr_nkitahodi
-    if (config.fields.pr_nkitahodi?.id && fields.pr_link) {
+    if (config.fields.pr_nkitahodi?.id && fields.pr_link && String(fields.pr_link).trim()) {
       updates.push(this.updateText(
         itemId,
         config.fields.pr_nkitahodi.id,
@@ -270,9 +290,19 @@ export class ProjectGraphQLClient {
       ));
     }
     
-    // Execute all updates in parallel (within rate limits)
+    // Execute all updates with rate limiting between batches
     // Use allSettled to handle individual failures gracefully
-    const results = await Promise.allSettled(updates);
+    // Add a small delay between updates to avoid rate limits
+    const RATE_LIMIT_DELAY = 100; // milliseconds between updates
+    const results = [];
+    
+    for (const update of updates) {
+      const result = await Promise.allSettled([update]);
+      results.push(result[0]);
+      if (updates.indexOf(update) < updates.length - 1) {
+        await delay(RATE_LIMIT_DELAY);
+      }
+    }
     
     // Check for any failures
     const failures = results.filter(r => r.status === 'rejected');

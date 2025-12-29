@@ -27,24 +27,7 @@ if (!itemId) {
   console.log('Added issue to project');
 }
 
-// Update individual fields
-await client.updateSingleSelect(itemId, fieldId, optionId);
-await client.updateNumber(itemId, fieldId, 5);
-await client.updateText(itemId, fieldId, 'Some text');
-await client.updateDate(itemId, fieldId, '2025-01-15');
-
-// Batch update all fields
-const fields = {
-  status: 'afiase',
-  priority: 'p1_abusuapanyin',
-  complexity: 3,
-  component: 'services',
-  agent_type: 'copilot',
-  dependencies: '#1, #2',
-  last_activity: '2025-12-29',
-  pr_link: 'https://github.com/...'
-};
-
+// Define config first (typically loaded from project-config.yml)
 const config = {
   fields: {
     nsoromma: { id: 'PVTF_...', options: { afiase: 'PVTSSOO_...' } },
@@ -58,10 +41,27 @@ const config = {
   }
 };
 
-await client.updateAllFields(itemId, fields, config);
+// Update individual fields (using values from config)
+const fieldId = config.fields.nsoromma.id;
+const optionId = config.fields.nsoromma.options.afiase;
+await client.updateSingleSelect(itemId, fieldId, optionId);
+await client.updateNumber(itemId, config.fields.mu.id, 5);
+await client.updateText(itemId, config.fields.nkabom.id, 'Some text');
+await client.updateDate(itemId, config.fields.da_akyire.id, '2025-01-15');
 
-// Rate limiting
-await delay(1000); // Wait 1 second between API calls
+// Batch update all fields
+const fields = {
+  status: 'afiase',
+  priority: 'p1_abusuapanyin',
+  complexity: 3,
+  component: 'services',
+  agent_type: 'copilot',
+  dependencies: '#1, #2',
+  last_activity: '2025-12-29',
+  pr_link: 'https://github.com/...'
+};
+
+await client.updateAllFields(itemId, fields, config);
 ```
 
 ## Methods
@@ -86,15 +86,16 @@ Updates a date field (Last Activity). Date must be ISO format (YYYY-MM-DD).
 
 ### `updateAllFields(itemId, fields, config)`
 Batch updates all fields for an issue using the field values and config.
-Uses `Promise.allSettled()` to handle individual failures gracefully.
+Updates are executed sequentially with a 100ms delay between each to avoid rate limits.
+Uses `Promise.allSettled()` to attempt all updates even if some fail.
 Throws an error if any field update fails, with details logged to console.
 
 ### `delay(ms)`
-Promise-based delay for rate limiting.
+Promise-based delay for rate limiting. Used internally by `updateAllFields`.
 
 ## Error Handling
 
-The `updateAllFields` method uses `Promise.allSettled()` to attempt all field updates even if some fail. If any updates fail, the method will:
+The `updateAllFields` method attempts all field updates sequentially. If any updates fail, the method will:
 1. Log details of each failure to console.error
 2. Throw an error indicating how many updates failed
 
@@ -105,6 +106,15 @@ Example error output:
   - Update 3: Network error
 Error: Failed to update 2 field(s)
 ```
+
+## Validation
+
+The module performs validation on inputs:
+- Constructor validates token and projectId are non-empty strings
+- Complexity field must be >= 1
+- Date fields must be in ISO format (YYYY-MM-DD)
+- Text fields must be non-empty after trimming
+- Empty strings are filtered out to avoid unnecessary API calls
 
 ## Limitations
 
