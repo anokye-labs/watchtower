@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/anokye-labs/watchtower/tree/main/docs
+    about: Check the docs before creating an issue
+  - name: 💬 Discussions
+    url: https://github.com/anokye-labs/watchtower/discussions
+    about: Ask questions in discussions instead of creating issues
