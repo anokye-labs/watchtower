@@ -1,0 +1,17 @@
+{
+  "name": "watchtower-github-scripts",
+  "version": "1.0.0",
+  "description": "GitHub automation scripts for WatchTower project management",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
