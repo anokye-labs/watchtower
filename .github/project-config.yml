@@ -1,63 +1,64 @@
-# Nsumankwahene Project Configuration
-# Generated from GraphQL GetProjectFields query
-# DO NOT EDIT MANUALLY - regenerate from GraphQL if fields change
+# Watchtower Iterative Development Project Configuration
+# Generated from GraphQL GetProjectFields query on 2025-12-29
+# Regenerate with: gh api graphql -f query='...' -F projectId="PVT_kwDODbLOnM4BLchY"
 
 project:
-  id: "PVT_kwDONc6RBc4A0MJL"  # Project ID
-  number: 1      # Project number
+  id: "PVT_kwDODbLOnM4BLchY"  # Project ID
+  number: 2                    # Project number (linked to watchtower repo)
+  title: "Watchtower Iterative Development"
 
 fields:
-  nsoromma:  # Status
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrI"
+  status:  # Status
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHPM"
     options:
-      afiase: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMg"      # Backlog
-      siesie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMh"      # Ready
-      dwuma: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMi"       # In Progress
-      hwehwe: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMj"      # Review
-      asiw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMk"        # Blocked
-      wie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMl"         # Done
-      gyaw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMm"        # Abandoned
+      Backlog: "f75ad846"
+      Ready: "e18bf179"
+      "In progress": "47fc9ee4"
+      "In review": "aba860b9"
+      Blocked: "f0511bc2"
+      Done: "98236657"
+      Abandoned: "9bd32825"
   
-  tumi:  # Priority
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrJ"
+  priority:  # Priority
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHUU"
     options:
-      p0_hene: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNa"
-      p1_abusuapanyin: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNb"
-      p2_obi: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNc"
-      p3_akwadaa: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNd"
+      P0: "79628723"
+      P1: "0a877460"
+      P2: "da944a9c"
+      P3: "ff01dc29"
   
-  mu:  # Complexity (number field)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrK"
+  complexity:  # Complexity (number field, 1-13 Fibonacci scale)
+    id: "PVTF_lADODbLOnM4BLchYzg7BHUc"
   
-  okyeame:  # Agent Type
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrL"
+  agent_type:  # Agent Type
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI1s"
     options:
-      copilot: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNe"
-      claude_opus: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNf"
-      task_maestro: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNg"
-      nnipa_hia: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNh"
-      biara: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNi"
+      Copilot: "807e206b"
+      "Copilot + Thinking": "c36f2b25"
+      Task-Maestro: "1463e4d8"
+      "Human Required": "115f1b81"
+      "Any Agent": "cc729823"
   
-  fapem:  # Component
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrM"
+  component:  # Component
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI6Y"
     options:
-      services: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNj"
-      viewmodels: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNk"
-      views: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNl"
-      models: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNm"
-      testing: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNn"
-      infrastructure: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNo"
-      docs: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNp"
-      build: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNq"
+      Services: "e564590b"
+      "View Model": "21b57a83"
+      Views: "f84d3558"
+      Models: "6ae6375e"
+      Testing: "1bc11c29"
+      Infrastructure: "6ae10d24"
+      Docs: "fe624e7f"
+      Build: "910a429f"
   
-  nkabom:  # Dependencies (text)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrN"
+  dependencies:  # Dependencies (text)
+    id: "PVTF_lADODbLOnM4BLchYzg7DI88"
   
-  da_akyire:  # Last Activity (date)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrO"
+  last_activity:  # Last Activity (date)
+    id: "PVTF_lADODbLOnM4BLchYzg7DJR8"
   
-  pr_nkitahodi:  # PR Link (text)
-    id: "PVTF_lADONc6RBc4A0MJLzgTwGrP"
+  pr_link:  # PR Link (text)
+    id: "PVTF_lADODbLOnM4BLchYzg7DJHo"
 
 # Automation settings
 assignee_on_blocked: "hoopsomuah"
