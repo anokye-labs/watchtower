@@ -71,7 +71,9 @@ The migration script:
 
 ## Configuration
 
-The script uses `project-config.yml` which maps to the Akan field names in the GitHub Project:
+The script uses `project-config.yml` which is a copy of the root `.github/project-config.yml`. This file maps to the Akan field names in the GitHub Project:
+
+**Note**: This is a local copy for the migration script. If the root config changes, you may need to update this copy or use the root config directly by modifying the script's config path.
 
 - **nsoromma** - Status (Nsoromma)
 - **tumi** - Priority (Tumi)  

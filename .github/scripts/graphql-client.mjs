@@ -22,10 +22,14 @@ export class ProjectGraphQLClient {
    */
   async getProjectItemId(issueNodeId) {
     const query = `
-      query GetProjectItem($projectId: ID!, $issueId: ID!) {
+      query GetProjectItem($projectId: ID!, $issueId: ID!, $cursor: String) {
         node(id: $projectId) {
           ... on ProjectV2 {
-            items(first: 100) {
+            items(first: 100, after: $cursor) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
               nodes {
                 id
                 content {
@@ -40,14 +44,27 @@ export class ProjectGraphQLClient {
       }
     `;
     
-    const result = await this.octokit.graphql(query, {
-      projectId: this.projectId,
-      issueId: issueNodeId
-    });
+    let hasNextPage = true;
+    let cursor = null;
     
-    const items = result.node?.items?.nodes || [];
-    const item = items.find(i => i.content?.id === issueNodeId);
-    return item?.id || null;
+    while (hasNextPage) {
+      const result = await this.octokit.graphql(query, {
+        projectId: this.projectId,
+        issueId: issueNodeId,
+        cursor
+      });
+      
+      const items = result.node?.items?.nodes || [];
+      const item = items.find(i => i.content?.id === issueNodeId);
+      if (item) {
+        return item.id;
+      }
+      
+      hasNextPage = result.node?.items?.pageInfo?.hasNextPage || false;
+      cursor = result.node?.items?.pageInfo?.endCursor;
+    }
+    
+    return null;
   }
   
   /**
