@@ -1,0 +1,65 @@
+# Nsumankwahene Project Configuration
+# Generated from GraphQL GetProjectFields query
+# DO NOT EDIT MANUALLY - regenerate from GraphQL if fields change
+
+project:
+  id: "PVT_kwDONc6RBc4A0MJL"  # Project ID
+  number: 1      # Project number
+
+fields:
+  nsoromma:  # Status
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrI"
+    options:
+      afiase: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMg"      # Backlog
+      siesie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMh"      # Ready
+      dwuma: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMi"       # In Progress
+      hwehwe: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMj"      # Review
+      asiw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMk"        # Blocked
+      wie: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMl"         # Done
+      gyaw: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrI4LNdMm"        # Abandoned
+  
+  tumi:  # Priority
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrJ"
+    options:
+      p0_hene: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNa"
+      p1_abusuapanyin: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNb"
+      p2_obi: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNc"
+      p3_akwadaa: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrJ4LNdNd"
+  
+  mu:  # Complexity (number field)
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrK"
+  
+  okyeame:  # Agent Type
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrL"
+    options:
+      copilot: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNe"
+      claude_opus: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNf"
+      task_maestro: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNg"
+      nnipa_hia: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNh"
+      biara: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrL4LNdNi"
+  
+  fapem:  # Component
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrM"
+    options:
+      services: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNj"
+      viewmodels: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNk"
+      views: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNl"
+      models: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNm"
+      testing: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNn"
+      infrastructure: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNo"
+      docs: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNp"
+      build: "PVTSSOO_lADONc6RBc4A0MJLzgTwGrM4LNdNq"
+  
+  nkabom:  # Dependencies (text)
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrN"
+  
+  da_akyire:  # Last Activity (date)
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrO"
+  
+  pr_nkitahodi:  # PR Link (text)
+    id: "PVTF_lADONc6RBc4A0MJLzgTwGrP"
+
+# Automation settings
+assignee_on_blocked: "hoopsomuah"
+stale_threshold_days: 5
+archive_after_days: 30
