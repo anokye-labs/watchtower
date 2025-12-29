@@ -22,7 +22,7 @@ export class ProjectGraphQLClient {
    */
   async getProjectItemId(issueNodeId) {
     const query = `
-      query GetProjectItem($projectId: ID!, $issueId: ID!) {
+      query GetProjectItem($projectId: ID!) {
         node(id: $projectId) {
           ... on ProjectV2 {
             items(first: 100) {
@@ -41,8 +41,7 @@ export class ProjectGraphQLClient {
     `;
     
     const result = await this.octokit.graphql(query, {
-      projectId: this.projectId,
-      issueId: issueNodeId
+      projectId: this.projectId
     });
     
     const items = result.node?.items?.nodes || [];
@@ -198,74 +197,74 @@ export class ProjectGraphQLClient {
   async updateAllFields(itemId, fields, config) {
     const updates = [];
     
-    // Status (single-select)
-    if (config.fields.status?.options?.[fields.status]) {
+    // Status (single-select) - nsoromma
+    if (config.fields.nsoromma?.options?.[fields.status] && fields.status) {
       updates.push(this.updateSingleSelect(
         itemId,
-        config.fields.status.id,
-        config.fields.status.options[fields.status]
+        config.fields.nsoromma.id,
+        config.fields.nsoromma.options[fields.status]
       ));
     }
     
-    // Priority (single-select)
-    if (config.fields.priority?.options?.[fields.priority]) {
+    // Priority (single-select) - tumi
+    if (config.fields.tumi?.options?.[fields.priority] && fields.priority) {
       updates.push(this.updateSingleSelect(
         itemId,
-        config.fields.priority.id,
-        config.fields.priority.options[fields.priority]
+        config.fields.tumi.id,
+        config.fields.tumi.options[fields.priority]
       ));
     }
     
-    // Complexity (number)
-    if (config.fields.complexity?.id) {
+    // Complexity (number) - mu
+    if (config.fields.mu?.id && typeof fields.complexity === 'number' && !isNaN(fields.complexity)) {
       updates.push(this.updateNumber(
         itemId,
-        config.fields.complexity.id,
+        config.fields.mu.id,
         fields.complexity
       ));
     }
     
-    // Component (single-select)
-    if (config.fields.component?.options?.[fields.component]) {
+    // Component (single-select) - fapem
+    if (config.fields.fapem?.options?.[fields.component] && fields.component) {
       updates.push(this.updateSingleSelect(
         itemId,
-        config.fields.component.id,
-        config.fields.component.options[fields.component]
+        config.fields.fapem.id,
+        config.fields.fapem.options[fields.component]
       ));
     }
     
-    // Agent Type (single-select)
-    if (config.fields.agent_type?.options?.[fields.agent_type]) {
+    // Agent Type (single-select) - okyeame
+    if (config.fields.okyeame?.options?.[fields.agent_type] && fields.agent_type) {
       updates.push(this.updateSingleSelect(
         itemId,
-        config.fields.agent_type.id,
-        config.fields.agent_type.options[fields.agent_type]
+        config.fields.okyeame.id,
+        config.fields.okyeame.options[fields.agent_type]
       ));
     }
     
-    // Dependencies (text)
-    if (config.fields.dependencies?.id) {
+    // Dependencies (text) - nkabom
+    if (config.fields.nkabom?.id && fields.dependencies) {
       updates.push(this.updateText(
         itemId,
-        config.fields.dependencies.id,
+        config.fields.nkabom.id,
         fields.dependencies
       ));
     }
     
-    // Last Activity (date)
-    if (config.fields.last_activity?.id) {
+    // Last Activity (date) - da_akyire
+    if (config.fields.da_akyire?.id && fields.last_activity) {
       updates.push(this.updateDate(
         itemId,
-        config.fields.last_activity.id,
+        config.fields.da_akyire.id,
         fields.last_activity
       ));
     }
     
-    // PR Link (text) - skip if empty
-    if (config.fields.pr_link?.id && fields.pr_link) {
+    // PR Link (text) - pr_nkitahodi
+    if (config.fields.pr_nkitahodi?.id && fields.pr_link) {
       updates.push(this.updateText(
         itemId,
-        config.fields.pr_link.id,
+        config.fields.pr_nkitahodi.id,
         fields.pr_link
       ));
     }

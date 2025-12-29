@@ -47,8 +47,14 @@ const fields = {
 
 const config = {
   fields: {
-    status: { id: 'PVTF_...', options: { afiase: 'PVTSSOO_...' } },
-    // ... more field configs
+    nsoromma: { id: 'PVTF_...', options: { afiase: 'PVTSSOO_...' } },
+    tumi: { id: 'PVTF_...', options: { p1_abusuapanyin: 'PVTSSOO_...' } },
+    mu: { id: 'PVTF_...' },
+    fapem: { id: 'PVTF_...', options: { services: 'PVTSSOO_...' } },
+    okyeame: { id: 'PVTF_...', options: { copilot: 'PVTSSOO_...' } },
+    nkabom: { id: 'PVTF_...' },
+    da_akyire: { id: 'PVTF_...' },
+    pr_nkitahodi: { id: 'PVTF_...' }
   }
 };
 
