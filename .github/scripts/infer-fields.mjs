@@ -10,9 +10,10 @@
  * @returns {string} Priority option key (p0_hene, p1_abusuapanyin, p2_obi, p3_akwadaa)
  */
 export function inferPriority(labels) {
-  if (labels.includes('P0')) return 'p0_hene';
-  if (labels.includes('P1')) return 'p1_abusuapanyin';
-  if (labels.includes('P2')) return 'p2_obi';
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  if (safeLabels.includes('P0')) return 'p0_hene';
+  if (safeLabels.includes('P1')) return 'p1_abusuapanyin';
+  if (safeLabels.includes('P2')) return 'p2_obi';
   return 'p3_akwadaa';  // Default
 }
 
@@ -23,8 +24,10 @@ export function inferPriority(labels) {
  * @returns {number} Complexity score
  */
 export function inferComplexity(labels, body) {
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  
   // Tech Design Needed = high complexity
-  if (labels.includes('Tech Design Needed') || labels.includes('tech-design-needed')) {
+  if (safeLabels.includes('Tech Design Needed') || safeLabels.includes('tech-design-needed')) {
     return 8;
   }
   
@@ -76,15 +79,17 @@ export function inferComponent(labels) {
  * @returns {string} Agent type option key
  */
 export function inferAgentType(labels, body, complexity) {
+  const safeLabels = Array.isArray(labels) ? labels : [];
+  
   // Tech Design Needed or nnipa-gyinae-hia = Human Required
-  if (labels.includes('Tech Design Needed') || 
-      labels.includes('tech-design-needed') ||
-      labels.includes('nnipa-gyinae-hia')) {
+  if (safeLabels.includes('Tech Design Needed') || 
+      safeLabels.includes('tech-design-needed') ||
+      safeLabels.includes('nnipa-gyinae-hia')) {
     return 'nnipa_hia';
   }
   
   // Testing = any agent
-  if (labels.includes('testing')) return 'biara';
+  if (safeLabels.includes('testing')) return 'biara';
   
   // Check body for explicit agent mentions
   if (body?.includes('Copilot')) return 'copilot';
