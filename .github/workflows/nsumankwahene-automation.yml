@@ -11,13 +11,22 @@ on:
     types: [created]
   schedule:
     - cron: '0 0 * * 0'  # Weekly: Sunday midnight UTC
-    - cron: '0 0 1 * *'  # Monthly: 1st of month midnight UTC
+    - cron: '0 1 1 * *'  # Monthly: 1st of month at 01:00 UTC (avoids overlap with weekly)
   workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run (stale or archive)'
+        required: false
+        type: choice
+        options:
+          - stale
+          - archive
 
 permissions:
   contents: read
   issues: write
   pull-requests: write
+  repository-projects: write
 
 jobs:
   pr-linked-to-issue:
@@ -34,7 +43,7 @@ jobs:
             const prBody = context.payload.pull_request.body || '';
             const prNumber = context.payload.pull_request.number;
             
-            // Parse PR body for "Closes #X", "Fixes #X", "Resolves #X"
+            // Parse PR body for "Closes #X", "Fixes #X", "Resolves #X" (case-insensitive)
             const issueRefs = prBody.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
             
             if (issueRefs.length === 0) {
@@ -52,7 +61,7 @@ jobs:
                     nodes {
                       id
                       number
-                      fields(first: 20) {
+                      fields(first: 100) {
                         nodes {
                           ... on ProjectV2SingleSelectField {
                             id
@@ -118,7 +127,7 @@ jobs:
                     repository(owner: $owner, name: $repo) {
                       issue(number: $issueNumber) {
                         id
-                        projectItems(first: 10) {
+                        projectItems(first: 100) {
                           nodes {
                             id
                             project {
@@ -296,7 +305,7 @@ jobs:
                     nodes {
                       id
                       number
-                      fields(first: 20) {
+                      fields(first: 100) {
                         nodes {
                           ... on ProjectV2SingleSelectField {
                             id
@@ -314,10 +323,16 @@ jobs:
               }
             `;
             
-            const projectData = await github.graphql(projectQuery, {
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
+            let projectData;
+            try {
+              projectData = await github.graphql(projectQuery, {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+            } catch (error) {
+              console.log('Error fetching project data for repository', context.repo, error);
+              return;
+            }
             
             const project = projectData.repository.projectsV2.nodes[0];
             if (!project) {
@@ -342,7 +357,7 @@ jobs:
                   query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
                     repository(owner: $owner, name: $repo) {
                       issue(number: $issueNumber) {
-                        projectItems(first: 10) {
+                        projectItems(first: 100) {
                           nodes {
                             id
                             project {
@@ -498,7 +513,7 @@ jobs:
                     nodes {
                       id
                       number
-                      fields(first: 20) {
+                      fields(first: 100) {
                         nodes {
                           ... on ProjectV2SingleSelectField {
                             id
@@ -516,10 +531,16 @@ jobs:
               }
             `;
             
-            const projectData = await github.graphql(projectQuery, {
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
+            let projectData;
+            try {
+              projectData = await github.graphql(projectQuery, {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+            } catch (error) {
+              console.log('Error fetching project data for repository', context.repo, error);
+              return;
+            }
             
             const project = projectData.repository.projectsV2.nodes[0];
             if (!project) {
@@ -544,7 +565,7 @@ jobs:
                   query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
                     repository(owner: $owner, name: $repo) {
                       issue(number: $issueNumber) {
-                        projectItems(first: 10) {
+                        projectItems(first: 100) {
                           nodes {
                             id
                             project {
@@ -632,9 +653,13 @@ jobs:
       
       - name: Detect and mark stale items
         uses: actions/github-script@v7
+        env:
+          STALE_THRESHOLD_DAYS: ${{ vars.STALE_THRESHOLD_DAYS || 5 }}
+          STALE_ASSIGNEE: ${{ vars.STALE_ASSIGNEE || 'hoopsomuah' }}
         with:
           script: |
-            const STALE_THRESHOLD_DAYS = 5;
+            const STALE_THRESHOLD_DAYS = parseInt(process.env.STALE_THRESHOLD_DAYS, 10) || 5;
+            const STALE_ASSIGNEE = process.env.STALE_ASSIGNEE || 'hoopsomuah';
             
             // Get project data
             const projectQuery = `
@@ -644,7 +669,7 @@ jobs:
                     nodes {
                       id
                       number
-                      fields(first: 20) {
+                      fields(first: 100) {
                         nodes {
                           ... on ProjectV2SingleSelectField {
                             id
@@ -660,6 +685,9 @@ jobs:
                           }
                         }
                       }
+                      # NOTE: Only the first 100 project items are processed here.
+                      # Older items beyond this limit are not checked for staleness.
+                      # To process more items, pagination support would need to be added.
                       items(first: 100) {
                         nodes {
                           id
@@ -670,7 +698,7 @@ jobs:
                               updatedAt
                             }
                           }
-                          fieldValues(first: 20) {
+                          fieldValues(first: 100) {
                             nodes {
                               ... on ProjectV2ItemFieldSingleSelectValue {
                                 field {
@@ -777,12 +805,12 @@ jobs:
                       labels: ['stale']
                     });
                     
-                    // Assign to hoopsomuah
+                    // Assign to configured user
                     await github.rest.issues.addAssignees({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: item.content.number,
-                      assignees: ['hoopsomuah']
+                      assignees: [STALE_ASSIGNEE]
                     });
                     
                     // Comment on issue
@@ -795,7 +823,7 @@ Please:
 2. Update status if blocked externally
 3. Or continue work if still active
 
-Assigning to @hoopsomuah for review.`;
+Assigning to @${STALE_ASSIGNEE} for review.`;
                     
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
@@ -822,9 +850,11 @@ Assigning to @hoopsomuah for review.`;
       
       - name: Archive old completed items
         uses: actions/github-script@v7
+        env:
+          ARCHIVE_THRESHOLD_DAYS: ${{ vars.ARCHIVE_THRESHOLD_DAYS || 30 }}
         with:
           script: |
-            const ARCHIVE_THRESHOLD_DAYS = 30;
+            const ARCHIVE_THRESHOLD_DAYS = Number.parseInt(process.env.ARCHIVE_THRESHOLD_DAYS, 10) || 30;
             
             // Get project data
             const projectQuery = `
@@ -834,6 +864,8 @@ Assigning to @hoopsomuah for review.`;
                     nodes {
                       id
                       number
+                      # NOTE: This workflow only fetches and checks the first 100 project items for archival.
+                      # Older items beyond this limit are not evaluated unless pagination support is added.
                       items(first: 100) {
                         nodes {
                           id
@@ -844,7 +876,7 @@ Assigning to @hoopsomuah for review.`;
                               closedAt
                             }
                           }
-                          fieldValues(first: 20) {
+                          fieldValues(first: 100) {
                             nodes {
                               ... on ProjectV2ItemFieldSingleSelectValue {
                                 field {
@@ -965,7 +997,7 @@ Assigning to @hoopsomuah for review.`;
                     nodes {
                       id
                       number
-                      fields(first: 20) {
+                      fields(first: 100) {
                         nodes {
                           ... on ProjectV2Field {
                             id
@@ -1001,7 +1033,7 @@ Assigning to @hoopsomuah for review.`;
               query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
                 repository(owner: $owner, name: $repo) {
                   issue(number: $issueNumber) {
-                    projectItems(first: 10) {
+                    projectItems(first: 100) {
                       nodes {
                         id
                         project {
