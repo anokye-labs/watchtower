@@ -85,8 +85,8 @@ async function fetchOpenIssues() {
   console.log('\n📋 Fetching open issues...');
   
   const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-    owner: config.project?.owner,
-    repo: config.project?.repo,
+    owner: config.project.owner,
+    repo: config.project.repo,
     state: 'open',
     per_page: 100
   });

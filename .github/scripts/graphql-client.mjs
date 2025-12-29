@@ -364,8 +364,8 @@ export class ProjectGraphQLClient {
       .filter(({ result }) => result.status === 'rejected');
     
     if (failures.length > 0) {
-      const errors = failures.map(({ name, result }) => `${name}: ${result.reason.message}`).join('; ');
-      throw new Error(`Failed to update ${failures.length} field(s): ${errors}`);
+      const errors = failures.map(({ name, result }) => `${name}: ${result.reason.message}`).join('\n  - ');
+      throw new Error(`Failed to update ${failures.length} field(s):\n  - ${errors}`);
     }
   }
 }
