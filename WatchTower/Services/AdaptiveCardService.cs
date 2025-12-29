@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using AdaptiveCards;
 using Microsoft.Extensions.Logging;
 
@@ -10,9 +12,54 @@ public class AdaptiveCardService : IAdaptiveCardService
 {
     private readonly ILogger<AdaptiveCardService> _logger;
 
+    public event EventHandler<AdaptiveCardActionEventArgs>? ActionInvoked;
+    public event EventHandler<AdaptiveCardSubmitEventArgs>? SubmitAction;
+    public event EventHandler<AdaptiveCardActionEventArgs>? OpenUrlAction;
+    public event EventHandler<AdaptiveCardActionEventArgs>? ExecuteAction;
+    public event EventHandler<AdaptiveCardActionEventArgs>? ShowCardAction;
+
     public AdaptiveCardService(ILogger<AdaptiveCardService> logger)
     {
         _logger = logger;
+    }
+
+    /// <inheritdoc/>
+    public void HandleAction(AdaptiveAction action, Dictionary<string, object>? inputValues = null)
+    {
+        _logger.LogInformation("Adaptive card action invoked: {ActionType}", action.GetType().Name);
+
+        // Raise the general action event
+        var eventArgs = new AdaptiveCardActionEventArgs(action, inputValues);
+        ActionInvoked?.Invoke(this, eventArgs);
+
+        // Raise specific action events
+        switch (action)
+        {
+            case AdaptiveSubmitAction submitAction:
+                var submitArgs = new AdaptiveCardSubmitEventArgs(submitAction, inputValues ?? new Dictionary<string, object>());
+                SubmitAction?.Invoke(this, submitArgs);
+                _logger.LogDebug("Submit action handled with {Count} input values", inputValues?.Count ?? 0);
+                break;
+
+            case AdaptiveOpenUrlAction openUrlAction:
+                OpenUrlAction?.Invoke(this, eventArgs);
+                _logger.LogDebug("OpenUrl action handled: {Url}", openUrlAction.Url);
+                break;
+
+            case AdaptiveExecuteAction executeAction:
+                ExecuteAction?.Invoke(this, eventArgs);
+                _logger.LogDebug("Execute action handled: {Verb}", executeAction.Verb);
+                break;
+
+            case AdaptiveShowCardAction:
+                ShowCardAction?.Invoke(this, eventArgs);
+                _logger.LogDebug("ShowCard action handled");
+                break;
+
+            default:
+                _logger.LogWarning("Unknown action type: {ActionType}", action.GetType().Name);
+                break;
+        }
     }
 
     /// <inheritdoc/>
@@ -53,8 +100,8 @@ public class AdaptiveCardService : IAdaptiveCardService
                     Text = "WatchTower",
                     Size = AdaptiveTextSize.ExtraLarge,
                     Weight = AdaptiveTextWeight.Bolder,
-                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center,
-                    Color = AdaptiveTextColor.Light
+                    HorizontalAlignment = AdaptiveHorizontalAlignment.Center
+                    // Color controlled by HostConfig
                 },
                 new AdaptiveTextBlock
                 {
@@ -63,14 +110,15 @@ public class AdaptiveCardService : IAdaptiveCardService
                     Weight = AdaptiveTextWeight.Lighter,
                     HorizontalAlignment = AdaptiveHorizontalAlignment.Center,
                     Spacing = AdaptiveSpacing.None,
-                    Color = AdaptiveTextColor.Light
+                    IsSubtle = true
+                    // Color controlled by HostConfig
                 },
                 new AdaptiveTextBlock
                 {
                     Text = "This demonstrates the core functionality of rendering Adaptive Cards in the WatchTower application.",
                     Wrap = true,
-                    Spacing = AdaptiveSpacing.Medium,
-                    Color = AdaptiveTextColor.Light
+                    Spacing = AdaptiveSpacing.Medium
+                    // Color controlled by HostConfig
                 },
                 new AdaptiveColumnSet
                 {
@@ -84,8 +132,8 @@ public class AdaptiveCardService : IAdaptiveCardService
                                 new AdaptiveTextBlock
                                 {
                                     Text = "Status:",
-                                    Weight = AdaptiveTextWeight.Bolder,
-                                    Color = AdaptiveTextColor.Light
+                                    Weight = AdaptiveTextWeight.Bolder
+                                    // Color controlled by HostConfig
                                 }
                             }
                         },
@@ -97,7 +145,7 @@ public class AdaptiveCardService : IAdaptiveCardService
                                 new AdaptiveTextBlock
                                 {
                                     Text = "Ready",
-                                    Color = AdaptiveTextColor.Good
+                                    Color = AdaptiveTextColor.Good // Use semantic color
                                 }
                             }
                         }

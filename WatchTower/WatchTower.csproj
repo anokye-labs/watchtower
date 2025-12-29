@@ -24,12 +24,16 @@
     </PackageReference>
     <PackageReference Include="FluentIcons.Avalonia.Fluent" Version="2.0.316.1" />
     <PackageReference Include="Iciclecreek.AdaptiveCards.Rendering.Avalonia" Version="1.0.4" />
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.47.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="PiperSharp" Version="1.0.6" />
     <PackageReference Include="Silk.NET.SDL" Version="2.22.0" />
+    <PackageReference Include="Vosk" Version="0.3.38" />
   </ItemGroup>
 
   <ItemGroup>

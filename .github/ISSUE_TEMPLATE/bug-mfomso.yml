@@ -1,0 +1,62 @@
+name: "🐛 Bug - Mfomso (Defect)"
+description: "Report a bug or unexpected behavior"
+labels: ["P1"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Mfomso (Bug Report)
+        *English: Report a defect or unexpected behavior*
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "What happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+      description: "What should have happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "How can we reproduce this?"
+      placeholder: |
+        1. Open the application
+        2. Click on...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: "Platform"
+      options:
+        - Windows (win-x64)
+        - macOS (osx-x64)
+        - Linux (linux-x64)
+        - All platforms
+    validations:
+      required: true
+
+  - type: dropdown
+    id: fapem
+    attributes:
+      label: "Fapem (Component)"
+      options:
+        - Services
+        - ViewModels
+        - Views
+        - Models
+        - Unknown
+    validations:
+      required: true

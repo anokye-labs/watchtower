@@ -5,8 +5,8 @@
 A unified shell window that replaces the separate splash and main windows with a smooth animated transition:
 
 1. **Single Window Lifecycle**: One `ShellWindow` from launch to runtime
-2. **Decorative Frame**: Ornate border that stretches with the window
-3. **Smooth Animation**: 800ms cubic ease-out expansion from 70% to full-screen
+2. **Decorative Frame**: Ornate border using 5x5 grid slicing for resolution-independent scaling
+3. **Smooth Animation**: 500ms cubic ease-out expansion from frame-based splash size to full-screen
 4. **Seamless Transition**: Splash content → animation → main content
 
 ## Files Changed
@@ -35,35 +35,32 @@ dotnet run --project WatchTower/WatchTower.csproj
 ```
 
 **Expected behavior:**
-1. Window opens centered (70% screen size)
+1. Window opens centered at frame-based splash size
 2. Splash shows loading (~3-5 seconds)
-3. Window smoothly expands to full-screen
+3. Window smoothly expands to full-screen (500ms)
 4. Main content appears inside frame
 
 ## Customization
 
-All in `ShellWindow.axaml.cs`:
-
-```csharp
-private const int AnimationDurationMs = 800;        // Animation speed
-private const double SplashSizeRatio = 0.7;         // Initial size (70%)
-```
-
-## Frame Configuration
-
-The frame image (`WatchTower/Assets/main-frame.png`) is configured via `appsettings.json`:
+Window sizing is configured via `appsettings.json`:
 
 ```json
 {
+  "Startup": {
+    "MinContentWidth": 400,
+    "MinContentHeight": 300
+  },
   "Frame": {
     "SourceUri": "avares://WatchTower/Assets/main-frame.png",
-    "Scale": 0.25,
+    "Scale": 0.20,
     "BackgroundColor": "#261208",
     "Padding": { "Left": 80, "Top": 60, "Right": 80, "Bottom": 60 },
     "Slice": { ... }
   }
 }
 ```
+
+Animation duration is hardcoded to 500ms in `ShellWindow.axaml.cs`.
 
 The frame uses a 5x5 grid slicing system for resolution-independent scaling.
 
