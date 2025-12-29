@@ -22,7 +22,7 @@ export class ProjectGraphQLClient {
    */
   async getProjectItemId(issueNodeId) {
     const query = `
-      query GetProjectItem($projectId: ID!, $issueId: ID!, $cursor: String) {
+      query GetProjectItem($projectId: ID!, $cursor: String) {
         node(id: $projectId) {
           ... on ProjectV2 {
             items(first: 100, after: $cursor) {
@@ -50,7 +50,6 @@ export class ProjectGraphQLClient {
     while (hasNextPage) {
       const result = await this.octokit.graphql(query, {
         projectId: this.projectId,
-        issueId: issueNodeId,
         cursor
       });
       

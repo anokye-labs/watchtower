@@ -49,14 +49,12 @@ body:
       required: true
 
   - type: dropdown
-    id: fapem
+    id: component
     attributes:
-      label: "Fapem (Component)"
+      label: "Component"
       options:
         - Services
         - ViewModels
         - Views
         - Models
         - Unknown
-    validations:
-      required: true
