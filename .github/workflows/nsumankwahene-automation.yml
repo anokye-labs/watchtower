@@ -816,11 +816,11 @@ jobs:
                     // Comment on issue
                     const comment = `⚠️ **Asiw (Blocked): No activity for ${STALE_THRESHOLD_DAYS} days**
 
-This issue has remained in the Dwuma status for more than ${STALE_THRESHOLD_DAYS} days without activity.
+This issue has remained in the Dwuma (In progress) status for more than ${STALE_THRESHOLD_DAYS} days without activity.
 
 Please:
 1. Check the Nkabom field for any blockers
-2. Update the status to Asiw if it is blocked externally
+2. Update the status to Blocked (Asiw) if it is blocked externally
 3. Or continue work if the item is still active
 
 Assigning to @${STALE_ASSIGNEE} for review.`;
