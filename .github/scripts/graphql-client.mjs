@@ -271,7 +271,7 @@ export class ProjectGraphQLClient {
     if (config.fields.da_akyire?.id && fields.last_activity) {
       const lastActivity = String(fields.last_activity).trim();
       const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!isoDateRegex.test(lastActivity) || Number.isNaN(Date.parse(lastActivity))) {
+      if (!isoDateRegex.test(lastActivity) || isNaN(Date.parse(lastActivity))) {
         throw new Error(`Invalid last_activity date format: "${fields.last_activity}". Expected ISO format YYYY-MM-DD.`);
       }
       updates.push(this.updateDate(
@@ -291,15 +291,21 @@ export class ProjectGraphQLClient {
     }
     
     // Execute all updates with rate limiting between batches
-    // Use allSettled to handle individual failures gracefully
+    // Use try-catch to handle individual failures gracefully
     // Add a small delay between updates to avoid rate limits
     const RATE_LIMIT_DELAY = 100; // milliseconds between updates
     const results = [];
     
-    for (const update of updates) {
-      const result = await Promise.allSettled([update]);
-      results.push(result[0]);
-      if (updates.indexOf(update) < updates.length - 1) {
+    for (let i = 0; i < updates.length; i++) {
+      try {
+        await updates[i];
+        results.push({ status: 'fulfilled' });
+      } catch (error) {
+        results.push({ status: 'rejected', reason: error });
+      }
+      
+      // Add delay between updates (but not after the last one)
+      if (i < updates.length - 1) {
         await delay(RATE_LIMIT_DELAY);
       }
     }
