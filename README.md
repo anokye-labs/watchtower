@@ -161,6 +161,14 @@ See [Adaptive Card Theme Plan](docs/ADAPTIVE-CARD-THEME-PLAN.md) for theming det
 
 A unified shell window that hosts both splash and main content with smooth animated transitions. The decorative frame uses 5x5 grid slicing for resolution-independent scaling.
 
+## Project Management
+
+Work is tracked via the **Nsumankwahene** (Spiritual Guardian) continuous flow system:
+- [GitHub Project Board](https://github.com/orgs/anokye-labs/projects/2)
+- [Workflow Documentation](docs/nsumankwahene-workflow.md)
+
+The system uses Akan terminology with English descriptions, honoring WatchTower's "Ancestral Futurism" design language while enabling agent-optimized collaboration.
+
 ## Configuration
 
 The application is configured through `WatchTower/appsettings.json`:
