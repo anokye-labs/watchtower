@@ -265,3 +265,6 @@ Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
 ## License
 
 This project is open source under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Automation Test
+Validates fixed field names in workflow.
