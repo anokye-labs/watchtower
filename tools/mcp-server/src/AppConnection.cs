@@ -53,10 +53,7 @@ public class AppConnection : IDisposable
         }
 
         // Serialize the request to JSON
-        var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(request);
 
         // Append newline for message framing (newline-delimited JSON)
         var message = json + "\n";

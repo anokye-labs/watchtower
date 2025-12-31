@@ -379,13 +379,26 @@ public class ProxyServer : IDisposable
                 var appResponse = await tcs.Task.ConfigureAwait(false);
 
                 // Forward the app's response to the agent
-                var agentResponse = new
+                // JSON-RPC 2.0: response must have either "result" OR "error", not both
+                object agentResponse;
+                if (appResponse.TryGetProperty("error", out var errorEl))
                 {
-                    jsonrpc = "2.0",
-                    id = requestId ?? 0,
-                    result = appResponse.TryGetProperty("result", out var resultEl) ? resultEl : (object?)null,
-                    error = appResponse.TryGetProperty("error", out var errorEl) ? errorEl : (object?)null
-                };
+                    agentResponse = new
+                    {
+                        jsonrpc = "2.0",
+                        id = requestId ?? 0,
+                        error = errorEl
+                    };
+                }
+                else
+                {
+                    agentResponse = new
+                    {
+                        jsonrpc = "2.0",
+                        id = requestId ?? 0,
+                        result = appResponse.TryGetProperty("result", out var resultEl) ? resultEl : (object?)null
+                    };
+                }
 
                 await SendToAgentAsync(JsonSerializer.Serialize(agentResponse), cancellationToken);
 
@@ -396,7 +409,8 @@ public class ProxyServer : IDisposable
             {
                 _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' was canceled", toolName, app.Name);
                 _pendingRequests.TryRemove(correlationId, out _);
-                await SendErrorToAgentAsync("Tool execution was canceled", requestId, cancellationToken);
+                // Use CancellationToken.None to avoid throwing another OperationCanceledException
+                await SendErrorToAgentAsync("Tool execution was canceled", requestId, CancellationToken.None);
             }
             catch (Exception ex)
             {
