@@ -65,6 +65,7 @@ public interface IUserPreferencesService
 
     /// <summary>
     /// Gets the date when the application was first run, or null if not set.
+    /// FirstRunDate is automatically set on first load and is read-only thereafter.
     /// </summary>
     DateTime? GetFirstRunDate();
 

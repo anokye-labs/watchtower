@@ -111,6 +111,7 @@ public class UserPreferencesService : IUserPreferencesService
 
     public void SetHasSeenWelcomeScreen(bool hasSeenWelcomeScreen)
     {
+        UserPreferences? preferencesToNotify = null;
         lock (_lock)
         {
             if (_preferences.HasSeenWelcomeScreen == hasSeenWelcomeScreen)
@@ -118,9 +119,16 @@ public class UserPreferencesService : IUserPreferencesService
 
             _preferences.HasSeenWelcomeScreen = hasSeenWelcomeScreen;
             PersistPreferences();
+            
+            // Create defensive copy for event notification outside the lock
+            var json = JsonSerializer.Serialize(_preferences, JsonOptions);
+            preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
         }
         _logger.LogInformation("HasSeenWelcomeScreen changed to {HasSeenWelcomeScreen}", hasSeenWelcomeScreen);
-        PreferencesChanged?.Invoke(this, _preferences);
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
     }
 
     public bool GetShowWelcomeOnStartup()
@@ -133,6 +141,7 @@ public class UserPreferencesService : IUserPreferencesService
 
     public void SetShowWelcomeOnStartup(bool showWelcomeOnStartup)
     {
+        UserPreferences? preferencesToNotify = null;
         lock (_lock)
         {
             if (_preferences.ShowWelcomeOnStartup == showWelcomeOnStartup)
@@ -140,9 +149,16 @@ public class UserPreferencesService : IUserPreferencesService
 
             _preferences.ShowWelcomeOnStartup = showWelcomeOnStartup;
             PersistPreferences();
+            
+            // Create defensive copy for event notification outside the lock
+            var json = JsonSerializer.Serialize(_preferences, JsonOptions);
+            preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
         }
         _logger.LogInformation("ShowWelcomeOnStartup changed to {ShowWelcomeOnStartup}", showWelcomeOnStartup);
-        PreferencesChanged?.Invoke(this, _preferences);
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
     }
 
     public DateTime? GetFirstRunDate()
