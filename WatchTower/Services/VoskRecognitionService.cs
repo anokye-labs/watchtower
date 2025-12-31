@@ -241,7 +241,6 @@ public class VoskRecognitionService : IVoiceRecognitionService
         catch (JsonException ex)
         {
             _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
-            _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
         }
         return string.Empty;
     }
@@ -298,6 +297,10 @@ public class VoskRecognitionService : IVoiceRecognitionService
                 _logger.LogWarning(
                     "Vosk recognition shutdown did not complete within {TimeoutSeconds}s",
                     shutdownTimeoutSeconds);
+            }
+            else
+            {
+                _logger.LogInformation("Vosk recognition shutdown completed successfully");
             }
         }
         catch (Exception ex)
