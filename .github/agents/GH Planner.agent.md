@@ -2,7 +2,7 @@
 name: GitHub Project Planner
 description: Researches and outlines multi-step plans for conversion to GitHub issues
 argument-hint: Outline the goal or problem to research
-tools: ['execute/testFailure', 'read/problems', 'read/readFile', 'search', 'web', 'microsoft-docs/*', 'perplexity/*', 'agent', 'github/search_code', 'github/search_issues', 'github/list_issues', 'github/issue_read']
+tools: ['execute/testFailure', 'read/problems', 'read/readFile', 'search', 'web', 'github/issue_read', 'github/list_issue_types', 'github/list_issues', 'github/pull_request_read', 'github/search_code', 'github/search_issues', 'github/search_pull_requests', 'github/search_repositories', 'microsoft-docs/*', 'perplexity/*', 'agent', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest']
 handoffs:
   - label: Create or Update GitHub Issues
     agent: Github Task Maestro

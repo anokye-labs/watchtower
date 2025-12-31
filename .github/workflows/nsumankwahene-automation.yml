@@ -46,7 +46,7 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             
             // Parse PR body for "Closes #X", "Fixes #X", "Resolves #X" (case-insensitive)
-            const issueRefs = prBody.match(/(?:closes|fixes|resolves)\s+#(\d+)/gi) || [];
+            const issueRefs = prBody.match(/(?:closes|Closes|fixes|Fixes|resolves|Resolves)\s+#(\d+)/gi) || [];
             
             if (issueRefs.length === 0) {
               console.log('No linked issues found in PR body');
@@ -995,6 +995,8 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
           script: |
             const issueNumber = context.payload.issue.number;
             
+            // NOTE: The projectQuery structure is duplicated across multiple jobs in this workflow.
+            // Consider extracting to a reusable script file or composite action for better maintainability.
             // Get project data
             const projectQuery = `
               query GetProject($owner: String!, $repo: String!) {
