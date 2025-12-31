@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Serialization;
 
 namespace WatchTower.Models;
@@ -18,6 +19,24 @@ public class UserPreferences
     /// </summary>
     [JsonPropertyName("fontOverrides")]
     public FontOverrides? FontOverrides { get; set; }
+
+    /// <summary>
+    /// Indicates whether the user has seen the welcome screen.
+    /// </summary>
+    [JsonPropertyName("hasSeenWelcomeScreen")]
+    public bool HasSeenWelcomeScreen { get; set; }
+
+    /// <summary>
+    /// Indicates whether to show the welcome screen on application startup.
+    /// </summary>
+    [JsonPropertyName("showWelcomeOnStartup")]
+    public bool ShowWelcomeOnStartup { get; set; } = true;
+
+    /// <summary>
+    /// The date when the application was first run. Null indicates first run hasn't been recorded yet.
+    /// </summary>
+    [JsonPropertyName("firstRunDate")]
+    public DateTime? FirstRunDate { get; set; }
 }
 
 /// <summary>

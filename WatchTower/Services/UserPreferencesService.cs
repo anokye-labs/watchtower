@@ -101,6 +101,58 @@ public class UserPreferencesService : IUserPreferencesService
         PreferencesChanged?.Invoke(this, _preferences);
     }
 
+    public bool GetHasSeenWelcomeScreen()
+    {
+        lock (_lock)
+        {
+            return _preferences.HasSeenWelcomeScreen;
+        }
+    }
+
+    public void SetHasSeenWelcomeScreen(bool hasSeenWelcomeScreen)
+    {
+        lock (_lock)
+        {
+            if (_preferences.HasSeenWelcomeScreen == hasSeenWelcomeScreen)
+                return;
+
+            _preferences.HasSeenWelcomeScreen = hasSeenWelcomeScreen;
+            PersistPreferences();
+        }
+        _logger.LogInformation("HasSeenWelcomeScreen changed to {HasSeenWelcomeScreen}", hasSeenWelcomeScreen);
+        PreferencesChanged?.Invoke(this, _preferences);
+    }
+
+    public bool GetShowWelcomeOnStartup()
+    {
+        lock (_lock)
+        {
+            return _preferences.ShowWelcomeOnStartup;
+        }
+    }
+
+    public void SetShowWelcomeOnStartup(bool showWelcomeOnStartup)
+    {
+        lock (_lock)
+        {
+            if (_preferences.ShowWelcomeOnStartup == showWelcomeOnStartup)
+                return;
+
+            _preferences.ShowWelcomeOnStartup = showWelcomeOnStartup;
+            PersistPreferences();
+        }
+        _logger.LogInformation("ShowWelcomeOnStartup changed to {ShowWelcomeOnStartup}", showWelcomeOnStartup);
+        PreferencesChanged?.Invoke(this, _preferences);
+    }
+
+    public DateTime? GetFirstRunDate()
+    {
+        lock (_lock)
+        {
+            return _preferences.FirstRunDate;
+        }
+    }
+
     private static string GetPreferencesFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -120,6 +172,7 @@ public class UserPreferencesService : IUserPreferencesService
                 if (preferences != null)
                 {
                     _logger.LogDebug("Loaded user preferences from {Path}", _preferencesFilePath);
+                    ApplyMigrations(preferences);
                     return preferences;
                 }
             }
@@ -130,7 +183,40 @@ public class UserPreferencesService : IUserPreferencesService
         }
 
         _logger.LogDebug("Using default user preferences");
-        return new UserPreferences();
+        var defaultPreferences = new UserPreferences();
+        ApplyMigrations(defaultPreferences);
+        return defaultPreferences;
+    }
+
+    /// <summary>
+    /// Apply migration logic to preferences loaded from disk or newly created.
+    /// </summary>
+    private void ApplyMigrations(UserPreferences preferences)
+    {
+        bool needsSave = false;
+
+        // Set FirstRunDate if not already set
+        if (preferences.FirstRunDate == null)
+        {
+            preferences.FirstRunDate = DateTime.UtcNow;
+            needsSave = true;
+            _logger.LogInformation("First run detected, setting FirstRunDate to {FirstRunDate}", preferences.FirstRunDate);
+        }
+
+        // Persist changes if migrations were applied
+        if (needsSave)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(preferences, JsonOptions);
+                File.WriteAllText(_preferencesFilePath, json);
+                _logger.LogDebug("Saved migrated preferences to {Path}", _preferencesFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save migrated preferences to {Path}", _preferencesFilePath);
+            }
+        }
     }
 
     private void PersistPreferences()
