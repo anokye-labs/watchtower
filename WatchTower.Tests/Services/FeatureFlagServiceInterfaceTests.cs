@@ -1,6 +1,5 @@
 using System;
 using Xunit;
-using WatchTower.Models;
 using WatchTower.Services;
 
 namespace WatchTower.Tests.Services;
@@ -50,5 +49,26 @@ public class FeatureFlagServiceInterfaceTests
 
         // Assert
         Assert.IsAssignableFrom<EventArgs>(eventArgs);
+    }
+
+    [Fact]
+    public void FeatureFlagChangedEventArgs_Constructor_ThrowsOnNullFlagKey()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new FeatureFlagChangedEventArgs(null!, null, null));
+    }
+
+    [Fact]
+    public void FeatureFlagChangedEventArgs_Constructor_ThrowsOnEmptyFlagKey()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new FeatureFlagChangedEventArgs("", null, null));
+    }
+
+    [Fact]
+    public void FeatureFlagChangedEventArgs_Constructor_ThrowsOnWhitespaceFlagKey()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new FeatureFlagChangedEventArgs("   ", null, null));
     }
 }
