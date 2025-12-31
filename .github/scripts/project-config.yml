@@ -1,77 +1,67 @@
-# Project Configuration for Migration Script
-# Field names use English (per recent comment on anokye-labs/watchtower#76)
+# Nsumankwahene Project Configuration
+# Generated from GraphQL GetProjectFields query
+# DO NOT EDIT MANUALLY - regenerate from GraphQL if fields change
 
 project:
-  owner: "anokye-labs"
-  repo: "watchtower"
-  number: 1  # Actual project number
+  owner: "anokye-labs"  # GitHub organization
+  repo: "watchtower"    # Repository name
+  id: "PVT_kwDODbLOnM4BLchY"  # Project ID
+  number: 2      # Project number
 
-# Field mapping - English names
-# NOTE: These IDs must be populated from the GitHub Project UI
-# Run GraphQL query to get actual IDs before migration
 fields:
-  status:  # Nsoromma (Status)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "SINGLE_SELECT"
+  nsoromma:  # Status
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHPM"
     options:
-      backlog: "REPLACE_WITH_OPTION_ID"      # Afiase
-      ready: "REPLACE_WITH_OPTION_ID"        # Siesie
-      in_progress: "REPLACE_WITH_OPTION_ID"  # Dwuma
-      review: "REPLACE_WITH_OPTION_ID"       # Hwehwɛ
-      blocked: "REPLACE_WITH_OPTION_ID"      # Asiw
-      done: "REPLACE_WITH_OPTION_ID"         # Wie
-      abandoned: "REPLACE_WITH_OPTION_ID"    # Gyaw
-
-  priority:  # Tumi (Priority)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "SINGLE_SELECT"
+      Backlog: "f75ad846"      # Afiase
+      Ready: "e18bf179"        # Siesie
+      "In progress": "47fc9ee4"       # Dwuma
+      "In review": "aba860b9"      # Hwehwɛ
+      Blocked: "f0511bc2"        # Asiw
+      Done: "98236657"         # Wie
+      Abandoned: "9bd32825"        # Gyaw
+  
+  tumi:  # Priority
+    id: "PVTSSF_lADODbLOnM4BLchYzg7BHUU"
     options:
-      p0_critical: "REPLACE_WITH_OPTION_ID"  # P0-Hene
-      p1_high: "REPLACE_WITH_OPTION_ID"      # P1-Abusuapanyin
-      p2_medium: "REPLACE_WITH_OPTION_ID"    # P2-Obi
-      p3_low: "REPLACE_WITH_OPTION_ID"       # P3-Akwadaa
-
-  complexity:  # Mu (Complexity)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "NUMBER"
-
-  agent_type:  # Ɔkyeame (Agent Type)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "SINGLE_SELECT"
+      P0: "79628723"            # P0-Hene
+      P1: "0a877460"            # P1-Abusuapanyin
+      P2: "da944a9c"            # P2-Obi
+      P3: "ff01dc29"            # P3-Akwadaa
+  
+  mu:  # Complexity (number field)
+    id: "PVTF_lADODbLOnM4BLchYzg7BHUc"
+  
+  okyeame:  # Agent Type
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI1s"
     options:
-      copilot: "REPLACE_WITH_OPTION_ID"
-      claude_opus: "REPLACE_WITH_OPTION_ID"
-      task_maestro: "REPLACE_WITH_OPTION_ID"
-      human_required: "REPLACE_WITH_OPTION_ID"  # Nnipa-Hia
-      any_agent: "REPLACE_WITH_OPTION_ID"       # Biara
-
-  component:  # Fapem (Component)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "SINGLE_SELECT"
+      Copilot: "807e206b"
+      "Copilot + Thinking": "c36f2b25"
+      Task-Maestro: "1463e4d8"
+      "Human Required": "115f1b81"  # Nnipa-Hia
+      "Any Agent": "cc729823"       # Biara
+  
+  fapem:  # Component
+    id: "PVTSSF_lADODbLOnM4BLchYzg7DI6Y"
     options:
-      services: "REPLACE_WITH_OPTION_ID"
-      viewmodels: "REPLACE_WITH_OPTION_ID"
-      views: "REPLACE_WITH_OPTION_ID"
-      models: "REPLACE_WITH_OPTION_ID"
-      testing: "REPLACE_WITH_OPTION_ID"
-      infrastructure: "REPLACE_WITH_OPTION_ID"
-      docs: "REPLACE_WITH_OPTION_ID"
-      build: "REPLACE_WITH_OPTION_ID"
+      Services: "e564590b"
+      "View Model": "21b57a83"
+      Views: "f84d3558"
+      Models: "6ae6375e"
+      Testing: "1bc11c29"
+      Infrastructure: "6ae10d24"
+      Docs: "fe624e7f"
+      Build: "910a429f"
+  
+  nkabom:  # Dependencies (text)
+    id: "PVTF_lADODbLOnM4BLchYzg7DI88"
+  
+  da_akyire:  # Last Activity (date)
+    id: "PVTF_lADODbLOnM4BLchYzg7DJR8"
+  
+  pr_nkitahodi:  # PR Link (text)
+    id: "PVTF_lADODbLOnM4BLchYzg7DJHo"
 
-  dependencies:  # Nkabom (Dependencies)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "TEXT"
-
-  last_activity:  # Da-Akyire (Last Activity)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "DATE"
-
-  pr_link:  # PR Nkitahodi (PR Link)
-    id: "REPLACE_WITH_ACTUAL_FIELD_ID"
-    type: "TEXT"
-
-# Migration defaults
-defaults:
-  status: "backlog"
-  agent_type: "any_agent"
-  pr_link: ""
+# Automation settings
+assignee_on_blocked: "hoopsomuah"
+stale_threshold_days: 5
+archive_after_days: 30
