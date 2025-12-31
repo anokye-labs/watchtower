@@ -23,6 +23,8 @@ public class ProxyServer : IDisposable
     private Task? _listenerTask;
     private Task? _stdinTask;
     private readonly ConcurrentDictionary<string, TcpClient> _appConnections = new();
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new();
+    private long _nextCorrelationId;
     private bool _disposed;
 
     public ProxyServer(ProxyConfiguration config, AppRegistry registry, ILogger<ProxyServer> logger)
@@ -168,6 +170,23 @@ public class ProxyServer : IDisposable
             var json = JsonDocument.Parse(message);
             var root = json.RootElement;
 
+            // Check if this is a JSON-RPC response (has "id" and either "result" or "error")
+            if (root.TryGetProperty("jsonrpc", out _) && root.TryGetProperty("id", out var idElement))
+            {
+                var correlationId = idElement.GetString();
+                if (!string.IsNullOrEmpty(correlationId) && _pendingRequests.TryRemove(correlationId, out var tcs))
+                {
+                    _logger.LogDebug("Received response for correlation ID: {CorrelationId}", correlationId);
+                    tcs.TrySetResult(root);
+                }
+                else
+                {
+                    _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
+                }
+                return;
+            }
+
+            // Handle registration messages
             if (root.TryGetProperty("type", out var typeElement))
             {
                 var type = typeElement.GetString();
@@ -304,22 +323,87 @@ public class ProxyServer : IDisposable
                 return;
             }
 
-            // Forward the tool call to the app
-            // For now, send a success response (actual routing will be implemented later)
-            var response = new
+            // Get the TCP connection for this app
+            if (!_appConnections.TryGetValue(app.ConnectionId, out var tcpClient) || !tcpClient.Connected)
             {
-                jsonrpc = "2.0",
-                id = requestId ?? 0,
-                result = new
-                {
-                    content = new[]
-                    {
-                        new { type = "text", text = $"Tool {toolName} executed (routing not fully implemented)" }
-                    }
-                }
-            };
+                await SendErrorToAgentAsync($"App '{app.Name}' is not connected", requestId, cancellationToken);
+                return;
+            }
 
-            await SendToAgentAsync(JsonSerializer.Serialize(response), cancellationToken);
+            // Generate correlation ID for tracking the request/response
+            var correlationId = Interlocked.Increment(ref _nextCorrelationId).ToString();
+
+            // Create TaskCompletionSource for awaiting the response
+            var tcs = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (!_pendingRequests.TryAdd(correlationId, tcs))
+            {
+                await SendErrorToAgentAsync($"Correlation ID conflict: {correlationId}", requestId, cancellationToken);
+                return;
+            }
+
+            try
+            {
+                // Build JSON-RPC 2.0 request for the app
+                var appRequest = new
+                {
+                    jsonrpc = "2.0",
+                    id = correlationId,
+                    method = "tools/call",
+                    @params = new
+                    {
+                        name = toolName,
+                        arguments = paramsEl.TryGetProperty("arguments", out var argsEl) ? argsEl : (object?)null
+                    }
+                };
+
+                // Serialize and send the request with newline delimiter
+                var appRequestJson = JsonSerializer.Serialize(appRequest);
+                var messageBytes = Encoding.UTF8.GetBytes(appRequestJson + "\n");
+
+                var stream = tcpClient.GetStream();
+                await stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                _logger.LogDebug("Forwarded tool call '{ToolName}' to app '{AppName}' with correlation ID: {CorrelationId}",
+                    toolName, app.Name, correlationId);
+
+                // Wait for the response from the app with cancellation support
+                using var registration = cancellationToken.Register(() =>
+                {
+                    if (_pendingRequests.TryRemove(correlationId, out var cancelledTcs))
+                    {
+                        cancelledTcs.TrySetCanceled(cancellationToken);
+                    }
+                });
+
+                var appResponse = await tcs.Task.ConfigureAwait(false);
+
+                // Forward the app's response to the agent
+                var agentResponse = new
+                {
+                    jsonrpc = "2.0",
+                    id = requestId ?? 0,
+                    result = appResponse.TryGetProperty("result", out var resultEl) ? resultEl : (object?)null,
+                    error = appResponse.TryGetProperty("error", out var errorEl) ? errorEl : (object?)null
+                };
+
+                await SendToAgentAsync(JsonSerializer.Serialize(agentResponse), cancellationToken);
+
+                _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
+                    app.Name, correlationId);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' was canceled", toolName, app.Name);
+                _pendingRequests.TryRemove(correlationId, out _);
+                await SendErrorToAgentAsync("Tool execution was canceled", requestId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error forwarding tool call '{ToolName}' to app '{AppName}'", toolName, app.Name);
+                _pendingRequests.TryRemove(correlationId, out _);
+                throw;
+            }
         }
         catch (Exception ex)
         {
