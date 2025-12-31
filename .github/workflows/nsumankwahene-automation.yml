@@ -103,9 +103,9 @@ jobs:
             }
             
             // Find the status field and "In progress" option
-            const statusField = project.fields.nodes.find(f => f.name === 'status');
-            const prLinkField = project.fields.nodes.find(f => f.name === 'pr_link');
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const prLinkField = project.fields.nodes.find(f => f.name === 'PR Link');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
             
             if (!statusField) {
               console.log('Status field not found in project');
@@ -342,7 +342,7 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
             const inReviewOption = statusField?.options?.find(o => o.name === 'In review');
             
             if (!statusField || !inReviewOption) {
@@ -550,7 +550,7 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
             const doneOption = statusField?.options?.find(o => o.name === 'Done');
             
             if (!statusField || !doneOption) {
@@ -740,8 +740,8 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'status');
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
             const blockedOption = statusField?.options?.find(o => o.name === 'Blocked');
             
             if (!statusField || !blockedOption) {
@@ -762,11 +762,11 @@ jobs:
               for (const fieldValue of item.fieldValues.nodes) {
                 const fieldName = fieldValue.field?.name;
                 
-                if (fieldName === 'status') {
+                if (fieldName === 'Status') {
                   status = fieldValue.name;
                 }
                 
-                if (fieldName === 'last_activity' && fieldValue.date) {
+                if (fieldName === 'Last Activity' && fieldValue.date) {
                   lastActivity = new Date(fieldValue.date);
                 }
               }
@@ -934,11 +934,11 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
               for (const fieldValue of item.fieldValues.nodes) {
                 const fieldName = fieldValue.field?.name;
                 
-                if (fieldName === 'status') {
+                if (fieldName === 'Status') {
                   status = fieldValue.name;
                 }
                 
-                if (fieldName === 'last_activity' && fieldValue.date) {
+                if (fieldName === 'Last Activity' && fieldValue.date) {
                   lastActivity = new Date(fieldValue.date);
                 }
               }
@@ -1030,9 +1030,9 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
               return;
             }
             
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
             if (!lastActivityField) {
-              console.log('last_activity field not found');
+              console.log('Last Activity field not found');
               return;
             }
             
