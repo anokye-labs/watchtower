@@ -10,6 +10,6 @@ public class ViewModelBaseTests
         // This is a placeholder test to verify test infrastructure works
         Assert.True(true);
     }
-    
+
     // TODO: Add real tests for ViewModelBase
 }

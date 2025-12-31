@@ -16,7 +16,7 @@ public static class ServiceMocks
     {
         return new Mock<ILogger<T>>();
     }
-    
+
     public static Mock<IGameControllerService> CreateGameControllerService()
     {
         var mock = new Mock<IGameControllerService>();
@@ -24,14 +24,14 @@ public static class ServiceMocks
         mock.Setup(s => s.ConnectedControllers).Returns(new List<GameControllerState>());
         return mock;
     }
-    
+
     public static Mock<IAdaptiveCardService> CreateAdaptiveCardService()
     {
         var mock = new Mock<IAdaptiveCardService>();
         // Setup basic methods if needed
         return mock;
     }
-    
+
     public static Mock<IAdaptiveCardThemeService> CreateAdaptiveCardThemeService()
     {
         var mock = new Mock<IAdaptiveCardThemeService>();
@@ -39,7 +39,7 @@ public static class ServiceMocks
         mock.Setup(s => s.GetHostConfig()).Returns(new AdaptiveHostConfig());
         return mock;
     }
-    
+
     public static Mock<IVoiceOrchestrationService> CreateVoiceOrchestrationService()
     {
         var mock = new Mock<IVoiceOrchestrationService>();
