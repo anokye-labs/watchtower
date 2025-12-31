@@ -12,6 +12,26 @@ namespace WatchTower.Services;
 /// Online speech recognition service using Azure Cognitive Services.
 /// Requires internet connection and Azure Speech Services API key.
 /// </summary>
+/// <remarks>
+/// <para><strong>Confidence Score Extraction:</strong></para>
+/// <para>
+/// Azure Speech provides confidence scores through the NBest (N-best list) results feature.
+/// The confidence value represents the service's certainty in the recognition accuracy,
+/// ranging from 0.0 (no confidence) to 1.0 (highest confidence).
+/// </para>
+/// <para><strong>Extraction Strategy:</strong></para>
+/// <list type="bullet">
+/// <item><description>Uses the <c>Best()</c> method to retrieve the highest-confidence alternative from NBest results</description></item>
+/// <item><description>The first item in the NBest list represents the most likely recognition</description></item>
+/// <item><description>Falls back to 0.0f when confidence data is unavailable</description></item>
+/// <item><description>Semantic segmentation results may not provide confidence scores</description></item>
+/// </list>
+/// <para><strong>Current Implementation Note:</strong></para>
+/// <para>
+/// The current implementation uses placeholder confidence values (0.5f for partial, 0.9f for final results)
+/// as a temporary measure. Full NBest integration requires additional result format configuration.
+/// </para>
+/// </remarks>
 public class AzureSpeechRecognitionService : IVoiceRecognitionService
 {
     private readonly ILogger<AzureSpeechRecognitionService> _logger;

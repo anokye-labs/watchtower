@@ -13,8 +13,18 @@ public class VoiceRecognitionResult
     public string Text { get; set; } = string.Empty;
     
     /// <summary>
-    /// Confidence score (0.0 to 1.0), where 1.0 is highest confidence.
+    /// Recognition confidence score (0.0 to 1.0).
+    /// Higher values indicate greater confidence in the recognition result.
+    /// A value of 0.0f indicates confidence data is unavailable.
     /// </summary>
+    /// <remarks>
+    /// Confidence scores vary by recognition service:
+    /// <list type="bullet">
+    /// <item><description>Azure Speech: Extracted from NBest results when available</description></item>
+    /// <item><description>Vosk: Aggregated from word-level confidences</description></item>
+    /// <item><description>0.0f: Indicates the service could not provide confidence data</description></item>
+    /// </list>
+    /// </remarks>
     public float Confidence { get; set; }
     
     /// <summary>
