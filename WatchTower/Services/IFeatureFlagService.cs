@@ -1,5 +1,4 @@
 using System;
-using WatchTower.Models;
 
 namespace WatchTower.Services;
 
