@@ -385,6 +385,9 @@ public partial class ShellWindow : AnimatableWindow
         AnimatedWidth = savedPosition.Width;
         AnimatedHeight = savedPosition.Height;
         
+        // Update current screen tracking
+        _currentScreen = targetScreen;
+        
         // Remove WindowStartupLocation to use manual positioning
         WindowStartupLocation = WindowStartupLocation.Manual;
         
@@ -791,6 +794,9 @@ public partial class ShellWindow : AnimatableWindow
         
         // Update frame scale for the new screen
         UpdateFrameScale();
+        
+        // Save the new window position after monitor switch
+        SaveWindowPosition();
         
         _viewModel?.EndExpansionAnimation();
         _isAnimating = false;
