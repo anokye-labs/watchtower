@@ -41,7 +41,6 @@ public class SubscriptionManager : IDisposable
     /// <summary>
     /// Subscribes to an event and tracks the subscription for automatic cleanup.
     /// </summary>
-    /// <typeparam name="TEventArgs">The type of event arguments.</typeparam>
     /// <param name="subscribe">Action to perform subscription (should add the handler).</param>
     /// <param name="unsubscribe">Action to perform unsubscription (should remove the handler).</param>
     /// <exception cref="ArgumentNullException">Thrown when subscribe or unsubscribe is null.</exception>
