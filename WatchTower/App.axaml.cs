@@ -42,6 +42,11 @@ public partial class App : Application
                     $"Startup:HangThresholdSeconds must be between 5 and 300 seconds. Current value: {hangThreshold}");
             }
 
+            // Create early UserPreferencesService for window position restoration
+            var loggingService = new LoggingService();
+            var logger = loggingService.LoggerFactory.CreateLogger<UserPreferencesService>();
+            var userPreferencesService = new UserPreferencesService(logger);
+
             // Create and show shell window immediately with splash content
             var splashViewModel = new SplashWindowViewModel(hangThreshold);
             var shellViewModel = new ShellWindowViewModel(splashViewModel);
@@ -52,6 +57,9 @@ public partial class App : Application
             
             // Pass configuration to shell window for frame settings
             shellWindow.SetConfiguration(configuration);
+            
+            // Pass user preferences service to shell window for position restoration
+            shellWindow.SetUserPreferencesService(userPreferencesService);
 
             // Handle exit request from splash
             EventHandler? exitHandler = null;
@@ -69,7 +77,7 @@ public partial class App : Application
             {
                 try
                 {
-                    await ExecuteStartupAsync(shellViewModel, desktop, shellWindow, configuration);
+                    await ExecuteStartupAsync(shellViewModel, desktop, shellWindow, configuration, userPreferencesService);
                 }
                 catch (Exception ex)
                 {
@@ -97,7 +105,8 @@ public partial class App : Application
         ShellWindowViewModel shellViewModel,
         IClassicDesktopStyleApplicationLifetime desktop,
         Views.ShellWindow shellWindow,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IUserPreferencesService userPreferencesService)
     {
         var splashViewModel = shellViewModel.SplashViewModel;
         
@@ -105,7 +114,7 @@ public partial class App : Application
         {
             // Execute startup workflow with shared configuration
             var orchestrator = new StartupOrchestrator();
-            _serviceProvider = await orchestrator.ExecuteStartupAsync(splashViewModel, configuration);
+            _serviceProvider = await orchestrator.ExecuteStartupAsync(splashViewModel, configuration, userPreferencesService);
 
             if (_serviceProvider == null)
             {
