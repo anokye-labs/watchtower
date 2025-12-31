@@ -198,12 +198,15 @@ public class PiperTextToSpeechService : ITextToSpeechService
         using var memoryStream = new MemoryStream(audioData);
         using var rawSource = new RawSourceWaveStream(memoryStream, new WaveFormat(22050, 16, 1));
 
-        // Create wave output for playback using 'using' statement for automatic disposal
+        // Create wave output for playback
+        // Note: We store a reference in _waveOut for StopAsync to access, but we use 'using'
+        // for automatic cleanup. The finally block clears the reference before disposal.
         using var waveOut = new WaveOutEvent();
-        _waveOut = waveOut; // Store reference for StopAsync to access
         
         try
         {
+            _waveOut = waveOut; // Store reference for StopAsync to access
+            
             waveOut.Init(rawSource);
 
             // Set up completion handler
@@ -234,7 +237,8 @@ public class PiperTextToSpeechService : ITextToSpeechService
         }
         finally
         {
-            // Clear reference after disposal (using statement handles disposal)
+            // Clear reference before the using statement disposes the object
+            // This prevents StopAsync from accessing an object that's about to be disposed
             if (_waveOut == waveOut)
             {
                 _waveOut = null;
