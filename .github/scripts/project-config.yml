@@ -12,21 +12,21 @@ fields:
   nsoromma:  # Status
     id: "PVTSSF_lADODbLOnM4BLchYzg7BHPM"
     options:
-      afiase: "f75ad846"      # Backlog
-      siesie: "e18bf179"      # Ready
-      dwuma: "47fc9ee4"       # In Progress
-      hwehwe: "aba860b9"      # In review
-      asiw: "f0511bc2"        # Blocked
-      wie: "98236657"         # Done
-      gyaw: "9bd32825"        # Abandoned
+      Backlog: "f75ad846"      # Afiase
+      Ready: "e18bf179"        # Siesie
+      "In progress": "47fc9ee4"       # Dwuma
+      "In review": "aba860b9"      # Hwehwɛ
+      Blocked: "f0511bc2"        # Asiw
+      Done: "98236657"         # Wie
+      Abandoned: "9bd32825"        # Gyaw
   
   tumi:  # Priority
     id: "PVTSSF_lADODbLOnM4BLchYzg7BHUU"
     options:
-      p0_hene: "79628723"
-      p1_abusuapanyin: "0a877460"
-      p2_obi: "da944a9c"
-      p3_akwadaa: "ff01dc29"
+      P0: "79628723"            # P0-Hene
+      P1: "0a877460"            # P1-Abusuapanyin
+      P2: "da944a9c"            # P2-Obi
+      P3: "ff01dc29"            # P3-Akwadaa
   
   mu:  # Complexity (number field)
     id: "PVTF_lADODbLOnM4BLchYzg7BHUc"
@@ -34,23 +34,23 @@ fields:
   okyeame:  # Agent Type
     id: "PVTSSF_lADODbLOnM4BLchYzg7DI1s"
     options:
-      copilot: "807e206b"
-      claude_opus: "c36f2b25"
-      task_maestro: "1463e4d8"
-      nnipa_hia: "115f1b81"
-      biara: "cc729823"
+      Copilot: "807e206b"
+      "Copilot + Thinking": "c36f2b25"
+      Task-Maestro: "1463e4d8"
+      "Human Required": "115f1b81"  # Nnipa-Hia
+      "Any Agent": "cc729823"       # Biara
   
   fapem:  # Component
     id: "PVTSSF_lADODbLOnM4BLchYzg7DI6Y"
     options:
-      services: "e564590b"
-      viewmodels: "21b57a83"
-      views: "f84d3558"
-      models: "6ae6375e"
-      testing: "1bc11c29"
-      infrastructure: "6ae10d24"
-      docs: "fe624e7f"
-      build: "910a429f"
+      Services: "e564590b"
+      "View Model": "21b57a83"
+      Views: "f84d3558"
+      Models: "6ae6375e"
+      Testing: "1bc11c29"
+      Infrastructure: "6ae10d24"
+      Docs: "fe624e7f"
+      Build: "910a429f"
   
   nkabom:  # Dependencies (text)
     id: "PVTF_lADODbLOnM4BLchYzg7DI88"
