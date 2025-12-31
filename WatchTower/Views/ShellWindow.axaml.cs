@@ -377,9 +377,7 @@ public partial class ShellWindow : AnimatableWindow
             return false;
         }
 
-        // Restore the saved position
-        Width = savedPosition.Width;
-        Height = savedPosition.Height;
+        // Restore the saved position (AnimatedWidth/Height automatically sync to Width/Height)
         AnimatedX = savedPosition.X;
         AnimatedY = savedPosition.Y;
         AnimatedWidth = savedPosition.Width;
