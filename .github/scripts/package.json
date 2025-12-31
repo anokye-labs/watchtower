@@ -7,7 +7,7 @@
   "scripts": {
     "migrate": "node migrate-open-issues.mjs",
     "dry-run": "node migrate-open-issues.mjs --dry-run",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "node --test graphql-client.test.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^21.1.1",

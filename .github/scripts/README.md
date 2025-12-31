@@ -151,10 +151,31 @@ The issue number you specified with `--issue` doesn't exist or is closed.
 
 - **`migrate-open-issues.mjs`** - Main migration script
 - **`infer-fields.mjs`** - Issue field inference logic
-- **`graphql-client.mjs`** - GitHub GraphQL API client
+- **`graphql-client.mjs`** - GitHub GraphQL API client with automatic pagination support
+- **`graphql-client.test.mjs`** - Test suite for GraphQL client pagination
 - **`project-config.yml`** - Project field configuration
 - **`package.json`** - npm package definition
 - **`.gitignore`** - Excludes node_modules from git
+
+## Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+The test suite validates:
+- Pagination through projects with >100 items
+- Finding items across multiple pages
+- Handling edge cases (empty projects, exactly 100 items, etc.)
+
+## GraphQL Client Features
+
+The `graphql-client.mjs` module provides:
+- **Automatic pagination**: `getProjectItemId` automatically iterates through all project items using cursor-based pagination (100 items per page)
+- **Backward compatibility**: Existing code works without modifications
+- **Comprehensive error handling**: Detailed error messages for failed operations
 
 ## Related Issues
 
