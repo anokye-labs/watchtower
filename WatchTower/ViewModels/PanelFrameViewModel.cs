@@ -10,6 +10,7 @@ namespace WatchTower.ViewModels;
 /// <summary>
 /// ViewModel for panel frame rendering using 5x5 grid slicing.
 /// Handles frame bitmap sources, grid dimensions, and slide direction clipping.
+/// Uses IFrameSliceService to load and slice frame images into 16 pieces for the 5x5 grid.
 /// </summary>
 public class PanelFrameViewModel : ViewModelBase
 {

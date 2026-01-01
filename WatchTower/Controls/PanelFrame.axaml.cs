@@ -17,6 +17,17 @@ public partial class PanelFrame : UserControl
 {
     private const string DefaultFrameSourceUri = "avares://WatchTower/Assets/main-frame.png";
     
+    // Default slice coordinates (fallback if configuration not available)
+    private const int DefaultSliceLeft = 1330;
+    private const int DefaultSliceLeftInner = 2600;
+    private const int DefaultSliceRightInner = 4280;
+    private const int DefaultSliceRight = 5560;
+    private const int DefaultSliceTop = 955;
+    private const int DefaultSliceTopInner = 1400;
+    private const int DefaultSliceBottomInner = 2415;
+    private const int DefaultSliceBottom = 2860;
+    private const double DefaultFrameScale = 0.15;
+    
     private PanelFrameViewModel? _viewModel;
     private IConfiguration? _configuration;
     
@@ -104,34 +115,34 @@ public partial class PanelFrame : UserControl
         // X coordinates - use nullable int to allow fallback
         var sliceLeft = _configuration.GetValue<int?>("PanelFrame:Slice:Left") 
             ?? _configuration.GetValue<int?>("Frame:Slice:Left") 
-            ?? 1330;
+            ?? DefaultSliceLeft;
         var sliceLeftInner = _configuration.GetValue<int?>("PanelFrame:Slice:LeftInner") 
             ?? _configuration.GetValue<int?>("Frame:Slice:LeftInner") 
-            ?? 2600;
+            ?? DefaultSliceLeftInner;
         var sliceRightInner = _configuration.GetValue<int?>("PanelFrame:Slice:RightInner") 
             ?? _configuration.GetValue<int?>("Frame:Slice:RightInner") 
-            ?? 4280;
+            ?? DefaultSliceRightInner;
         var sliceRight = _configuration.GetValue<int?>("PanelFrame:Slice:Right") 
             ?? _configuration.GetValue<int?>("Frame:Slice:Right") 
-            ?? 5560;
+            ?? DefaultSliceRight;
         
         // Y coordinates - use nullable int to allow fallback
         var sliceTop = _configuration.GetValue<int?>("PanelFrame:Slice:Top") 
             ?? _configuration.GetValue<int?>("Frame:Slice:Top") 
-            ?? 955;
+            ?? DefaultSliceTop;
         var sliceTopInner = _configuration.GetValue<int?>("PanelFrame:Slice:TopInner") 
             ?? _configuration.GetValue<int?>("Frame:Slice:TopInner") 
-            ?? 1400;
+            ?? DefaultSliceTopInner;
         var sliceBottomInner = _configuration.GetValue<int?>("PanelFrame:Slice:BottomInner") 
             ?? _configuration.GetValue<int?>("Frame:Slice:BottomInner") 
-            ?? 2415;
+            ?? DefaultSliceBottomInner;
         var sliceBottom = _configuration.GetValue<int?>("PanelFrame:Slice:Bottom") 
             ?? _configuration.GetValue<int?>("Frame:Slice:Bottom") 
-            ?? 2860;
+            ?? DefaultSliceBottom;
         
         var frameScale = _configuration.GetValue<double?>("PanelFrame:Scale") 
             ?? _configuration.GetValue<double?>("Frame:Scale") 
-            ?? 0.15;
+            ?? DefaultFrameScale;
         
         var sliceDefinition = new FrameSliceDefinition
         {
