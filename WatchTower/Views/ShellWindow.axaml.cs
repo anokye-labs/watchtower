@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
@@ -175,6 +176,27 @@ public partial class ShellWindow : AnimatableWindow
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         _viewModel = DataContext as ShellWindowViewModel;
+        
+        // When the view model changes, check if we need to configure MainWindow
+        if (_viewModel != null && !_viewModel.IsInSplashMode)
+        {
+            ConfigureMainWindowIfPresent();
+        }
+    }
+    
+    /// <summary>
+    /// Configures the MainWindow control if it's present in the content.
+    /// </summary>
+    private void ConfigureMainWindowIfPresent()
+    {
+        if (_configuration == null) return;
+        
+        // Find the ContentControl named ShellContent
+        var shellContent = this.FindControl<ContentControl>("ShellContent");
+        if (shellContent?.Content is MainWindow mainWindow)
+        {
+            mainWindow.SetConfiguration(_configuration);
+        }
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -196,6 +218,23 @@ public partial class ShellWindow : AnimatableWindow
         if (!_hasAnimated && _viewModel?.IsInSplashMode == true)
         {
             SetSplashSize();
+        }
+        
+        // Configure MainWindow if it's already present
+        ConfigureMainWindowIfPresent();
+        
+        // Subscribe to CurrentContent changes to configure MainWindow when it's created
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+    
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ShellWindowViewModel.CurrentContent))
+        {
+            ConfigureMainWindowIfPresent();
         }
     }
 
