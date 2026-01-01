@@ -47,10 +47,13 @@
             </ContentControl.DataTemplates>
         </ContentControl>
 
-        <!-- Frame layer - 5x5 grid, IsHitTestVisible=False so clicks pass through -->
+        <!-- Frame layer - 5x5 grid with alpha-based hit testing for window interaction -->
         <!-- Images are pre-sized by service; grid cells sized by ViewModel -->
         <!-- Grid: Fixed rows/cols (0, 2, 4) for corners/centers, * (1, 3) for stretch sections -->
-        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="False">
+        <Grid ZIndex="0" Name="FrameGrid" ShowGridLines="False"
+              PointerPressed="OnFramePointerPressed"
+              PointerMoved="OnFramePointerMoved"
+              PointerReleased="OnFramePointerReleased">
             <Grid.RowDefinitions>
                 <RowDefinition Height="{Binding Row0Height}"/>   <!-- Top corners/edge (fixed) -->
                 <RowDefinition Height="*"/>                       <!-- Top stretch -->
