@@ -26,6 +26,9 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
     private string _statusMessage = "Loading...";
     private readonly int _hangThresholdSeconds;
     private bool _disposed;
+    private int _progressPercentage;
+    private string _currentPhase = string.Empty;
+    private string _appVersion = "v1.0.0"; // TODO: Get from assembly info
 
     public SplashWindowViewModel(int hangThresholdSeconds = 30)
     {
@@ -116,6 +119,33 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
     }
 
     /// <summary>
+    /// Current startup progress percentage (0-100).
+    /// </summary>
+    public int ProgressPercentage
+    {
+        get => _progressPercentage;
+        private set => SetProperty(ref _progressPercentage, value);
+    }
+
+    /// <summary>
+    /// Current startup phase description.
+    /// </summary>
+    public string CurrentPhase
+    {
+        get => _currentPhase;
+        private set => SetProperty(ref _currentPhase, value);
+    }
+
+    /// <summary>
+    /// Application version string.
+    /// </summary>
+    public string AppVersion
+    {
+        get => _appVersion;
+        private set => SetProperty(ref _appVersion, value);
+    }
+
+    /// <summary>
     /// Collection of diagnostic messages for the diagnostics panel.
     /// </summary>
     public ObservableCollection<string> DiagnosticMessages { get; }
@@ -168,6 +198,17 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
             }
             TrimDiagnosticMessages();
         });
+    }
+
+    public void ReportProgress(int currentStep, int totalSteps, string description)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            ProgressPercentage = totalSteps > 0 ? (int)((double)currentStep / totalSteps * 100) : 0;
+            CurrentPhase = description;
+            StatusMessage = $"Step {currentStep}/{totalSteps}: {description}";
+        });
+        Info($"Progress: {currentStep}/{totalSteps} - {description}");
     }
 
     #endregion

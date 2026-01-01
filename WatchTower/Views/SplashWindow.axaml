@@ -3,9 +3,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:WatchTower.ViewModels"
+             xmlns:converters="using:WatchTower.Converters"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              x:Class="WatchTower.Views.SplashWindow"
              x:DataType="vm:SplashWindowViewModel">
+
+    <UserControl.Resources>
+        <converters:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
+    </UserControl.Resources>
 
     <Border Background="#EE0A0A0A"
             CornerRadius="12"
@@ -33,7 +38,19 @@
                               FontSize="36"
                               FontWeight="Bold"
                               HorizontalAlignment="Center"
-                              Foreground="White"/>
+                              Foreground="#FFD700"/>
+                    <TextBlock Text="Ancestral Futurism AI Framework"
+                              FontSize="12"
+                              FontWeight="Light"
+                              HorizontalAlignment="Center"
+                              Foreground="#00F0FF"
+                              Opacity="0.8"/>
+                    <TextBlock Text="{Binding AppVersion}"
+                              FontSize="10"
+                              HorizontalAlignment="Center"
+                              Foreground="#AAFFFFFF"
+                              Opacity="0.6"
+                              Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <!-- Status and Spinner Area -->
@@ -82,6 +99,27 @@
                               FontSize="16"
                               HorizontalAlignment="Center"
                               Foreground="White"/>
+
+                    <!-- Progress bar -->
+                    <Border Height="6" 
+                            Width="300"
+                            Background="#2A4A1812"
+                            CornerRadius="3"
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding IsStartupRunning}">
+                        <Border Background="#FF00F0FF"
+                                CornerRadius="3"
+                                HorizontalAlignment="Left"
+                                Width="{Binding ProgressPercentage, Converter={StaticResource PercentageToWidthConverter}}"/>
+                    </Border>
+
+                    <!-- Current phase -->
+                    <TextBlock Text="{Binding CurrentPhase}"
+                              FontSize="12"
+                              HorizontalAlignment="Center"
+                              Foreground="#CCFFFFFF"
+                              IsVisible="{Binding IsStartupRunning}"
+                              Opacity="0.7"/>
 
                     <!-- Warning icon for slow startup -->
                     <Border IsVisible="{Binding IsSlowStartup}"

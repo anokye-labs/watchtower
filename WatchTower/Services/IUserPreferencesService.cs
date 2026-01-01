@@ -42,6 +42,26 @@ public interface IUserPreferencesService
     void SetFontOverrides(FontOverrides? fontOverrides);
 
     /// <summary>
+    /// Gets whether this is the first application run.
+    /// </summary>
+    bool IsFirstRun();
+
+    /// <summary>
+    /// Marks the first run as complete.
+    /// </summary>
+    void MarkFirstRunComplete();
+
+    /// <summary>
+    /// Gets whether the user has seen the welcome screen.
+    /// </summary>
+    bool HasSeenWelcomeScreen();
+
+    /// <summary>
+    /// Marks the welcome screen as seen and persists the timestamp.
+    /// </summary>
+    void MarkWelcomeScreenSeen();
+
+    /// <summary>
     /// Event raised when preferences change.
     /// </summary>
     event EventHandler<UserPreferences>? PreferencesChanged;

@@ -101,6 +101,51 @@ public class UserPreferencesService : IUserPreferencesService
         PreferencesChanged?.Invoke(this, _preferences);
     }
 
+    public bool IsFirstRun()
+    {
+        lock (_lock)
+        {
+            return _preferences.IsFirstRun;
+        }
+    }
+
+    public void MarkFirstRunComplete()
+    {
+        lock (_lock)
+        {
+            if (!_preferences.IsFirstRun)
+                return;
+
+            _preferences.IsFirstRun = false;
+            PersistPreferences();
+        }
+        _logger.LogInformation("First run marked as complete");
+        PreferencesChanged?.Invoke(this, _preferences);
+    }
+
+    public bool HasSeenWelcomeScreen()
+    {
+        lock (_lock)
+        {
+            return _preferences.HasSeenWelcomeScreen;
+        }
+    }
+
+    public void MarkWelcomeScreenSeen()
+    {
+        lock (_lock)
+        {
+            if (_preferences.HasSeenWelcomeScreen)
+                return;
+
+            _preferences.HasSeenWelcomeScreen = true;
+            _preferences.WelcomeScreenDismissedDate = DateTime.UtcNow;
+            PersistPreferences();
+        }
+        _logger.LogInformation("Welcome screen marked as seen");
+        PreferencesChanged?.Invoke(this, _preferences);
+    }
+
     private static string GetPreferencesFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
