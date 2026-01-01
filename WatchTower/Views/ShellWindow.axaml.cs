@@ -257,6 +257,12 @@ public partial class ShellWindow : AnimatableWindow
         PositionChanged -= OnPositionChanged;
         ScalingChanged -= OnScalingChanged;
         
+        // Unsubscribe from ViewModel PropertyChanged event
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+        
         // Cancel any pending monitor switch debounce
         _monitorSwitchDebounce?.Cancel();
         _monitorSwitchDebounce?.Dispose();

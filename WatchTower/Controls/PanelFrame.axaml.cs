@@ -15,6 +15,8 @@ namespace WatchTower.Controls;
 /// </summary>
 public partial class PanelFrame : UserControl
 {
+    private const string DefaultFrameSourceUri = "avares://WatchTower/Assets/main-frame.png";
+    
     private PanelFrameViewModel? _viewModel;
     private IConfiguration? _configuration;
     
@@ -97,7 +99,7 @@ public partial class PanelFrame : UserControl
         // Read panel frame configuration
         var frameSourceUri = _configuration.GetValue<string?>("PanelFrame:SourceUri") 
             ?? _configuration.GetValue<string?>("Frame:SourceUri")
-            ?? "avares://WatchTower/Assets/main-frame.png";
+            ?? DefaultFrameSourceUri;
         
         // X coordinates - use nullable int to allow fallback
         var sliceLeft = _configuration.GetValue<int?>("PanelFrame:Slice:Left") 
