@@ -28,7 +28,7 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
     private bool _disposed;
     private int _progressPercentage;
     private string _currentPhase = string.Empty;
-    private string _appVersion = "v1.0.0"; // TODO: Get from assembly info
+    private string _appVersion;
 
     public SplashWindowViewModel(int hangThresholdSeconds = 30)
     {
@@ -39,6 +39,11 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
 
         _hangThresholdSeconds = hangThresholdSeconds;
         _stopwatch = Stopwatch.StartNew();
+        
+        // Get version from assembly
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version;
+        _appVersion = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.0";
         
         DiagnosticMessages = new ObservableCollection<string>();
         
