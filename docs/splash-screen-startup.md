@@ -2,49 +2,60 @@
 
 ## Overview
 
-The WatchTower application uses a splash screen to provide visual feedback during application startup. This document describes how the splash screen works, how to modify startup phases, and how to use the diagnostics panel.
+The WatchTower application uses an enhanced splash screen to provide visual feedback during application startup. The splash screen features the application logo, Ancestral Futurism branding, granular progress tracking with 10 detailed steps, and an animated Gye Nyame symbol. This document describes how the splash screen works, how to modify startup phases, and how to use the diagnostics panel.
 
 ## Architecture
 
 ### Components
 
 1. **SplashWindow** (`Views/SplashWindow.axaml`)
-   - Borderless, centered window
-   - Displays logo, status, elapsed time, and optional diagnostics
+   - Borderless, centered window with Ancestral Futurism styling
+   - Displays logo, tagline ("Ancestral Futurism AI Framework"), version number
+   - Shows animated Gye Nyame symbol during startup
+   - Displays progress bar (Holographic Cyan) with percentage and current phase
+   - Shows status message, elapsed time, and optional diagnostics
    - Keyboard shortcuts: `D` (toggle diagnostics), `ESC` (exit)
 
 2. **SplashWindowViewModel** (`ViewModels/SplashWindowViewModel.cs`)
    - Implements `IStartupLogger` to capture startup messages
+   - Tracks progress percentage (0-100) and current phase description
    - Manages timer for elapsed time display
    - Handles hang detection based on configurable threshold
    - Provides diagnostics message collection
 
 3. **StartupOrchestrator** (`Services/StartupOrchestrator.cs`)
-   - Orchestrates the multi-phase startup workflow
-   - Reports progress to `IStartupLogger`
+   - Orchestrates the multi-phase startup workflow with 10 granular steps
+   - Reports detailed progress to `IStartupLogger` using `ReportProgress` method
    - Wraps initialization in try/catch for error handling
 
 4. **IStartupLogger** (`Services/IStartupLogger.cs`)
    - Interface for logging startup progress
-   - Methods: `Info(string)`, `Warn(string)`, `Error(string, Exception?)`
+   - Methods: `Info(string)`, `Warn(string)`, `Error(string, Exception?)`, `ReportProgress(int, int, string)`
 
 ## Startup Flow
 
 1. **Framework Initialization** (`App.OnFrameworkInitializationCompleted`)
    - Loads configuration from `appsettings.json`
-   - Creates and shows `SplashWindow` immediately
+   - Creates and shows `ShellWindow` with `SplashWindow` content immediately
    - Starts async startup workflow in background
 
-2. **Startup Phases** (orchestrated by `StartupOrchestrator`)
-   - **Phase 1**: Load configuration
-   - **Phase 2**: Configure dependency injection
-   - **Phase 3**: Register application services
-   - **Phase 4**: Initialize services (e.g., game controller)
+2. **Startup Phases** (orchestrated by `StartupOrchestrator` - 10 steps)
+   - **Step 1**: Initialize environment
+   - **Step 2**: Load configuration
+   - **Step 3**: Setup dependency injection
+   - **Step 4**: Register logging services
+   - **Step 5**: Register core services (UserPreferences, AdaptiveCard, GameController)
+   - **Step 6**: Register MCP handler
+   - **Step 7**: Register voice services (based on configured mode)
+   - **Step 8**: Build service provider
+   - **Step 9**: Initialize game controller
+   - **Step 10**: Initialize voice services
 
 3. **Success Path**
-   - Mark startup complete
-   - Create and show `MainWindow`
-   - Close `SplashWindow`
+   - Mark startup complete (shows success checkmark)
+   - Animate shell window expansion (500ms)
+   - Transition to main content
+   - Check for first-run and show welcome screen if needed
 
 4. **Failure Path**
    - Log error to diagnostics

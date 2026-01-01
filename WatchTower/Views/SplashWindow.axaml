@@ -34,6 +34,14 @@
                 <StackPanel Grid.Row="0" 
                            HorizontalAlignment="Center"
                            Spacing="8">
+                    <!-- Logo Image -->
+                    <Image Source="avares://WatchTower/Assets/logo.png"
+                           Width="200"
+                           Height="80"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+                    
                     <TextBlock Text="WatchTower"
                               FontSize="36"
                               FontWeight="Bold"
@@ -82,6 +90,33 @@
                             </Style>
                         </Ellipse.Styles>
                     </Ellipse>
+
+                    <!-- Gye Nyame Symbol (animated) -->
+                    <Image Source="avares://WatchTower/Assets/gye-nyame.png"
+                           Width="50"
+                           Height="50"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"
+                           IsVisible="{Binding IsStartupRunning}"
+                           Name="GyeNyameSymbol">
+                        <Image.Styles>
+                            <Style Selector="Image#GyeNyameSymbol">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:2" 
+                                             IterationCount="Infinite"
+                                             PlaybackDirection="Alternate"
+                                             Easing="CubicEaseInOut">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="0.6"/>
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="1.0"/>
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </Image.Styles>
+                    </Image>
 
                     <!-- Success checkmark -->
                     <Viewbox Width="60" 
