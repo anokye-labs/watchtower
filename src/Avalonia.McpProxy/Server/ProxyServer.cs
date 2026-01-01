@@ -23,6 +23,9 @@ public class ProxyServer : IDisposable
     private Task? _listenerTask;
     private Task? _stdinTask;
     private readonly ConcurrentDictionary<string, TcpClient> _appConnections = new();
+    private readonly ConcurrentDictionary<string, NetworkStream> _appStreams = new();
+    private long _nextCorrelationId;
+    private readonly ConcurrentDictionary<long, TaskCompletionSource<McpToolResult>> _pendingRequests = new();
     private bool _disposed;
 
     public ProxyServer(ProxyConfiguration config, AppRegistry registry, ILogger<ProxyServer> logger)
@@ -111,6 +114,7 @@ public class ProxyServer : IDisposable
         {
             _appConnections[connectionId] = client;
             var stream = client.GetStream();
+            _appStreams[connectionId] = stream;
             var buffer = new byte[8192];
             var messageBuffer = new StringBuilder();
 
@@ -157,6 +161,7 @@ public class ProxyServer : IDisposable
         {
             _registry.MarkDisconnected(connectionId);
             _appConnections.TryRemove(connectionId, out _);
+            _appStreams.TryRemove(connectionId, out _);
             client.Close();
         }
     }
@@ -180,6 +185,30 @@ public class ProxyServer : IDisposable
                         : null;
 
                     _registry.RegisterApp(connectionId, appName, tools);
+                }
+                else if (type == "toolResponse")
+                {
+                    // Handle tool execution response
+                    if (root.TryGetProperty("correlationId", out var corrIdElement))
+                    {
+                        var correlationId = corrIdElement.GetInt64();
+                        
+                        // Parse the result
+                        var result = root.TryGetProperty("result", out var resultElement)
+                            ? JsonSerializer.Deserialize<McpToolResult>(resultElement.GetRawText())
+                            : McpToolResult.Fail("Invalid response format");
+
+                        // Complete the pending request
+                        if (_pendingRequests.TryRemove(correlationId, out var tcs))
+                        {
+                            tcs.TrySetResult(result ?? McpToolResult.Fail("Null result"));
+                            _logger.LogDebug("Completed pending request {CorrelationId}", correlationId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
+                        }
+                    }
                 }
             }
         }
@@ -304,22 +333,93 @@ public class ProxyServer : IDisposable
                 return;
             }
 
-            // Forward the tool call to the app
-            // For now, send a success response (actual routing will be implemented later)
-            var response = new
+            // Check if app is still connected
+            if (!_appStreams.TryGetValue(app.ConnectionId, out var stream))
             {
-                jsonrpc = "2.0",
-                id = requestId ?? 0,
-                result = new
-                {
-                    content = new[]
-                    {
-                        new { type = "text", text = $"Tool {toolName} executed (routing not fully implemented)" }
-                    }
-                }
-            };
+                await SendErrorToAgentAsync($"App '{app.Name}' is not connected", requestId, cancellationToken);
+                return;
+            }
 
-            await SendToAgentAsync(JsonSerializer.Serialize(response), cancellationToken);
+            // Parse tool arguments
+            var arguments = paramsEl.TryGetProperty("arguments", out var argsEl)
+                ? JsonSerializer.Deserialize<Dictionary<string, object>>(argsEl.GetRawText())
+                : null;
+
+            // Generate correlation ID
+            var correlationId = Interlocked.Increment(ref _nextCorrelationId);
+
+            // Create TaskCompletionSource for this request
+            var tcs = new TaskCompletionSource<McpToolResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _pendingRequests[correlationId] = tcs;
+
+            try
+            {
+                // Build tool invocation message for the app
+                var invocationMessage = new
+                {
+                    type = "toolInvocation",
+                    correlationId = correlationId,
+                    tool = toolName,
+                    parameters = arguments
+                };
+
+                var messageJson = JsonSerializer.Serialize(invocationMessage) + "\n";
+                var messageBytes = Encoding.UTF8.GetBytes(messageJson);
+
+                // Send to app
+                await stream.WriteAsync(messageBytes, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+
+                _logger.LogInformation("Forwarded tool '{ToolName}' to app '{AppName}' with correlation ID {CorrelationId}",
+                    toolName, app.Name, correlationId);
+
+                // Wait for response with timeout
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                McpToolResult result;
+                if (completedTask == timeoutTask)
+                {
+                    // Timeout occurred
+                    _pendingRequests.TryRemove(correlationId, out _);
+                    result = McpToolResult.Fail("Tool execution timed out after 30 seconds");
+                    _logger.LogWarning("Tool '{ToolName}' timed out (correlation ID: {CorrelationId})", toolName, correlationId);
+                }
+                else
+                {
+                    // Got response
+                    result = await tcs.Task;
+                }
+
+                // Convert result to MCP protocol response
+                var response = new
+                {
+                    jsonrpc = "2.0",
+                    id = requestId ?? 0,
+                    result = new
+                    {
+                        content = new[]
+                        {
+                            new
+                            {
+                                type = "text",
+                                text = result.Success
+                                    ? JsonSerializer.Serialize(result.Data)
+                                    : $"Error: {result.Error}"
+                            }
+                        }
+                    }
+                };
+
+                await SendToAgentAsync(JsonSerializer.Serialize(response), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Clean up pending request on exception
+                _pendingRequests.TryRemove(correlationId, out _);
+                _logger.LogError(ex, "Error forwarding tool call to app");
+                throw;
+            }
         }
         catch (Exception ex)
         {

@@ -144,13 +144,47 @@ public class McpHandler : IMcpHandler
             {
                 _logger?.LogDebug("Received message: {Message}", message);
 
-                // Parse message and handle tool invocation
-                var invocation = JsonSerializer.Deserialize<McpToolInvocation>(message);
-                if (invocation != null)
+                // Parse the message to extract type and correlation ID
+                var jsonDoc = JsonDocument.Parse(message);
+                var root = jsonDoc.RootElement;
+
+                // Check if this is a tool invocation message
+                if (root.TryGetProperty("type", out var typeEl) && typeEl.GetString() == "toolInvocation")
                 {
+                    // Extract correlation ID
+                    var correlationId = root.TryGetProperty("correlationId", out var corrIdEl)
+                        ? corrIdEl.GetInt64()
+                        : 0;
+
+                    // Extract tool name and parameters
+                    var toolName = root.GetProperty("tool").GetString()!;
+                    var parameters = root.TryGetProperty("parameters", out var paramsEl)
+                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(paramsEl.GetRawText())
+                        : null;
+
+                    // Create tool invocation
+                    var invocation = new McpToolInvocation
+                    {
+                        ToolName = toolName,
+                        Parameters = parameters
+                    };
+
+                    // Execute the tool
                     var result = await ExecuteToolAsync(invocation);
-                    var responseJson = JsonSerializer.Serialize(result);
+
+                    // Send response with correlation ID
+                    var response = new
+                    {
+                        type = "toolResponse",
+                        correlationId = correlationId,
+                        result = result
+                    };
+
+                    var responseJson = JsonSerializer.Serialize(response) + "\n";
                     await _transportClient!.SendMessageAsync(responseJson);
+
+                    _logger?.LogInformation("Executed tool '{ToolName}' with correlation ID {CorrelationId}, success: {Success}",
+                        toolName, correlationId, result.Success);
                 }
             }
             catch (Exception ex)
