@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="WatchTower.Tests/WatchTower.Tests.csproj" />
   <Folder Name="/src/">
+    <Project Path="src/Avalonia.Mcp.Core.Tests/Avalonia.Mcp.Core.Tests.csproj" />
     <Project Path="src/Avalonia.Mcp.Core/Avalonia.Mcp.Core.csproj" />
     <Project Path="src/Avalonia.McpProxy/Avalonia.McpProxy.csproj" />
   </Folder>

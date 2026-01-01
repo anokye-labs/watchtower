@@ -410,12 +410,20 @@ public class AvaloniaUiService : IAvaloniaUiService
 
                 var result = await FindElementAsync(selector, cancellationToken);
                 
-                if (result is IDictionary<string, object> dict && 
-                    dict.TryGetValue("found", out var foundObj) && 
-                    foundObj is bool found && found)
+                // Check if the result indicates the element was found
+                // Use reflection to access the 'found' property
+                if (result != null)
                 {
-                    _logger?.LogInformation("Element found within timeout: {Selector}", selector);
-                    return true;
+                    var foundProperty = result.GetType().GetProperty("found");
+                    if (foundProperty != null)
+                    {
+                        var foundValue = foundProperty.GetValue(result);
+                        if (foundValue is bool found && found)
+                        {
+                            _logger?.LogInformation("Element found within timeout: {Selector}", selector);
+                            return true;
+                        }
+                    }
                 }
 
                 await Task.Delay(pollInterval, cancellationToken);
