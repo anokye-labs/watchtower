@@ -193,17 +193,14 @@ public class AvaloniaUiService : IAvaloniaUiService
 
                     using var memoryStream = new MemoryStream();
                     
+                    // Avalonia doesn't have built-in JPEG encoding, so we'll use PNG
                     if (format.Equals("jpg", StringComparison.OrdinalIgnoreCase) || 
                         format.Equals("jpeg", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Avalonia doesn't have built-in JPEG encoding, so we'll use PNG
                         _logger?.LogWarning("JPEG format not directly supported, using PNG instead");
-                        renderTarget.Save(memoryStream);
                     }
-                    else
-                    {
-                        renderTarget.Save(memoryStream);
-                    }
+                    
+                    renderTarget.Save(memoryStream);
 
                     var bytes = memoryStream.ToArray();
                     base64Data = Convert.ToBase64String(bytes);
@@ -411,18 +408,21 @@ public class AvaloniaUiService : IAvaloniaUiService
                 var result = await FindElementAsync(selector, cancellationToken);
                 
                 // Check if the result indicates the element was found
-                // Use reflection to access the 'found' property
+                // Use dynamic to access the 'found' property from the anonymous type
                 if (result != null)
                 {
-                    var foundProperty = result.GetType().GetProperty("found");
-                    if (foundProperty != null)
+                    try
                     {
-                        var foundValue = foundProperty.GetValue(result);
-                        if (foundValue is bool found && found)
+                        dynamic dynamicResult = result;
+                        if (dynamicResult.found == true)
                         {
                             _logger?.LogInformation("Element found within timeout: {Selector}", selector);
                             return true;
                         }
+                    }
+                    catch
+                    {
+                        // If accessing the property fails, continue polling
                     }
                 }
 
