@@ -64,6 +64,9 @@ public class PanelFrameViewModel : ViewModelBase
     public PanelFrameViewModel(IFrameSliceService frameSliceService)
     {
         _frameSliceService = frameSliceService ?? throw new ArgumentNullException(nameof(frameSliceService));
+        
+        // Initialize edge visibility based on default slide direction
+        UpdateEdgeVisibility();
     }
     
     /// <summary>
