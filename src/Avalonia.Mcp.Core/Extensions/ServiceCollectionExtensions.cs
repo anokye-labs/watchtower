@@ -1,5 +1,6 @@
 using Avalonia.Mcp.Core.Handlers;
 using Avalonia.Mcp.Core.Models;
+using Avalonia.Mcp.Core.Services;
 using Avalonia.Mcp.Core.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,9 @@ public static class ServiceCollectionExtensions
         // Register configuration
         services.AddSingleton(configuration);
 
+        // Register Avalonia UI service
+        services.AddSingleton<IAvaloniaUiService, AvaloniaUiService>();
+
         // Register handler
         services.AddSingleton<IMcpHandler>(sp =>
         {
@@ -37,8 +41,9 @@ public static class ServiceCollectionExtensions
             // Register standard tools if requested
             if (registerStandardTools)
             {
+                var uiService = sp.GetRequiredService<IAvaloniaUiService>();
                 var toolsLogger = sp.GetService<ILogger<StandardUiTools>>();
-                var standardTools = new StandardUiTools(handler, toolsLogger);
+                var standardTools = new StandardUiTools(handler, uiService, toolsLogger);
                 standardTools.RegisterTools();
             }
 
