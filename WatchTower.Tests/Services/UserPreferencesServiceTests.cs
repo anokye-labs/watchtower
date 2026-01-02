@@ -187,10 +187,16 @@ public class UserPreferencesServiceTests : IDisposable
         Assert.NotNull(retrievedPosition2);
         Assert.NotSame(retrievedPosition1, retrievedPosition2);
         
-        // Modify first copy
+        // Modify first copy - both top-level and nested properties
         retrievedPosition1.X = 999.0;
+        if (retrievedPosition1.DisplayBounds != null)
+        {
+            retrievedPosition1.DisplayBounds.X = 9999;
+        }
         
-        // Second copy should be unchanged
+        // Second copy should be unchanged (deep copy)
         Assert.Equal(100.0, retrievedPosition2.X);
+        Assert.NotNull(retrievedPosition2.DisplayBounds);
+        Assert.Equal(0, retrievedPosition2.DisplayBounds.X);
     }
 }

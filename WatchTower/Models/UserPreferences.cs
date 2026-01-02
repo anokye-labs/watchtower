@@ -74,10 +74,25 @@ public class WindowPositionPreferences
     public double Height { get; set; }
 
     /// <summary>
-    /// Display bounds for identification (X, Y, Width, Height in physical pixels).
+    /// Bounds of the display where the window was shown, in physical pixels, used for display identification. Window position coordinates above are in logical pixels.
     /// </summary>
     [JsonPropertyName("displayBounds")]
     public DisplayBounds? DisplayBounds { get; set; }
+
+    /// <summary>
+    /// Creates a deep copy of this instance.
+    /// </summary>
+    public WindowPositionPreferences Clone()
+    {
+        return new WindowPositionPreferences
+        {
+            X = X,
+            Y = Y,
+            Width = Width,
+            Height = Height,
+            DisplayBounds = DisplayBounds?.Clone()
+        };
+    }
 }
 
 /// <summary>
@@ -108,4 +123,18 @@ public class DisplayBounds
     /// </summary>
     [JsonPropertyName("height")]
     public int Height { get; set; }
+
+    /// <summary>
+    /// Creates a deep copy of this instance.
+    /// </summary>
+    public DisplayBounds Clone()
+    {
+        return new DisplayBounds
+        {
+            X = X,
+            Y = Y,
+            Width = Width,
+            Height = Height
+        };
+    }
 }

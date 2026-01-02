@@ -357,6 +357,8 @@ public partial class ShellWindow : AnimatableWindow
         }
 
         // Try to find the saved display
+        // Note: For mirrored displays with identical bounds, the first matching screen is selected.
+        // This is acceptable since mirrored displays should show the same content.
         Screen? targetScreen = null;
         foreach (var screen in Screens.All)
         {
@@ -377,17 +379,54 @@ public partial class ShellWindow : AnimatableWindow
             return false;
         }
 
+        // Validate that the saved size is positive and reasonable
+        var width = savedPosition.Width;
+        var height = savedPosition.Height;
+        var workingArea = targetScreen.WorkingArea;
+        var scaling = targetScreen.Scaling;
+        var maxLogicalWidth = workingArea.Width / scaling;
+        var maxLogicalHeight = workingArea.Height / scaling;
+        
+        if (width <= 0 || height <= 0 || width > maxLogicalWidth * 1.5 || height > maxLogicalHeight * 1.5)
+        {
+            // Invalid or unreasonable size, fall back to default positioning
+            return false;
+        }
+
+        // Validate that the saved position is at least partially visible on the target screen
+        var x = savedPosition.X;
+        var y = savedPosition.Y;
+        var logicalScreenX = workingArea.X / scaling;
+        var logicalScreenY = workingArea.Y / scaling;
+        
+        // Ensure at least 100 logical pixels of the window are visible on the screen
+        const double MinVisibleSize = 100;
+        if (x + width < logicalScreenX + MinVisibleSize ||
+            x > logicalScreenX + maxLogicalWidth - MinVisibleSize ||
+            y + height < logicalScreenY + MinVisibleSize ||
+            y > logicalScreenY + maxLogicalHeight - MinVisibleSize)
+        {
+            // Window would be mostly off-screen, fall back to default positioning
+            return false;
+        }
+
         // Restore the saved position (AnimatedWidth/Height automatically sync to Width/Height)
-        AnimatedX = savedPosition.X;
-        AnimatedY = savedPosition.Y;
-        AnimatedWidth = savedPosition.Width;
-        AnimatedHeight = savedPosition.Height;
+        AnimatedX = x;
+        AnimatedY = y;
+        AnimatedWidth = width;
+        AnimatedHeight = height;
         
         // Update current screen tracking
         _currentScreen = targetScreen;
         
         // Remove WindowStartupLocation to use manual positioning
         WindowStartupLocation = WindowStartupLocation.Manual;
+        
+        // If the saved size matches the working area, skip the expansion animation
+        if (Math.Abs(width - maxLogicalWidth) < 1.0 && Math.Abs(height - maxLogicalHeight) < 1.0)
+        {
+            _hasAnimated = true;
+        }
         
         return true;
     }

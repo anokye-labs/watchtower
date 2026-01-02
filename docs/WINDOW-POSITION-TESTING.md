@@ -11,18 +11,20 @@ The window position persistence feature remembers the display/monitor where Watc
 ## Where It's Saved
 The preferences are stored in:
 - **Windows**: `%APPDATA%\WatchTower\user-preferences.json`
-- **macOS**: `~/.config/WatchTower/user-preferences.json`
-- **Linux**: `~/.config/WatchTower/user-preferences.json`
+- **macOS**: `<ApplicationData>/WatchTower/user-preferences.json` (typically `~/.config/WatchTower/user-preferences.json`, but on some .NET runtimes may be `~/.local/share/WatchTower/user-preferences.json`)
+- **Linux**: `<ApplicationData>/WatchTower/user-preferences.json` (usually `~/.config/WatchTower/user-preferences.json`)
 
 ## Manual Testing Scenarios
 
 ### Scenario 1: Basic Position Persistence (Single Monitor)
 1. Launch WatchTower
-2. Note the initial window position
-3. Move the window to a different position on the screen
+2. After the window expands to fill the screen, resize it so it does not occupy the entire working area
+3. Move the resized window to a different position on the screen
 4. Close WatchTower
 5. Relaunch WatchTower
-6. **Expected**: Window should appear at the position where it was closed
+6. **Expected**: The restored window (before any expansion animation to full screen) should appear at the position and size where it was closed
+
+> Note: By default the window animates to fill the working area after launch. This scenario verifies the saved position of the initial (non-maximized) window, not the final full-screen state.
 
 ### Scenario 2: Multi-Monitor Position Persistence
 1. Ensure you have multiple monitors connected
@@ -96,7 +98,8 @@ You can examine the saved preferences by opening `user-preferences.json` in a te
 
 ## Known Behaviors
 
-1. **Window starts at splash size**: On first load, the window appears at a calculated splash size, then animates to full screen
-2. **Saved position applies to splash size**: The saved position is used for the initial splash window size
+1. **Window starts at splash size**: On first load (with no saved preferences), the window appears at a calculated splash size, then animates to full screen
+2. **Saved position applies to expanded window**: After preferences exist, the saved position and size are applied to the fully expanded window on startup. If the saved size matches the working area, the expansion animation is skipped automatically
 3. **Monitor switch animation**: When dragging to a new monitor, the window smoothly animates to fill the new screen's working area
-4. **Display identification**: Displays are identified by their bounds (position and size), which should be unique in most configurations
+4. **Display identification**: Displays are identified by their bounds (position and size), which should be unique in most configurations. For mirrored displays with identical bounds, the first matching display is used
+5. **Position validation**: The system validates that saved positions are reasonable (positive dimensions, mostly visible on screen) before restoring them

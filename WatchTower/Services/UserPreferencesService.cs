@@ -112,8 +112,7 @@ public class UserPreferencesService : IUserPreferencesService
             }
 
             // Return a defensive copy to avoid exposing internal mutable state outside the lock.
-            var json = JsonSerializer.Serialize(windowPosition, JsonOptions);
-            return JsonSerializer.Deserialize<WindowPositionPreferences>(json, JsonOptions);
+            return windowPosition.Clone();
         }
     }
 
