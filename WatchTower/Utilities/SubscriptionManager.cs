@@ -11,10 +11,14 @@ namespace WatchTower.Utilities;
 /// This class simplifies subscription management in ViewModels by maintaining a list
 /// of unsubscribe actions. When disposed, it automatically calls all unsubscribe actions,
 /// preventing memory leaks and reducing boilerplate code.
+/// <para>
+/// This class is not thread-safe. It should only be used from a single thread (typically the UI thread).
+/// </para>
 /// </remarks>
 public class SubscriptionManager : IDisposable
 {
     private readonly List<Action> _unsubscribeActions = new();
+    private readonly object _lock = new();
     private bool _disposed;
 
     /// <summary>
@@ -30,12 +34,15 @@ public class SubscriptionManager : IDisposable
             throw new ArgumentNullException(nameof(unsubscribe));
         }
 
-        if (_disposed)
+        lock (_lock)
         {
-            throw new ObjectDisposedException(nameof(SubscriptionManager));
-        }
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(SubscriptionManager));
+            }
 
-        _unsubscribeActions.Add(unsubscribe);
+            _unsubscribeActions.Add(unsubscribe);
+        }
     }
 
     /// <summary>
@@ -45,6 +52,12 @@ public class SubscriptionManager : IDisposable
     /// <param name="unsubscribe">Action to perform unsubscription (should remove the handler).</param>
     /// <exception cref="ArgumentNullException">Thrown when subscribe or unsubscribe is null.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when attempting to subscribe after disposal.</exception>
+    /// <remarks>
+    /// If the subscribe action throws an exception, the unsubscribe action is added before subscribing
+    /// so that cleanup can be attempted even if the subscription fails. The unsubscribe action is removed
+    /// only if the subscription completes successfully. If subscription fails, unsubscribe is called to
+    /// clean up any partial state before rethrowing the exception.
+    /// </remarks>
     public void Subscribe(Action subscribe, Action unsubscribe)
     {
         if (subscribe == null)
@@ -57,13 +70,41 @@ public class SubscriptionManager : IDisposable
             throw new ArgumentNullException(nameof(unsubscribe));
         }
 
-        if (_disposed)
+        lock (_lock)
         {
-            throw new ObjectDisposedException(nameof(SubscriptionManager));
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(SubscriptionManager));
+            }
+
+            // Add the unsubscribe action before subscribing so that cleanup can be tracked
+            _unsubscribeActions.Add(unsubscribe);
         }
 
-        subscribe();
-        _unsubscribeActions.Add(unsubscribe);
+        try
+        {
+            subscribe();
+        }
+        catch
+        {
+            // Remove the unsubscribe action since the subscription did not complete successfully
+            lock (_lock)
+            {
+                _unsubscribeActions.Remove(unsubscribe);
+            }
+
+            try
+            {
+                // Attempt to clean up any partial subscription state
+                unsubscribe();
+            }
+            catch
+            {
+                // Swallow exceptions during cleanup; original exception will be rethrown
+            }
+
+            throw;
+        }
     }
 
     /// <summary>
@@ -71,19 +112,29 @@ public class SubscriptionManager : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed)
+        lock (_lock)
         {
-            return;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
         }
 
-        _disposed = true;
-
         // Unsubscribe in reverse order (LIFO) to handle dependencies correctly
-        for (int i = _unsubscribeActions.Count - 1; i >= 0; i--)
+        // Note: We don't hold the lock while calling unsubscribe actions to avoid potential deadlocks
+        Action[] actionsToDispose;
+        lock (_lock)
+        {
+            actionsToDispose = _unsubscribeActions.ToArray();
+        }
+
+        for (int i = actionsToDispose.Length - 1; i >= 0; i--)
         {
             try
             {
-                _unsubscribeActions[i]();
+                actionsToDispose[i]();
             }
             catch
             {
@@ -92,6 +143,9 @@ public class SubscriptionManager : IDisposable
             }
         }
 
-        _unsubscribeActions.Clear();
+        lock (_lock)
+        {
+            _unsubscribeActions.Clear();
+        }
     }
 }

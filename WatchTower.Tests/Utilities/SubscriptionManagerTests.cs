@@ -223,6 +223,61 @@ public class SubscriptionManagerTests
         Assert.Equal(1, event2Count);
     }
 
+    [Fact]
+    public void Subscribe_WhenSubscribeThrows_RemovesUnsubscribeAndCallsCleanup()
+    {
+        // Arrange
+        var manager = new SubscriptionManager();
+        var subscribeCallCount = 0;
+        var unsubscribeCallCount = 0;
+        var expectedException = new InvalidOperationException("Subscribe failed");
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            manager.Subscribe(
+                subscribe: () =>
+                {
+                    subscribeCallCount++;
+                    throw expectedException;
+                },
+                unsubscribe: () => unsubscribeCallCount++
+            );
+        });
+
+        // Verify the exception was propagated
+        Assert.Same(expectedException, exception);
+        Assert.Equal(1, subscribeCallCount);
+        
+        // Verify unsubscribe was called once during cleanup of failed subscription
+        Assert.Equal(1, unsubscribeCallCount);
+
+        // Dispose and verify unsubscribe is not called again (since subscription was not tracked)
+        manager.Dispose();
+        Assert.Equal(1, unsubscribeCallCount);
+    }
+
+    [Fact]
+    public void Subscribe_WhenSubscribeThrowsAndUnsubscribeThrows_PropagatesOriginalException()
+    {
+        // Arrange
+        var manager = new SubscriptionManager();
+        var originalException = new InvalidOperationException("Subscribe failed");
+        var cleanupException = new InvalidOperationException("Cleanup failed");
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            manager.Subscribe(
+                subscribe: () => throw originalException,
+                unsubscribe: () => throw cleanupException
+            );
+        });
+
+        // Verify the original exception was propagated, not the cleanup exception
+        Assert.Same(originalException, exception);
+    }
+
     // Helper class for testing event subscriptions
     private class TestEventSource
     {
