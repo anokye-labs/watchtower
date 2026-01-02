@@ -39,29 +39,45 @@ public class AppConnection : IDisposable
     /// <param name="request">The JSON-RPC request to send.</param>
     /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous send operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the connection is closed.</exception>
     public async Task SendAsync(JsonRpcRequest request, CancellationToken cancellationToken = default)
     {
+        if (request == null)
+        {
+            throw new ArgumentNullException(nameof(request));
+        }
+
         if (_disposed)
         {
             throw new ObjectDisposedException(nameof(AppConnection));
         }
 
-        if (!IsConnected)
+        try
         {
-            throw new InvalidOperationException("Connection is not active.");
+            // Serialize the request to JSON
+            var json = JsonSerializer.Serialize(request);
+
+            // Append newline for message framing (newline-delimited JSON)
+            var message = json + "\n";
+            var messageBytes = Encoding.UTF8.GetBytes(message);
+
+            // Send the message
+            await _stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
+            await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
-
-        // Serialize the request to JSON
-        var json = JsonSerializer.Serialize(request);
-
-        // Append newline for message framing (newline-delimited JSON)
-        var message = json + "\n";
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-
-        // Send the message
-        await _stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
-        await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException("Connection is not active.", ex);
+        }
+        catch (ObjectDisposedException ex)
+        {
+            throw new InvalidOperationException("Connection is not active.", ex);
+        }
+        catch (SocketException ex)
+        {
+            throw new InvalidOperationException("Connection is not active.", ex);
+        }
     }
 
     /// <summary>
@@ -76,7 +92,6 @@ public class AppConnection : IDisposable
 
         try
         {
-            _stream?.Dispose();
             _client?.Dispose();
         }
         finally

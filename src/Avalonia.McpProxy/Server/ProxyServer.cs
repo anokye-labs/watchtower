@@ -170,8 +170,11 @@ public class ProxyServer : IDisposable
             var json = JsonDocument.Parse(message);
             var root = json.RootElement;
 
-            // Check if this is a JSON-RPC response (has "id" and either "result" or "error")
-            if (root.TryGetProperty("jsonrpc", out _) && root.TryGetProperty("id", out var idElement))
+            // Check if this is a JSON-RPC response (has "jsonrpc": "2.0" and "id")
+            if (root.TryGetProperty("jsonrpc", out var jsonrpcElement)
+                && jsonrpcElement.ValueKind == JsonValueKind.String
+                && jsonrpcElement.GetString() == "2.0"
+                && root.TryGetProperty("id", out var idElement))
             {
                 var correlationId = idElement.GetString();
                 if (!string.IsNullOrEmpty(correlationId) && _pendingRequests.TryRemove(correlationId, out var tcs))
@@ -181,7 +184,10 @@ public class ProxyServer : IDisposable
                 }
                 else
                 {
-                    _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
+                    _logger.LogDebug(
+                        "Received response for unknown or expired correlation ID: {CorrelationId} from {ConnectionId}. This may occur after a request timeout or cancellation.",
+                        correlationId,
+                        connectionId);
                 }
                 return;
             }
@@ -361,13 +367,8 @@ public class ProxyServer : IDisposable
                 var messageBytes = Encoding.UTF8.GetBytes(appRequestJson + "\n");
 
                 var stream = tcpClient.GetStream();
-                await stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                _logger.LogDebug("Forwarded tool call '{ToolName}' to app '{AppName}' with correlation ID: {CorrelationId}",
-                    toolName, app.Name, correlationId);
-
-                // Wait for the response from the app with cancellation support
+                // Register cancellation callback before sending to ensure cleanup
                 using var registration = cancellationToken.Register(() =>
                 {
                     if (_pendingRequests.TryRemove(correlationId, out var cancelledTcs))
@@ -376,34 +377,74 @@ public class ProxyServer : IDisposable
                     }
                 });
 
-                var appResponse = await tcs.Task.ConfigureAwait(false);
+                await stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                // Forward the app's response to the agent
-                // JSON-RPC 2.0: response must have either "result" OR "error", not both
-                object agentResponse;
-                if (appResponse.TryGetProperty("error", out var errorEl))
+                _logger.LogDebug("Forwarded tool call '{ToolName}' to app '{AppName}' with correlation ID: {CorrelationId}",
+                    toolName, app.Name, correlationId);
+
+                // Wait for the response from the app with timeout
+                var timeout = TimeSpan.FromMinutes(2);
+                using var timeoutCts = new CancellationTokenSource(timeout);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+                Task<JsonElement> responseTask;
+                try
                 {
-                    agentResponse = new
+                    linkedCts.Token.Register(() =>
                     {
-                        jsonrpc = "2.0",
-                        id = requestId ?? 0,
-                        error = errorEl
-                    };
+                        if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                        {
+                            if (_pendingRequests.TryRemove(correlationId, out var timedOutTcs))
+                            {
+                                timedOutTcs.TrySetException(new TimeoutException($"Tool call '{toolName}' did not complete within {timeout.TotalSeconds} seconds."));
+                            }
+                        }
+                    });
+
+                    responseTask = tcs.Task;
+                    var appResponse = await responseTask.ConfigureAwait(false);
+
+                    // Forward the app's response to the agent
+                    // JSON-RPC 2.0: response must have either "result" OR "error", not both
+                    if (appResponse.TryGetProperty("error", out var errorEl))
+                    {
+                        var agentErrorResponse = new
+                        {
+                            jsonrpc = "2.0",
+                            id = requestId ?? 0,
+                            error = errorEl
+                        };
+                        await SendToAgentAsync(JsonSerializer.Serialize(agentErrorResponse), cancellationToken);
+                    }
+                    else if (appResponse.TryGetProperty("result", out var resultEl))
+                    {
+                        var agentResultResponse = new
+                        {
+                            jsonrpc = "2.0",
+                            id = requestId ?? 0,
+                            result = resultEl
+                        };
+                        await SendToAgentAsync(JsonSerializer.Serialize(agentResultResponse), cancellationToken);
+                    }
+                    else
+                    {
+                        // Malformed JSON-RPC response from app: missing both "result" and "error"
+                        _logger.LogWarning("Received malformed response from app '{AppName}' for correlation ID: {CorrelationId} (missing both 'result' and 'error')",
+                            app.Name, correlationId);
+                        await SendErrorToAgentAsync("Malformed response from application: missing both 'result' and 'error'.", requestId, CancellationToken.None);
+                        return;
+                    }
+
+                    _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
+                        app.Name, correlationId);
                 }
-                else
+                catch (TimeoutException)
                 {
-                    agentResponse = new
-                    {
-                        jsonrpc = "2.0",
-                        id = requestId ?? 0,
-                        result = appResponse.TryGetProperty("result", out var resultEl) ? resultEl : (object?)null
-                    };
+                    _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' timed out after {Timeout} seconds", toolName, app.Name, timeout.TotalSeconds);
+                    _pendingRequests.TryRemove(correlationId, out _);
+                    await SendErrorToAgentAsync($"Tool execution timed out after {timeout.TotalSeconds} seconds", requestId, CancellationToken.None);
                 }
-
-                await SendToAgentAsync(JsonSerializer.Serialize(agentResponse), cancellationToken);
-
-                _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
-                    app.Name, correlationId);
             }
             catch (OperationCanceledException)
             {

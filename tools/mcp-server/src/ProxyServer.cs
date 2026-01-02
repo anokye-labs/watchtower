@@ -176,17 +176,40 @@ public class ProxyServer
                 }
             };
 
-            // Send the request to the app via TCP connection
-            await connection.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
             // Register cancellation callback to cancel the pending request if cancellation is requested
             using var registration = cancellationToken.Register(() =>
             {
                 CancelPendingRequest(correlationId, "Operation was canceled.");
             });
 
-            // Await the response from the TaskCompletionSource
-            return await tcs.Task.ConfigureAwait(false);
+            // Send the request to the app via TCP connection
+            await connection.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            // Await the response from the TaskCompletionSource with timeout
+            var timeout = TimeSpan.FromMinutes(2);
+            var timeoutCts = new CancellationTokenSource(timeout);
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            
+            try
+            {
+                using (timeoutCts)
+                using (linkedCts)
+                {
+                    linkedCts.Token.Register(() =>
+                    {
+                        if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                        {
+                            CancelPendingRequest(correlationId, $"Tool call '{toolName}' timed out after {timeout.TotalSeconds} seconds.");
+                        }
+                    });
+                    
+                    return await tcs.Task.ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Tool call '{toolName}' did not complete within {timeout.TotalSeconds} seconds.");
+            }
         }
         catch
         {
