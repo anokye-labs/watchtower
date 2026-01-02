@@ -364,11 +364,9 @@ public partial class ShellWindow : AnimatableWindow
         MinWidth = _minContentWidth + paddingLeft + paddingRight;
         MinHeight = _minContentHeight + paddingTop + paddingBottom;
         
-        // Enable resize in windowed mode
-        if (_viewModel.IsWindowedModeEnabled)
-        {
-            CanResize = true;
-        }
+        // Set resize capability based on mode
+        // Windowed mode: resizable, Fullscreen mode: not resizable
+        CanResize = _viewModel.IsWindowedModeEnabled;
     }
 
     /// <summary>

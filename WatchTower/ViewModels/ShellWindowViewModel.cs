@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Microsoft.Extensions.Configuration;
 using WatchTower.Services;
 
 namespace WatchTower.ViewModels;
@@ -426,7 +427,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     /// Only loads configuration once to avoid overwriting values.
     /// </summary>
     /// <param name="configuration">The configuration instance to load from.</param>
-    public void LoadWindowedModeConfiguration(Microsoft.Extensions.Configuration.IConfiguration configuration)
+    public void LoadWindowedModeConfiguration(IConfiguration configuration)
     {
         if (configuration == null || _windowedModeConfigurationLoaded)
         {
@@ -440,29 +441,28 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             IsWindowedModeEnabled = enabled;
         }
         
+        // Parse and validate width
         var widthStr = configuration["Frame:InitialWidth"];
         if (!string.IsNullOrEmpty(widthStr) && double.TryParse(widthStr, out var width))
         {
+            if (width < MinWindowWidth || width > MaxWindowWidth)
+            {
+                throw new InvalidOperationException(
+                    $"Frame:InitialWidth must be between {MinWindowWidth} and {MaxWindowWidth}. Current value: {width}");
+            }
             InitialWindowWidth = width;
         }
         
+        // Parse and validate height
         var heightStr = configuration["Frame:InitialHeight"];
         if (!string.IsNullOrEmpty(heightStr) && double.TryParse(heightStr, out var height))
         {
+            if (height < MinWindowHeight || height > MaxWindowHeight)
+            {
+                throw new InvalidOperationException(
+                    $"Frame:InitialHeight must be between {MinWindowHeight} and {MaxWindowHeight}. Current value: {height}");
+            }
             InitialWindowHeight = height;
-        }
-        
-        // Validate initial dimensions
-        if (InitialWindowWidth < MinWindowWidth || InitialWindowWidth > MaxWindowWidth)
-        {
-            throw new InvalidOperationException(
-                $"Frame:InitialWidth must be between {MinWindowWidth} and {MaxWindowWidth}. Current value: {InitialWindowWidth}");
-        }
-        
-        if (InitialWindowHeight < MinWindowHeight || InitialWindowHeight > MaxWindowHeight)
-        {
-            throw new InvalidOperationException(
-                $"Frame:InitialHeight must be between {MinWindowHeight} and {MaxWindowHeight}. Current value: {InitialWindowHeight}");
         }
         
         // Mark configuration as loaded to prevent duplicate loading
