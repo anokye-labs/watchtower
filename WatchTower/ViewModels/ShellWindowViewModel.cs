@@ -30,6 +30,11 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private double _frameDisplayScale = 1.0;
     private Thickness _contentPadding;
     private string _backgroundColor = "#1A1A1A";
+    
+    // Windowed mode configuration
+    private bool _isWindowedModeEnabled;
+    private double _initialWindowWidth = 1280;
+    private double _initialWindowHeight = 720;
 
     // Frame bitmap sources (dynamically sliced from source image) - 16 pieces for 5x5 grid
     // Row 0: Top edge
@@ -102,6 +107,33 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     /// Gets the splash view model for direct access.
     /// </summary>
     public SplashWindowViewModel SplashViewModel => _splashViewModel;
+
+    /// <summary>
+    /// Gets whether windowed mode is enabled (non-fullscreen with configurable size).
+    /// </summary>
+    public bool IsWindowedModeEnabled
+    {
+        get => _isWindowedModeEnabled;
+        set => SetProperty(ref _isWindowedModeEnabled, value);
+    }
+    
+    /// <summary>
+    /// Gets the initial window width for windowed mode (in logical pixels).
+    /// </summary>
+    public double InitialWindowWidth
+    {
+        get => _initialWindowWidth;
+        set => SetProperty(ref _initialWindowWidth, value);
+    }
+    
+    /// <summary>
+    /// Gets the initial window height for windowed mode (in logical pixels).
+    /// </summary>
+    public double InitialWindowHeight
+    {
+        get => _initialWindowHeight;
+        set => SetProperty(ref _initialWindowHeight, value);
+    }
 
     /// <summary>
     /// Gets or sets the current render scaling factor (DPI scale).
@@ -379,6 +411,42 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         UpdateFrameDimensions();
         
         return true;
+    }
+    
+    /// <summary>
+    /// Loads windowed mode configuration from IConfiguration.
+    /// Should be called during initialization.
+    /// </summary>
+    /// <param name="configuration">The configuration instance to load from.</param>
+    public void LoadWindowedModeConfiguration(Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        if (configuration == null)
+        {
+            return;
+        }
+        
+        // Parse configuration values with defaults
+        var enabledStr = configuration["Frame:EnableWindowedMode"];
+        IsWindowedModeEnabled = !string.IsNullOrEmpty(enabledStr) && bool.Parse(enabledStr);
+        
+        var widthStr = configuration["Frame:InitialWidth"];
+        InitialWindowWidth = !string.IsNullOrEmpty(widthStr) ? double.Parse(widthStr) : 1280.0;
+        
+        var heightStr = configuration["Frame:InitialHeight"];
+        InitialWindowHeight = !string.IsNullOrEmpty(heightStr) ? double.Parse(heightStr) : 720.0;
+        
+        // Validate initial dimensions
+        if (InitialWindowWidth < 400 || InitialWindowWidth > 4000)
+        {
+            throw new InvalidOperationException(
+                $"Frame:InitialWidth must be between 400 and 4000. Current value: {InitialWindowWidth}");
+        }
+        
+        if (InitialWindowHeight < 300 || InitialWindowHeight > 4000)
+        {
+            throw new InvalidOperationException(
+                $"Frame:InitialHeight must be between 300 and 4000. Current value: {InitialWindowHeight}");
+        }
     }
     
     /// <summary>
