@@ -12,7 +12,8 @@ namespace WatchTower.Utilities;
 /// of unsubscribe actions. When disposed, it automatically calls all unsubscribe actions,
 /// preventing memory leaks and reducing boilerplate code.
 /// <para>
-/// This class is not thread-safe. It should only be used from a single thread (typically the UI thread).
+/// This class is thread-safe and can be used from multiple threads. However, it is typically
+/// used from a single thread (the UI thread) in ViewModels.
 /// </para>
 /// </remarks>
 public class SubscriptionManager : IDisposable
@@ -88,9 +89,10 @@ public class SubscriptionManager : IDisposable
         catch
         {
             // Remove the unsubscribe action since the subscription did not complete successfully
+            // Use RemoveAt with Count-1 for O(1) removal since we just added it
             lock (_lock)
             {
-                _unsubscribeActions.Remove(unsubscribe);
+                _unsubscribeActions.RemoveAt(_unsubscribeActions.Count - 1);
             }
 
             try
