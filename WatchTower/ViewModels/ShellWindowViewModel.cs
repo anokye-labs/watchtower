@@ -425,15 +425,24 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             return;
         }
         
-        // Parse configuration values with defaults
+        // Parse configuration values with defaults and safe parsing
         var enabledStr = configuration["Frame:EnableWindowedMode"];
-        IsWindowedModeEnabled = !string.IsNullOrEmpty(enabledStr) && bool.Parse(enabledStr);
+        if (!string.IsNullOrEmpty(enabledStr) && bool.TryParse(enabledStr, out var enabled))
+        {
+            IsWindowedModeEnabled = enabled;
+        }
         
         var widthStr = configuration["Frame:InitialWidth"];
-        InitialWindowWidth = !string.IsNullOrEmpty(widthStr) ? double.Parse(widthStr) : 1280.0;
+        if (!string.IsNullOrEmpty(widthStr) && double.TryParse(widthStr, out var width))
+        {
+            InitialWindowWidth = width;
+        }
         
         var heightStr = configuration["Frame:InitialHeight"];
-        InitialWindowHeight = !string.IsNullOrEmpty(heightStr) ? double.Parse(heightStr) : 720.0;
+        if (!string.IsNullOrEmpty(heightStr) && double.TryParse(heightStr, out var height))
+        {
+            InitialWindowHeight = height;
+        }
         
         // Validate initial dimensions
         if (InitialWindowWidth < 400 || InitialWindowWidth > 4000)
