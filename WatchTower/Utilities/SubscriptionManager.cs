@@ -55,9 +55,10 @@ public class SubscriptionManager : IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when attempting to subscribe after disposal.</exception>
     /// <remarks>
     /// If the subscribe action throws an exception, the unsubscribe action is added before subscribing
-    /// so that cleanup can be attempted even if the subscription fails. The unsubscribe action is removed
-    /// only if the subscription completes successfully. If subscription fails, unsubscribe is called to
-    /// clean up any partial state before rethrowing the exception.
+    /// so that cleanup can be attempted even if the subscription fails. If subscription fails, 
+    /// unsubscribe is called to clean up any partial state before rethrowing the exception.
+    /// Note: The subscribe action should not perform operations that could cause deadlocks when called
+    /// while holding an internal lock.
     /// </remarks>
     public void Subscribe(Action subscribe, Action unsubscribe)
     {
@@ -71,6 +72,8 @@ public class SubscriptionManager : IDisposable
             throw new ArgumentNullException(nameof(unsubscribe));
         }
 
+        Exception? capturedException = null;
+
         lock (_lock)
         {
             if (_disposed)
@@ -80,21 +83,23 @@ public class SubscriptionManager : IDisposable
 
             // Add the unsubscribe action before subscribing so that cleanup can be tracked
             _unsubscribeActions.Add(unsubscribe);
-        }
 
-        try
-        {
-            subscribe();
-        }
-        catch
-        {
-            // Remove the unsubscribe action since the subscription did not complete successfully
-            // Use RemoveAt with Count-1 for O(1) removal since we just added it
-            lock (_lock)
+            try
             {
-                _unsubscribeActions.RemoveAt(_unsubscribeActions.Count - 1);
+                subscribe();
             }
+            catch (Exception ex)
+            {
+                // Remove the unsubscribe action since the subscription did not complete successfully
+                // Use RemoveAt with Count-1 for O(1) removal since we just added it
+                _unsubscribeActions.RemoveAt(_unsubscribeActions.Count - 1);
+                capturedException = ex;
+            }
+        }
 
+        // If subscription failed, attempt cleanup outside the lock to avoid potential deadlocks
+        if (capturedException != null)
+        {
             try
             {
                 // Attempt to clean up any partial subscription state
@@ -105,7 +110,7 @@ public class SubscriptionManager : IDisposable
                 // Swallow exceptions during cleanup; original exception will be rethrown
             }
 
-            throw;
+            throw capturedException;
         }
     }
 
