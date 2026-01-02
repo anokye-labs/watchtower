@@ -43,7 +43,13 @@ jobs:
         run: dotnet build WatchTower.slnx --no-restore -c Release
       
       - name: Run tests with coverage
-        run: dotnet test WatchTower.slnx --no-build -c Release --collect:"XPlat Code Coverage" --results-directory ./coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+        run: >
+          dotnet test WatchTower.slnx 
+          --no-build 
+          -c Release 
+          --collect:"XPlat Code Coverage" 
+          --results-directory ./coverage 
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
       
       - name: Upload coverage artifacts
         if: matrix.os == 'ubuntu-latest'
@@ -114,10 +120,11 @@ jobs:
               pull_number: context.payload.pull_request.number,
             });
             
-            const relevantFiles = files.filter(file => 
-              file.filename.includes('WatchTower/Services/') || 
-              file.filename.includes('WatchTower/ViewModels/')
-            );
+            const relevantFiles = files.filter(file => {
+              const normalizedPath = file.filename.replace(/\\/g, '/');
+              return normalizedPath.includes('WatchTower/Services/') || 
+                     normalizedPath.includes('WatchTower/ViewModels/');
+            });
             
             console.log(`Found ${relevantFiles.length} Services/ViewModels files changed`);
             return relevantFiles.length > 0 ? 'true' : 'false';
@@ -162,8 +169,15 @@ jobs:
             console.log(`Reading coverage from: ${coverageFile}`);
             const coverageXml = fs.readFileSync(coverageFile, 'utf8');
             
+            // Validate XML structure
+            if (!coverageXml.includes('<coverage') || !coverageXml.includes('</coverage>')) {
+              core.setFailed('Invalid coverage XML format');
+              return;
+            }
+            
             // Simple regex-based XML parsing for coverage
-            // Extract all class elements for Services and ViewModels
+            // Note: While not ideal, regex parsing is used here to avoid additional dependencies
+            // in GitHub Actions. The Cobertura XML format is stable and predictable.
             const classRegex = /<class name="([^"]*)" filename="([^"]*)" line-rate="([^"]*)"/g;
             const lineRegex = /<line number="\d+" hits="(\d+)"/g;
             
@@ -174,29 +188,51 @@ jobs:
             // Split into class sections
             const classSections = coverageXml.split('<class name=').slice(1);
             
+            if (classSections.length === 0) {
+              console.warn('No classes found in coverage report');
+            }
+            
             for (const section of classSections) {
               const classMatch = section.match(/^"([^"]*)" filename="([^"]*)" line-rate="([^"]*)"/);
-              if (!classMatch) continue;
+              if (!classMatch) {
+                console.warn('Could not parse class section');
+                continue;
+              }
               
               const className = classMatch[1];
               const filename = classMatch[2];
               const lineRate = parseFloat(classMatch[3]);
               
+              // Validate line rate
+              if (isNaN(lineRate) || lineRate < 0 || lineRate > 1) {
+                console.warn(`Invalid line rate for ${className}: ${lineRate}`);
+                continue;
+              }
+              
               // Extract line hits from this class section
               const classEnd = section.indexOf('</class>');
-              const classContent = section.substring(0, classEnd);
+              if (classEnd === -1) {
+                console.warn(`Could not find end of class section for ${className}`);
+                continue;
+              }
               
+              const classContent = section.substring(0, classEnd);
               const lineMatches = Array.from(classContent.matchAll(lineRegex));
               const validLines = lineMatches.length;
-              const coveredLines = lineMatches.filter(m => parseInt(m[1]) > 0).length;
+              const coveredLines = lineMatches.filter(m => {
+                const hits = parseInt(m[1]);
+                return !isNaN(hits) && hits > 0;
+              }).length;
               
               totalLines += validLines;
               totalCovered += coveredLines;
               
-              if (filename.includes('/Services/')) {
+              // Normalize path separators for consistent matching
+              const normalizedFilename = filename.replace(/\\/g, '/');
+              if (normalizedFilename.includes('/Services/')) {
                 servicesLines += validLines;
                 servicesCovered += coveredLines;
-              } else if (filename.includes('/ViewModels/')) {
+              } else if (normalizedFilename.includes('/ViewModels/')) {
                 viewModelsLines += validLines;
                 viewModelsCovered += coveredLines;
               }
