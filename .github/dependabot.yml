@@ -1,0 +1,120 @@
+# Dependabot configuration for automated dependency updates
+# This file configures Dependabot to automatically create PRs for NuGet dependency updates
+# with appropriate grouping and scheduling.
+#
+# Documentation: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Monitor WatchTower main project
+  - package-ecosystem: "nuget"
+    directory: "/WatchTower"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+    groups:
+      avalonia:
+        patterns:
+          - "Avalonia*"
+        update-types:
+          - "minor"
+          - "patch"
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+        update-types:
+          - "minor"
+          - "patch"
+      silk-net:
+        patterns:
+          - "Silk.NET.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Monitor WatchTower.Tests project
+  - package-ecosystem: "nuget"
+    directory: "/WatchTower.Tests"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+      - "tests"
+    groups:
+      avalonia:
+        patterns:
+          - "Avalonia*"
+        update-types:
+          - "minor"
+          - "patch"
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Monitor Avalonia.Mcp.Core library
+  - package-ecosystem: "nuget"
+    directory: "/src/Avalonia.Mcp.Core"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+      - "mcp-core"
+    groups:
+      avalonia:
+        patterns:
+          - "Avalonia*"
+        update-types:
+          - "minor"
+          - "patch"
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Monitor Avalonia.McpProxy library
+  - package-ecosystem: "nuget"
+    directory: "/src/Avalonia.McpProxy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "nuget"
+      - "mcp-proxy"
+    groups:
+      avalonia:
+        patterns:
+          - "Avalonia*"
+        update-types:
+          - "minor"
+          - "patch"
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+        update-types:
+          - "minor"
+          - "patch"
