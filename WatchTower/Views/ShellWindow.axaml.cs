@@ -62,7 +62,8 @@ public partial class ShellWindow : AnimatableWindow
                 $"Startup:MinContentHeight must be between 100 and 2000. Current value: {_minContentHeight}");
         }
         
-        // Load windowed mode configuration into ViewModel
+        // Load windowed mode configuration into ViewModel if it's already set
+        // If DataContext hasn't been set yet, OnDataContextChanged will handle it
         if (_viewModel != null)
         {
             _viewModel.LoadWindowedModeConfiguration(configuration);
@@ -182,7 +183,8 @@ public partial class ShellWindow : AnimatableWindow
     {
         _viewModel = DataContext as ShellWindowViewModel;
         
-        // Load windowed mode configuration if available
+        // Load windowed mode configuration if available and not already loaded
+        // This handles the case where SetConfiguration was called before DataContext was set
         if (_viewModel != null && _configuration != null)
         {
             _viewModel.LoadWindowedModeConfiguration(_configuration);

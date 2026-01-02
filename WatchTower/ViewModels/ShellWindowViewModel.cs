@@ -35,6 +35,12 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isWindowedModeEnabled;
     private double _initialWindowWidth = 1280;
     private double _initialWindowHeight = 720;
+    
+    // Windowed mode validation constants
+    private const double MinWindowWidth = 400;
+    private const double MaxWindowWidth = 4000;
+    private const double MinWindowHeight = 300;
+    private const double MaxWindowHeight = 4000;
 
     // Frame bitmap sources (dynamically sliced from source image) - 16 pieces for 5x5 grid
     // Row 0: Top edge
@@ -445,16 +451,16 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         }
         
         // Validate initial dimensions
-        if (InitialWindowWidth < 400 || InitialWindowWidth > 4000)
+        if (InitialWindowWidth < MinWindowWidth || InitialWindowWidth > MaxWindowWidth)
         {
             throw new InvalidOperationException(
-                $"Frame:InitialWidth must be between 400 and 4000. Current value: {InitialWindowWidth}");
+                $"Frame:InitialWidth must be between {MinWindowWidth} and {MaxWindowWidth}. Current value: {InitialWindowWidth}");
         }
         
-        if (InitialWindowHeight < 300 || InitialWindowHeight > 4000)
+        if (InitialWindowHeight < MinWindowHeight || InitialWindowHeight > MaxWindowHeight)
         {
             throw new InvalidOperationException(
-                $"Frame:InitialHeight must be between 300 and 4000. Current value: {InitialWindowHeight}");
+                $"Frame:InitialHeight must be between {MinWindowHeight} and {MaxWindowHeight}. Current value: {InitialWindowHeight}");
         }
     }
     
