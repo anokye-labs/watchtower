@@ -223,7 +223,7 @@ Work is tracked via the [Nsumankwahene Flow System](docs/nsumankwahene-workflow.
 
 The message "Terminal will be reused by tasks, press any key to close it." is informational, not a prompt.
 
-Voice features currently use NAudio for audio capture/playback, which is Windows-only. Linux and macOS support will require an alternative audio backend (e.g., SDL via Silk.NET).
+Voice features use NAudio for native Windows audio integration, providing reliable and high-performance audio capture/playback on Windows 10/11.
 
 ---
 Last Updated: 2025-12-28 | Constitution Version: 1.2.0
