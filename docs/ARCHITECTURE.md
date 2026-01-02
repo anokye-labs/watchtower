@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the WatchTower application ar
 
 ## Overview
 
-WatchTower is a cross-platform desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
+WatchTower is a Windows-native desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
 
 ## Design Philosophy
 
@@ -14,7 +14,7 @@ The application's visual identity is built around the "Ancestral Futurism" desig
 
 ### Core Principles
 
-The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Cross-Platform Native ensures the application works identically on Windows, macOS, and Linux without platform-specific code. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
+The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Windows-Native enables full utilization of Windows APIs and ecosystem for optimal performance and feature support. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
 
 ## MVVM Architecture
 
@@ -136,7 +136,7 @@ Adaptive Card Display renders full-screen cards with the themed Ancestral Futuri
 
 ### 4. Game Controller System
 
-The game controller system provides full SDL2 integration for cross-platform controller support.
+The game controller system provides full SDL2 integration for game controller support.
 
 **Architecture**:
 
@@ -150,12 +150,12 @@ IGameControllerService (Interface with events)
 GameControllerService (SDL2-based implementation)
                     |
                     v
-Silk.NET.SDL v2.22.0 (Cross-platform SDL2 bindings)
+Silk.NET.SDL v2.22.0 (SDL2 bindings via Silk.NET)
 ```
 
 **Features**:
 
-The system provides real cross-platform gamepad detection via Silk.NET.SDL, uses the SDL Game Controller Database for automatic button mapping, supports hot-plug for controller connect/disconnect events, and polls at 60 FPS synchronized with UI rendering. Radial dead zone processing is configurable with a default of 15%.
+The system provides gamepad detection via Silk.NET.SDL, uses the SDL Game Controller Database for automatic button mapping, supports hot-plug for controller connect/disconnect events, and polls at 60 FPS synchronized with UI rendering. Radial dead zone processing is configurable with a default of 15%.
 
 ### 5. Voice System
 
@@ -309,17 +309,11 @@ TextToSpeechService (Piper/Azure)
 Audio Output
 ```
 
-## Cross-Platform Support
+## Deployment
 
-WatchTower is designed for cross-platform deployment on Windows (win-x64), macOS (osx-x64), and Linux (linux-x64).
+WatchTower is designed for Windows deployment (win-x64) with self-contained single-file distribution.
 
-**Platform Abstraction**:
-
-All platform-specific functionality is abstracted through interfaces. SDL2 provides cross-platform game controller support. Avalonia provides cross-platform UI rendering. The application uses no platform-specific code in the main codebase.
-
-**Known Limitations**:
-
-Voice features currently use NAudio for audio capture/playback, which is Windows-only. Linux and macOS support for voice will require an alternative audio backend such as SDL via Silk.NET.
+Voice features use NAudio for Windows-native audio capture/playback, providing reliable integration with the Windows audio stack.
 
 ## Testing Strategy
 
