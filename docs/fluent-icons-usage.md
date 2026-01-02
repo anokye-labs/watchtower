@@ -18,7 +18,7 @@ The FluentIcons package has been integrated into WatchTower and is ready to use 
 
 1. ✅ NuGet package added to `WatchTower.csproj`
 2. ✅ Namespace declarations added to `App.axaml` for global availability
-3. ✅ Cross-platform support verified
+3. ✅ Windows support verified
 
 ## Usage in XAML
 

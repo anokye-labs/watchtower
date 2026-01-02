@@ -53,7 +53,7 @@ The game controller support follows WatchTower's MVVM architecture:
                  │
 ┌────────────────▼────────────────────┐
 │     Silk.NET.SDL (v2.22.0)          │
-│  (Cross-platform SDL2 bindings)     │
+│        (SDL2 bindings)              │
 └─────────────────────────────────────┘
 ```
 

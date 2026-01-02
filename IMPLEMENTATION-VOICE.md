@@ -60,7 +60,7 @@ All services use NAudio for Windows audio integration.
 ### NuGet Packages
 - **Vosk 0.3.38** - Offline speech recognition engine
 - **PiperSharp 1.0.6** - Offline neural TTS engine
-- **NAudio 2.2.1** - Cross-platform audio capture/playback
+- **NAudio 2.2.1** - Windows audio capture/playback
 - **Microsoft.CognitiveServices.Speech 1.47.0** - Azure Speech SDK for online mode
 
 ### External Model Files (Not Included)

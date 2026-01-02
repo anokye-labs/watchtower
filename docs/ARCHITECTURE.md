@@ -136,7 +136,7 @@ Adaptive Card Display renders full-screen cards with the themed Ancestral Futuri
 
 ### 4. Game Controller System
 
-The game controller system provides full SDL2 integration for cross-platform controller support.
+The game controller system provides full SDL2 integration for gamepad support on Windows.
 
 **Architecture**:
 
@@ -150,12 +150,12 @@ IGameControllerService (Interface with events)
 GameControllerService (SDL2-based implementation)
                     |
                     v
-Silk.NET.SDL v2.22.0 (Cross-platform SDL2 bindings)
+Silk.NET.SDL v2.22.0 (SDL2 bindings for .NET)
 ```
 
 **Features**:
 
-The system provides real cross-platform gamepad detection via Silk.NET.SDL, uses the SDL Game Controller Database for automatic button mapping, supports hot-plug for controller connect/disconnect events, and polls at 60 FPS synchronized with UI rendering. Radial dead zone processing is configurable with a default of 15%.
+The system provides gamepad detection via Silk.NET.SDL, uses the SDL Game Controller Database for automatic button mapping, supports hot-plug for controller connect/disconnect events, and polls at 60 FPS synchronized with UI rendering. Radial dead zone processing is configurable with a default of 15%.
 
 ### 5. Voice System
 
@@ -309,7 +309,7 @@ TextToSpeechService (Piper/Azure)
 Audio Output
 ```
 
-## Cross-Platform Support
+## Windows Support
 
 WatchTower is designed as a Windows-native application targeting win-x64.
 
