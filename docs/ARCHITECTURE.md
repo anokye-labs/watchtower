@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the WatchTower application ar
 
 ## Overview
 
-WatchTower is a cross-platform desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
+WatchTower is a Windows desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
 
 ## Design Philosophy
 
@@ -14,7 +14,7 @@ The application's visual identity is built around the "Ancestral Futurism" desig
 
 ### Core Principles
 
-The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Cross-Platform Native ensures the application works identically on Windows, macOS, and Linux without platform-specific code. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
+The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Windows-Native means the application is optimized for Windows with native integrations and best-in-class Windows experience. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
 
 ## MVVM Architecture
 
@@ -311,15 +311,15 @@ Audio Output
 
 ## Cross-Platform Support
 
-WatchTower is designed for cross-platform deployment on Windows (win-x64), macOS (osx-x64), and Linux (linux-x64).
+WatchTower is designed as a Windows-native application targeting win-x64.
 
-**Platform Abstraction**:
+**Platform Focus**:
 
-All platform-specific functionality is abstracted through interfaces. SDL2 provides cross-platform game controller support. Avalonia provides cross-platform UI rendering. The application uses no platform-specific code in the main codebase.
+The application leverages Windows-specific features and optimizations to provide the best possible experience. SDL2 provides game controller support on Windows. Avalonia provides UI rendering. NAudio provides high-quality audio capture and playback.
 
-**Known Limitations**:
+**Native Windows Integration**:
 
-Voice features currently use NAudio for audio capture/playback, which is Windows-only. Linux and macOS support for voice will require an alternative audio backend such as SDL via Silk.NET.
+Voice features use NAudio for superior audio quality and integration with Windows audio subsystem. Game controller support uses SDL2 for broad hardware compatibility. The application can take advantage of Windows-specific optimizations when beneficial.
 
 ## Testing Strategy
 
