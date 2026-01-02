@@ -119,6 +119,8 @@ public class SubscriptionManager : IDisposable
     /// </summary>
     public void Dispose()
     {
+        Action[] actionsToDispose;
+
         lock (_lock)
         {
             if (_disposed)
@@ -127,16 +129,14 @@ public class SubscriptionManager : IDisposable
             }
 
             _disposed = true;
+
+            // Copy actions to dispose while holding the lock to prevent new additions
+            actionsToDispose = _unsubscribeActions.ToArray();
+            _unsubscribeActions.Clear();
         }
 
         // Unsubscribe in reverse order (LIFO) to handle dependencies correctly
         // Note: We don't hold the lock while calling unsubscribe actions to avoid potential deadlocks
-        Action[] actionsToDispose;
-        lock (_lock)
-        {
-            actionsToDispose = _unsubscribeActions.ToArray();
-        }
-
         for (int i = actionsToDispose.Length - 1; i >= 0; i--)
         {
             try
@@ -148,11 +148,6 @@ public class SubscriptionManager : IDisposable
                 // Swallow exceptions during cleanup to ensure all unsubscriptions are attempted
                 // In production scenarios, you may want to log these exceptions
             }
-        }
-
-        lock (_lock)
-        {
-            _unsubscribeActions.Clear();
         }
     }
 }
