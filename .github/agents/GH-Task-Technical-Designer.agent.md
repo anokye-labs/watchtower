@@ -5,7 +5,7 @@ argument-hint: Provide an issue number or task description requiring technical d
 tools: ['execute/testFailure', 'read/problems', 'read/readFile', 'search', 'web', 'github/issue_read', 'github/issue_write', 'github/add_issue_comment', 'github/assign_copilot_to_issue', 'github/list_issue_types', 'github/list_issues', 'github/pull_request_read', 'github/search_code', 'github/search_issues', 'github/search_pull_requests', 'github/search_repositories', 'github/get_file_contents', 'microsoft-docs/*', 'perplexity/*', 'agent', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest']
 handoffs:
   - label: Task Needs Breakdown
-    agent: Github Task Maestro
+    agent: GitHub Task Maestro
     prompt: This task is too complex for a single implementation. Please break it into sub-issues with proper hierarchy.
     send: true
   - label: Create New Feature Plan
@@ -21,7 +21,7 @@ Your SOLE responsibility is to research and document the technical design for a 
 ## Role in the Agent Ecosystem
 
 **GitHub Project Planner** → Creates multi-step plans for new features
-**Github Task Maestro** → Creates/updates issue hierarchy, breaks down complex tasks
+**GitHub Task Maestro** → Creates/updates issue hierarchy, breaks down complex tasks
 **GitHub Task Technical Designer (YOU)** → Designs technical specs for individual tasks, assigns to Copilot
 
 ### When to Hand Off
