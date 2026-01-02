@@ -35,6 +35,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isWindowedModeEnabled;
     private double _initialWindowWidth = 1280;
     private double _initialWindowHeight = 720;
+    private bool _windowedModeConfigurationLoaded;
     
     // Windowed mode validation constants
     private const double MinWindowWidth = 400;
@@ -422,11 +423,12 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     /// <summary>
     /// Loads windowed mode configuration from IConfiguration.
     /// Should be called during initialization.
+    /// Only loads configuration once to avoid overwriting values.
     /// </summary>
     /// <param name="configuration">The configuration instance to load from.</param>
     public void LoadWindowedModeConfiguration(Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
-        if (configuration == null)
+        if (configuration == null || _windowedModeConfigurationLoaded)
         {
             return;
         }
@@ -462,6 +464,9 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             throw new InvalidOperationException(
                 $"Frame:InitialHeight must be between {MinWindowHeight} and {MaxWindowHeight}. Current value: {InitialWindowHeight}");
         }
+        
+        // Mark configuration as loaded to prevent duplicate loading
+        _windowedModeConfigurationLoaded = true;
     }
     
     /// <summary>
