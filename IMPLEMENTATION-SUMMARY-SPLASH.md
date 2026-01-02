@@ -185,12 +185,11 @@ Adjust this value to change when the "slow startup" warning appears.
 - StartupOrchestrator service
 - Clean separation of concerns
 
-## Cross-Platform Compatibility
+## Windows Compatibility
 
 - Uses only Avalonia UI framework APIs
-- No platform-specific code
 - Configuration loaded from standard JSON
-- Works on Windows, macOS, Linux
+- Optimized for Windows
 
 ## Performance Considerations
 

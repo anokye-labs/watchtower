@@ -2,7 +2,7 @@
 
 ## Overview
 
-WatchTower integrates the `FluentIcons.Avalonia.Fluent` package to provide access to Microsoft's Fluent UI System Icons with Segoe Fluent Icons metrics. This provides a modern, consistent, and scalable icon solution across all platforms (Windows, macOS, and Linux).
+WatchTower integrates the `FluentIcons.Avalonia.Fluent` package to provide access to Microsoft's Fluent UI System Icons with Segoe Fluent Icons metrics. This provides a modern, consistent, and scalable icon solution for Windows.
 
 ## Package Information
 
@@ -103,11 +103,11 @@ See `WatchTower/Views/MainWindow.axaml` for a working example of FluentIcons usa
 
 ## Benefits
 
-- ✅ **Consistency**: Microsoft's official Fluent design icons across all platforms
+- ✅ **Consistency**: Microsoft's official Fluent design icons
 - ✅ **Scalability**: Vector-based icons scale perfectly at any resolution
 - ✅ **Performance**: Lightweight and efficient rendering
 - ✅ **Maintainability**: No need to manage custom SVG or image assets
-- ✅ **Cross-platform**: Identical appearance on Windows, macOS, and Linux
+- ✅ **Windows-Native**: Proper alignment with Segoe Fluent Icons specifications
 - ✅ **Segoe Metrics**: Proper alignment with Segoe Fluent Icons specifications
 
 ## Best Practices

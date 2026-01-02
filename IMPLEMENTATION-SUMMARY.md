@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully implemented **full hardware game controller support** for WatchTower using SDL2 via Silk.NET, providing cross-platform gamepad detection and input handling for Windows, macOS, and Linux.
+Successfully implemented **full hardware game controller support** for WatchTower using SDL2 via Silk.NET, providing gamepad detection and input handling for Windows.
 
 ## What Was Implemented
 
@@ -83,7 +83,7 @@ Successfully implemented **full hardware game controller support** for WatchTowe
 **WatchTower.csproj** (Updated)
 - Added `Silk.NET.SDL` package (v2.22.0) for SDL2 bindings
 - Enabled `AllowUnsafeBlocks` for SDL2 pointer operations
-- Cross-platform targeting: win-x64, osx-x64, linux-x64
+- Windows targeting: win-x64
 
 **appsettings.json** (Updated)
 ```json
