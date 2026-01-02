@@ -91,7 +91,7 @@ public class SubscriptionManager : IDisposable
             catch (Exception ex)
             {
                 // Remove the unsubscribe action since the subscription did not complete successfully
-                // Use RemoveAt with Count-1 for O(1) removal since we just added it
+                // RemoveAt with Count-1 is O(1) since we're removing the last element we just added
                 _unsubscribeActions.RemoveAt(_unsubscribeActions.Count - 1);
                 capturedException = ex;
             }
