@@ -43,9 +43,9 @@ public partial class App : Application
             }
 
             // Create early UserPreferencesService for window position restoration
-            var loggingService = new LoggingService();
-            var logger = loggingService.LoggerFactory.CreateLogger<UserPreferencesService>();
-            var userPreferencesService = new UserPreferencesService(logger);
+            // Use NullLogger to avoid creating a separate LoggingService instance before DI container
+            var userPreferencesService = new UserPreferencesService(
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<UserPreferencesService>.Instance);
 
             // Create and show shell window immediately with splash content
             var splashViewModel = new SplashWindowViewModel(hangThreshold);
