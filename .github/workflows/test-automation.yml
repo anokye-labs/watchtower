@@ -1,0 +1,132 @@
+name: Test Automation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'WatchTower/**'
+      - 'WatchTower.Tests/**'
+      - '.github/workflows/test-automation.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'WatchTower/**'
+      - 'WatchTower.Tests/**'
+      - '.github/workflows/test-automation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/**/coverage.cobertura.xml
+          flags: unittests
+          name: codecov-watchtower
+          fail_ci_if_error: false
+      
+      - name: Generate coverage report
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./coveragereport -reporttypes:Html
+      
+      - name: Upload coverage report as artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coveragereport
+      
+      - name: Comment PR with coverage
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find the coverage file
+            const coverageDir = './coverage';
+            const files = fs.readdirSync(coverageDir, { recursive: true });
+            const coverageFile = files.find(f => f.endsWith('coverage.cobertura.xml'));
+            
+            if (!coverageFile) {
+              console.log('No coverage file found');
+              return;
+            }
+            
+            const coveragePath = path.join(coverageDir, coverageFile);
+            const coverage = fs.readFileSync(coveragePath, 'utf8');
+            
+            // Parse coverage percentage (simple regex)
+            const match = coverage.match(/line-rate="([0-9.]+)"/);
+            const lineRate = match ? (parseFloat(match[1]) * 100).toFixed(2) : 'N/A';
+            
+            const comment = `## 📊 Test Coverage Report
+            
+            **Line Coverage:** ${lineRate}%
+            
+            View detailed coverage report in the workflow artifacts.
+            
+            <sub>Generated for commit ${context.sha.substring(0, 7)}</sub>`;
+            
+            // Find existing coverage comments
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Test Coverage Report')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
