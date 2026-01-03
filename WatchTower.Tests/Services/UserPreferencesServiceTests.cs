@@ -319,4 +319,22 @@ public class UserPreferencesServiceTests : IDisposable
         Assert.Equal(originalFirstRunDate, currentFirstRunDate);
         Assert.NotEqual(newDate, currentFirstRunDate);
     }
+
+    [Fact]
+    public void SavePreferences_DoesNotMutateInputParameter()
+    {
+        // Arrange
+        var service = new UserPreferencesService(_loggerMock.Object);
+        var originalFirstRunDate = service.GetFirstRunDate();
+        
+        // Act - Try to save preferences with a different FirstRunDate
+        var preferences = service.GetPreferences();
+        var attemptedDate = DateTime.UtcNow.AddDays(10);
+        preferences.FirstRunDate = attemptedDate;
+        service.SavePreferences(preferences);
+
+        // Assert - Input parameter should not be mutated by the service
+        Assert.Equal(attemptedDate, preferences.FirstRunDate);
+        Assert.NotEqual(originalFirstRunDate, preferences.FirstRunDate);
+    }
 }

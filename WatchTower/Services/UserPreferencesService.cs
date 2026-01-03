@@ -44,18 +44,34 @@ public class UserPreferencesService : IUserPreferencesService
 
     public void SavePreferences(UserPreferences preferences)
     {
+        UserPreferences? preferencesToNotify = null;
         lock (_lock)
         {
-            // Preserve FirstRunDate - it should not be overwritten once set
-            if (_preferences.FirstRunDate.HasValue && preferences.FirstRunDate != _preferences.FirstRunDate)
-            {
-                preferences.FirstRunDate = _preferences.FirstRunDate;
-            }
+            // Create a copy to avoid mutating the caller's object
+            var json = JsonSerializer.Serialize(preferences, JsonOptions);
+            var preferencesCopy = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
             
-            _preferences = preferences;
-            PersistPreferences();
+            if (preferencesCopy != null)
+            {
+                // Preserve FirstRunDate - it should not be overwritten once set
+                if (_preferences.FirstRunDate.HasValue)
+                {
+                    preferencesCopy.FirstRunDate = _preferences.FirstRunDate;
+                }
+                
+                _preferences = preferencesCopy;
+                PersistPreferences();
+                
+                // Create defensive copy for event notification
+                preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(
+                    JsonSerializer.Serialize(_preferences, JsonOptions), JsonOptions);
+            }
         }
-        PreferencesChanged?.Invoke(this, preferences);
+        
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
     }
 
     public ThemeMode GetThemeMode()
