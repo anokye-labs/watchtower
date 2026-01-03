@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
 using WatchTower.Models;
 using WatchTower.Services;
+using WatchTower.Utilities;
 
 namespace WatchTower.ViewModels;
 
@@ -21,6 +22,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IAdaptiveCardService _cardService;
     private readonly IAdaptiveCardThemeService _themeService;
     private readonly ILogger<MainWindowViewModel> _logger;
+    private readonly SubscriptionManager _subscriptions = new();
     private string _statusText = "Game Controller Status: Initializing...";
     private string _lastButtonPressed = "None";
     private int _buttonPressCount = 0;
@@ -225,21 +227,41 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _themeService = themeService;
         _logger = logger;
         
-        // Subscribe to controller events
-        _gameControllerService.ButtonPressed += OnButtonPressed;
-        _gameControllerService.ButtonReleased += OnButtonReleased;
-        _gameControllerService.ControllerConnected += OnControllerConnected;
-        _gameControllerService.ControllerDisconnected += OnControllerDisconnected;
+        // Subscribe to controller events using SubscriptionManager
+        _subscriptions.Subscribe(
+            () => _gameControllerService.ButtonPressed += OnButtonPressed,
+            () => _gameControllerService.ButtonPressed -= OnButtonPressed);
+        _subscriptions.Subscribe(
+            () => _gameControllerService.ButtonReleased += OnButtonReleased,
+            () => _gameControllerService.ButtonReleased -= OnButtonReleased);
+        _subscriptions.Subscribe(
+            () => _gameControllerService.ControllerConnected += OnControllerConnected,
+            () => _gameControllerService.ControllerConnected -= OnControllerConnected);
+        _subscriptions.Subscribe(
+            () => _gameControllerService.ControllerDisconnected += OnControllerDisconnected,
+            () => _gameControllerService.ControllerDisconnected -= OnControllerDisconnected);
 
         // Subscribe to theme changes
-        _themeService.ThemeChanged += OnThemeChanged;
+        _subscriptions.Subscribe(
+            () => _themeService.ThemeChanged += OnThemeChanged,
+            () => _themeService.ThemeChanged -= OnThemeChanged);
 
         // Subscribe to card action events
-        _cardService.ActionInvoked += OnCardActionInvoked;
-        _cardService.SubmitAction += OnCardSubmit;
-        _cardService.OpenUrlAction += OnCardOpenUrl;
-        _cardService.ExecuteAction += OnCardExecute;
-        _cardService.ShowCardAction += OnCardShowCard;
+        _subscriptions.Subscribe(
+            () => _cardService.ActionInvoked += OnCardActionInvoked,
+            () => _cardService.ActionInvoked -= OnCardActionInvoked);
+        _subscriptions.Subscribe(
+            () => _cardService.SubmitAction += OnCardSubmit,
+            () => _cardService.SubmitAction -= OnCardSubmit);
+        _subscriptions.Subscribe(
+            () => _cardService.OpenUrlAction += OnCardOpenUrl,
+            () => _cardService.OpenUrlAction -= OnCardOpenUrl);
+        _subscriptions.Subscribe(
+            () => _cardService.ExecuteAction += OnCardExecute,
+            () => _cardService.ExecuteAction -= OnCardExecute);
+        _subscriptions.Subscribe(
+            () => _cardService.ShowCardAction += OnCardShowCard,
+            () => _cardService.ShowCardAction -= OnCardShowCard);
 
         // Initialize commands
         ShowRichTextInputCommand = new RelayCommand(ShowRichTextInput);
@@ -566,23 +588,10 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (_disposed)
             return;
 
-        // Unsubscribe from controller events
-        _gameControllerService.ButtonPressed -= OnButtonPressed;
-        _gameControllerService.ButtonReleased -= OnButtonReleased;
-        _gameControllerService.ControllerConnected -= OnControllerConnected;
-        _gameControllerService.ControllerDisconnected -= OnControllerDisconnected;
+        // Unsubscribe from all events managed by SubscriptionManager
+        _subscriptions.Dispose();
 
-        // Unsubscribe from theme changes
-        _themeService.ThemeChanged -= OnThemeChanged;
-
-        // Unsubscribe from card action events
-        _cardService.ActionInvoked -= OnCardActionInvoked;
-        _cardService.SubmitAction -= OnCardSubmit;
-        _cardService.OpenUrlAction -= OnCardOpenUrl;
-        _cardService.ExecuteAction -= OnCardExecute;
-        _cardService.ShowCardAction -= OnCardShowCard;
-
-        // Unsubscribe from rendered card events
+        // Unsubscribe from rendered card events (not managed by SubscriptionManager)
         DetachRenderedCardHandler();
 
         _disposed = true;
