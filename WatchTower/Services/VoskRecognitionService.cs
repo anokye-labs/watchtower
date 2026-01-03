@@ -277,7 +277,6 @@ public class VoskRecognitionService : IVoiceRecognitionService
         catch (JsonException ex)
         {
             _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
-            _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
         }
         return string.Empty;
     }
