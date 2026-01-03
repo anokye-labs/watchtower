@@ -88,11 +88,12 @@ public class VoiceControlViewModelTests
         // Act - Dispose the ViewModel
         viewModel.Dispose();
 
-        // Raise the event after disposal - should not cause any issues
+        // Raise the event after disposal
         mockVoiceService.Raise(s => s.Speaking += null,
             new SpeechSynthesisEventArgs("Test text"));
 
-        // Assert - No exception should be thrown and properties remain unchanged
+        // Assert - The Speaking event handler is empty (no state changes), so this test
+        // primarily verifies that no exception is thrown when the event is raised after disposal
         Assert.NotNull(viewModel);
     }
 

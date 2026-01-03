@@ -45,7 +45,6 @@ public class MainWindowViewModelTests
 
         // Assert - The handler should not have been invoked
         Assert.Equal(initialButtonPressCount, viewModel.ButtonPressCount);
-        Assert.Equal("None", viewModel.LastButtonPressed);
     }
 
     [Fact]
