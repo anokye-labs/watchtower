@@ -26,6 +26,8 @@ IVoiceOrchestrationService (Coordinator)
 4. **AzureSpeechSynthesisService** - Cloud-based TTS via Azure Cognitive Services
 5. **VoiceOrchestrationService** - Coordinates full-duplex operations between ASR and TTS
 
+All services use NAudio for Windows audio integration.
+
 #### Models & Data Structures
 - `VoiceMode` - Enum for offline/online/hybrid modes
 - `VoiceState` - Current state of voice system (listening, speaking, activity levels)
@@ -58,7 +60,7 @@ IVoiceOrchestrationService (Coordinator)
 ### NuGet Packages
 - **Vosk 0.3.38** - Offline speech recognition engine
 - **PiperSharp 1.0.6** - Offline neural TTS engine
-- **NAudio 2.2.1** - Cross-platform audio capture/playback
+- **NAudio 2.2.1** - Windows audio capture/playback
 - **Microsoft.CognitiveServices.Speech 1.47.0** - Azure Speech SDK for online mode
 
 ### External Model Files (Not Included)

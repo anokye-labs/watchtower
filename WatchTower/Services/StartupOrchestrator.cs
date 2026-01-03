@@ -13,7 +13,22 @@ namespace WatchTower.Services;
 /// </summary>
 public class StartupOrchestrator : IStartupOrchestrator
 {
-    public async Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger, IConfiguration configuration)
+    public Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger, IConfiguration configuration)
+    {
+        return ExecuteStartupAsync(logger, configuration, null);
+    }
+
+    /// <summary>
+    /// Executes the startup workflow asynchronously.
+    /// </summary>
+    /// <param name="logger">Logger for reporting progress and errors.</param>
+    /// <param name="configuration">Application configuration to use.</param>
+    /// <param name="userPreferencesService">Optional pre-created user preferences service (e.g., for early window positioning).</param>
+    /// <returns>The configured ServiceProvider on success, null on failure.</returns>
+    public async Task<ServiceProvider?> ExecuteStartupAsync(
+        IStartupLogger logger,
+        IConfiguration configuration,
+        IUserPreferencesService? userPreferencesService)
     {
         try
         {
@@ -46,7 +61,15 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("Phase 3/4: Registering application services...");
             
             // Register core services
-            services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+            if (userPreferencesService != null)
+            {
+                // Use the pre-created instance (e.g., for early window positioning)
+                services.AddSingleton<IUserPreferencesService>(userPreferencesService);
+            }
+            else
+            {
+                services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+            }
             services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();

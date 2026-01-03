@@ -8,7 +8,7 @@ NOTE: the FAL.AI Key is in the local .env file when creating scripts, create the
 
 ## Project Overview
 
-WatchTower is an Avalonia UI-based application with strict MVVM architecture and dependency injection on .NET 10. It is cross-platform first, targeting win-x64, osx-x64, and linux-x64 with self-contained single-file publish. The project uses only open source dependencies (MIT/Apache 2.0).
+WatchTower is an Avalonia UI-based application with strict MVVM architecture and dependency injection on .NET 10. It is Windows-native, targeting win-x64 with self-contained single-file publish. The project uses only open source dependencies (MIT/Apache 2.0).
 
 ### Key Capabilities
 
@@ -40,7 +40,7 @@ SplashWindow.axaml       ->  SplashWindowViewModel     ->  IVoiceOrchestrationSe
 
 1. **MVVM Architecture First** - All logic in ViewModels and Services, Views are presentation-only.
 2. **Open Source Only** - Use only MIT or Apache 2.0 licensed dependencies.
-3. **Cross-Platform Native** - No platform-specific code, works identically on Windows/macOS/Linux.
+3. **Windows-Native** - Optimized for Windows with native integrations and best-in-class Windows experience.
 4. **Testability Required** - ViewModels testable without UI dependencies using Avalonia.Headless.
 5. **Design System Compliance** - Use Avalonia CSS vars; dark theme primary, light supported.
 
@@ -68,12 +68,10 @@ dotnet build
 dotnet run --project WatchTower/WatchTower.csproj
 ```
 
-### Publish (per platform)
+### Publish
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true
-dotnet publish -c Release -r osx-x64 --self-contained true
-dotnet publish -c Release -r linux-x64 --self-contained true
 ```
 
 ## Debugging
@@ -125,7 +123,7 @@ Configuration is in appsettings.json. Logging:LogLevel values are minimal, norma
 
 ### Red Flags to Avoid
 
-Do not put logic in code-behind. Do not use static service locators. Do not use platform-specific hacks without guards. Do not hardcode configuration values. Do not make ViewModels require UI types. Do not manually create tasks/specs.
+Do not put logic in code-behind. Do not use static service locators. Do not hardcode configuration values. Do not make ViewModels require UI types. Do not manually create tasks/specs.
 
 ## Testing
 
@@ -202,7 +200,7 @@ Review relevant documentation in docs/ before starting. Check the [Architecture]
 
 ### During Development
 
-Keep MVVM separation strict. Ensure cross-platform parity. Stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships).
+Keep MVVM separation strict. Stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships). Leverage Windows-specific features when they enhance user experience.
 
 ### Key Systems Reference
 
