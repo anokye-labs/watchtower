@@ -186,28 +186,39 @@ public class ProxyServer : IDisposable
 
                     _registry.RegisterApp(connectionId, appName, tools);
                 }
-                else if (type == "toolResponse")
+                else if (type == "toolResponse" && root.TryGetProperty("correlationId", out var corrIdElement))
                 {
                     // Handle tool execution response
-                    if (root.TryGetProperty("correlationId", out var corrIdElement))
-                    {
-                        var correlationId = corrIdElement.GetInt64();
+                    var correlationId = corrIdElement.GetInt64();
                         
-                        // Parse the result
-                        var result = root.TryGetProperty("result", out var resultElement)
-                            ? JsonSerializer.Deserialize<McpToolResult>(resultElement.GetRawText())
-                            : McpToolResult.Fail("Invalid response format");
-
-                        // Complete the pending request
-                        if (_pendingRequests.TryRemove(correlationId, out var tcs))
+                    // Parse the result
+                    McpToolResult result;
+                    if (root.TryGetProperty("result", out var resultElement))
+                    {
+                        if (resultElement.ValueKind == JsonValueKind.Null)
                         {
-                            tcs.TrySetResult(result ?? McpToolResult.Fail("Null result"));
-                            _logger.LogDebug("Completed pending request {CorrelationId}", correlationId);
+                            result = McpToolResult.Fail("Null result");
                         }
                         else
                         {
-                            _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
+                            var deserializedResult = JsonSerializer.Deserialize<McpToolResult>(resultElement.GetRawText());
+                            result = deserializedResult ?? McpToolResult.Fail("Null result");
                         }
+                    }
+                    else
+                    {
+                        result = McpToolResult.Fail("Missing result property");
+                    }
+
+                    // Complete the pending request
+                    if (_pendingRequests.TryRemove(correlationId, out var tcs))
+                    {
+                        tcs.TrySetResult(result);
+                        _logger.LogDebug("Completed pending request {CorrelationId}", correlationId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
                     }
                 }
             }
@@ -340,10 +351,13 @@ public class ProxyServer : IDisposable
                 return;
             }
 
-            // Parse tool arguments
-            var arguments = paramsEl.TryGetProperty("arguments", out var argsEl)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(argsEl.GetRawText())
-                : null;
+            // Parse tool arguments - store as object to preserve JSON structure
+            object? arguments = null;
+            if (paramsEl.TryGetProperty("arguments", out var argsEl))
+            {
+                // Keep as JsonElement to preserve exact JSON structure without type conversion
+                arguments = JsonSerializer.Deserialize<JsonElement>(argsEl.GetRawText());
+            }
 
             // Generate correlation ID
             var correlationId = Interlocked.Increment(ref _nextCorrelationId);
@@ -374,20 +388,29 @@ public class ProxyServer : IDisposable
                     toolName, app.Name, correlationId);
 
                 // Wait for response with timeout
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), timeoutCts.Token);
                 var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 McpToolResult result;
                 if (completedTask == timeoutTask)
                 {
-                    // Timeout occurred
-                    _pendingRequests.TryRemove(correlationId, out _);
-                    result = McpToolResult.Fail("Tool execution timed out after 30 seconds");
-                    _logger.LogWarning("Tool '{ToolName}' timed out (correlation ID: {CorrelationId})", toolName, correlationId);
+                    // Timeout occurred (but verify that the request is still pending to avoid race conditions)
+                    if (_pendingRequests.TryRemove(correlationId, out _))
+                    {
+                        result = McpToolResult.Fail("Tool execution timed out after 30 seconds");
+                        _logger.LogWarning("Tool '{ToolName}' timed out (correlation ID: {CorrelationId})", toolName, correlationId);
+                    }
+                    else
+                    {
+                        // A response won the race against the timeout; use the actual tool result instead of reporting a timeout.
+                        result = await tcs.Task;
+                    }
                 }
                 else
                 {
-                    // Got response
+                    // Got response, cancel the timeout task to free resources
+                    timeoutCts.Cancel();
                     result = await tcs.Task;
                 }
 

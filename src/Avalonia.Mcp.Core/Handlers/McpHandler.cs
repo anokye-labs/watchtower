@@ -158,9 +158,20 @@ public class McpHandler : IMcpHandler
 
                     // Extract tool name and parameters
                     var toolName = root.GetProperty("tool").GetString()!;
-                    var parameters = root.TryGetProperty("parameters", out var paramsEl)
-                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(paramsEl.GetRawText())
-                        : null;
+                    Dictionary<string, object>? parameters = null;
+                    if (root.TryGetProperty("parameters", out var paramsEl) && paramsEl.ValueKind != JsonValueKind.Null)
+                    {
+                        // Deserialize to Dictionary<string, JsonElement> first for safer handling
+                        var paramDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(paramsEl.GetRawText());
+                        if (paramDict != null)
+                        {
+                            parameters = new Dictionary<string, object>();
+                            foreach (var kvp in paramDict)
+                            {
+                                parameters[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
 
                     // Create tool invocation
                     var invocation = new McpToolInvocation
