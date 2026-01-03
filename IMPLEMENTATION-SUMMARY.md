@@ -168,7 +168,7 @@ The SDL2 implementation provides:
 - Event-driven architecture with state change detection
 - Proper cleanup with SDL_QuitSubSystem on dispose
 - **Windows**: XInput API (Xbox controllers)
-- **SDL2 library**: Cross-platform gamepad support layer
+- **SDL2 library**: Gamepad support layer for Windows
 
 Platform-specific implementations should inherit from `GameControllerService` and override hardware detection/polling methods.
 

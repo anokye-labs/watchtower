@@ -108,7 +108,6 @@ See `WatchTower/Views/MainWindow.axaml` for a working example of FluentIcons usa
 - ✅ **Performance**: Lightweight and efficient rendering
 - ✅ **Maintainability**: No need to manage custom SVG or image assets
 - ✅ **Windows-Native**: Proper alignment with Segoe Fluent Icons specifications
-- ✅ **Segoe Metrics**: Proper alignment with Segoe Fluent Icons specifications
 
 ## Best Practices
 
