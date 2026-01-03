@@ -68,7 +68,7 @@ The frame uses a 5x5 grid slicing system for resolution-independent scaling.
 
 ✅ **MVVM**: Logic in ViewModels only
 ✅ **DI**: Services injected via ServiceProvider  
-✅ **Cross-Platform**: Pure Avalonia
+✅ **Windows-Native**: Pure Avalonia, optimized for Windows
 ✅ **No Breaking Changes**: Original windows kept for reference
 
 ## Next Steps

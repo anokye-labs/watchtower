@@ -11,8 +11,6 @@ The window position persistence feature remembers the display/monitor where Watc
 ## Where It's Saved
 The preferences are stored in:
 - **Windows**: `%APPDATA%\WatchTower\user-preferences.json`
-- **macOS**: `<ApplicationData>/WatchTower/user-preferences.json` (typically `~/.config/WatchTower/user-preferences.json`, but on some .NET runtimes may be `~/.local/share/WatchTower/user-preferences.json`)
-- **Linux**: `<ApplicationData>/WatchTower/user-preferences.json` (usually `~/.config/WatchTower/user-preferences.json`)
 
 ## Manual Testing Scenarios
 
@@ -69,8 +67,6 @@ The preferences are stored in:
 - [ ] Position is saved when moving to a different monitor
 - [ ] Graceful fallback when saved monitor is unavailable
 - [ ] Works correctly on Windows
-- [ ] Works correctly on macOS
-- [ ] Works correctly on Linux
 - [ ] No exceptions or errors in console logs
 - [ ] Preferences file is created and updated correctly
 
