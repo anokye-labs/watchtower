@@ -10,8 +10,8 @@ using GameControllerButton = WatchTower.Models.GameControllerButton;
 namespace WatchTower.Services;
 
 /// <summary>
-/// SDL2-based game controller service with cross-platform hardware support.
-/// Uses Silk.NET.SDL for gamepad polling on Windows, macOS, and Linux.
+/// SDL2-based game controller service with hardware support.
+/// Uses Silk.NET.SDL for gamepad polling on Windows.
 /// </summary>
 public unsafe class GameControllerService : IGameControllerService
 {

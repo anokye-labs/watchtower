@@ -42,6 +42,17 @@ public interface IUserPreferencesService
     void SetFontOverrides(FontOverrides? fontOverrides);
 
     /// <summary>
+    /// Gets the window position preferences if configured.
+    /// </summary>
+    WindowPositionPreferences? GetWindowPosition();
+
+    /// <summary>
+    /// Sets the window position preferences and persists them.
+    /// </summary>
+    /// <param name="windowPosition">The window position preferences to set, or null to clear.</param>
+    void SetWindowPosition(WindowPositionPreferences? windowPosition);
+
+    /// <summary>
     /// Event raised when preferences change.
     /// </summary>
     event EventHandler<UserPreferences>? PreferencesChanged;

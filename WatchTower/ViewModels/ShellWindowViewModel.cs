@@ -6,6 +6,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using WatchTower.Services;
+using WatchTower.Utilities;
 
 namespace WatchTower.ViewModels;
 
@@ -20,6 +21,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _isAnimating;
     private readonly SplashWindowViewModel _splashViewModel;
     private readonly IFrameSliceService _frameSliceService;
+    private readonly SubscriptionManager _subscriptions = new();
     private MainWindowViewModel? _mainViewModel;
     private bool _cleanedUp;
     
@@ -80,8 +82,10 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         _frameSliceService = frameSliceService ?? throw new ArgumentNullException(nameof(frameSliceService));
         _currentContent = _splashViewModel;
         
-        // Forward exit request from splash
-        _splashViewModel.ExitRequested += OnSplashExitRequested;
+        // Forward exit request from splash using SubscriptionManager
+        _subscriptions.Subscribe(
+            () => _splashViewModel.ExitRequested += OnSplashExitRequested,
+            () => _splashViewModel.ExitRequested -= OnSplashExitRequested);
     }
 
     /// <summary>
@@ -553,7 +557,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             return;
         _cleanedUp = true;
 
-        _splashViewModel.ExitRequested -= OnSplashExitRequested;
+        // Unsubscribe from all events using SubscriptionManager
+        _subscriptions.Dispose();
         _splashViewModel.Cleanup();
         
         // Dispose MainWindowViewModel if it was created
