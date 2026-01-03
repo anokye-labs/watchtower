@@ -106,12 +106,6 @@ updates:
       - "nuget"
       - "mcp-proxy"
     groups:
-      avalonia:
-        patterns:
-          - "Avalonia*"
-        update-types:
-          - "minor"
-          - "patch"
       microsoft-extensions:
         patterns:
           - "Microsoft.Extensions.*"
