@@ -8,7 +8,7 @@ WatchTower supports full-duplex voice capabilities with both **offline** and **o
 - **Online Mode**: Uses Azure Cognitive Services for both speech recognition and synthesis. Requires internet and API keys.
 - **Hybrid Mode**: *(Not yet implemented)* Intended to prefer offline with online fallback; currently behaves the same as offline mode.
 
-**⚠️ Platform Support Note:** The current voice implementation uses NAudio for audio capture/playback, which is Windows-only. Linux and macOS support will require an alternative audio backend (e.g., SDL via Silk.NET).
+Voice features use NAudio for high-quality Windows audio integration.
 
 ## Quick Start (Offline Mode)
 

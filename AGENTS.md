@@ -40,7 +40,7 @@ SplashWindow.axaml       ->  SplashWindowViewModel     ->  IVoiceOrchestrationSe
 
 1. **MVVM Architecture First** - All logic in ViewModels and Services, Views are presentation-only.
 2. **Open Source Only** - Use only MIT or Apache 2.0 licensed dependencies.
-3. **Windows-Native** - Optimized for Windows with full .NET ecosystem support and native audio/input integration.
+3. **Windows-Native** - Optimized for Windows with native audio/input integration for best-in-class experience.
 4. **Testability Required** - ViewModels testable without UI dependencies using Avalonia.Headless.
 5. **Design System Compliance** - Use Avalonia CSS vars; dark theme primary, light supported.
 
@@ -68,7 +68,7 @@ dotnet build
 dotnet run --project WatchTower/WatchTower.csproj
 ```
 
-### Publish (per platform)
+### Publish
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true
@@ -200,7 +200,7 @@ Review relevant documentation in docs/ before starting. Check the [Architecture]
 
 ### During Development
 
-Keep MVVM separation strict. Stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships).
+Keep MVVM separation strict. Stay on latest stable Avalonia (currently 11.3.9, suggest upgrade when newer stable ships). Leverage Windows-specific features when they enhance user experience.
 
 ### Key Systems Reference
 
@@ -221,7 +221,7 @@ Work is tracked via the [Nsumankwahene Flow System](docs/nsumankwahene-workflow.
 
 The message "Terminal will be reused by tasks, press any key to close it." is informational, not a prompt.
 
-Voice features use NAudio for audio capture/playback, leveraging Windows-native audio APIs for optimal performance and reliability.
+Voice features use NAudio for audio capture/playback, providing high-quality Windows audio integration.
 
 ---
 Last Updated: 2025-12-28 | Constitution Version: 1.2.0

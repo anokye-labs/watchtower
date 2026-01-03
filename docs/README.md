@@ -118,7 +118,7 @@ The application uses a unified ShellWindow that hosts both splash and main conte
 
 ### Gamepad-First Navigation
 
-Full SDL2 integration provides cross-platform game controller support:
+Full SDL2 integration provides game controller support on Windows:
 
 - **XYFocus Navigation** - D-Pad and analog stick control UI focus
 - **Button Mapping** - Standard Xbox/PlayStation button layouts

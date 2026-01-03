@@ -134,13 +134,13 @@ The main README provides project overview and quick start. The docs/ARCHITECTURE
 
 Write in clear, flowing prose. Avoid excessive bullet points in explanatory text. Use code blocks for commands and code examples. Keep documentation up to date with code changes.
 
-## Windows Target Platform
+## Windows Focus
 
-WatchTower targets Windows 10 and Windows 11. All contributions should work on these platforms.
+WatchTower is a Windows-native application targeting Windows 10 and Windows 11. All contributions should be tested on Windows.
 
-### Windows-Native Code
+### Windows-Optimized Code
 
-WatchTower is a Windows-native application. You may use Windows-specific APIs and features when they provide benefit. Document any Windows version requirements (e.g., Windows 10+ only features).
+Leverage Windows-specific features and APIs when they enhance user experience. Document any Windows version requirements (e.g., Windows 10+ only features) or optimizations in the code.
 
 ### Testing
 

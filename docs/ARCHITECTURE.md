@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the WatchTower application ar
 
 ## Overview
 
-WatchTower is a Windows-native desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
+WatchTower is a Windows desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. The application showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, specifically Adinkra symbols.
 
 ## Design Philosophy
 
@@ -14,7 +14,7 @@ The application's visual identity is built around the "Ancestral Futurism" desig
 
 ### Core Principles
 
-The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Windows-Native enables full utilization of Windows APIs and ecosystem for optimal performance and feature support. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
+The architecture is guided by five core principles. First, MVVM Architecture First ensures that all logic resides in ViewModels and Services, with Views containing only bindings and presentation code. Second, Open Source Only means the project uses only MIT or Apache 2.0 licensed dependencies. Third, Windows-Native means the application is optimized for Windows with native integrations and best-in-class Windows experience. Fourth, Testability Required means ViewModels are testable without UI dependencies using Avalonia.Headless. Fifth, Design System Compliance ensures consistent styling through Avalonia CSS variables with dark as the primary theme.
 
 ## MVVM Architecture
 
@@ -136,7 +136,7 @@ Adaptive Card Display renders full-screen cards with the themed Ancestral Futuri
 
 ### 4. Game Controller System
 
-The game controller system provides full SDL2 integration for game controller support.
+The game controller system provides full SDL2 integration for gamepad support on Windows.
 
 **Architecture**:
 
@@ -150,7 +150,7 @@ IGameControllerService (Interface with events)
 GameControllerService (SDL2-based implementation)
                     |
                     v
-Silk.NET.SDL v2.22.0 (SDL2 bindings via Silk.NET)
+Silk.NET.SDL v2.22.0 (SDL2 bindings for .NET)
 ```
 
 **Features**:
@@ -309,11 +309,17 @@ TextToSpeechService (Piper/Azure)
 Audio Output
 ```
 
-## Deployment
+## Windows Support
 
-WatchTower is designed for Windows deployment (win-x64) with self-contained single-file distribution.
+WatchTower is designed as a Windows-native application targeting win-x64.
 
-Voice features use NAudio for Windows-native audio capture/playback, providing reliable integration with the Windows audio stack.
+**Platform Focus**:
+
+The application leverages Windows-specific features and optimizations to provide the best possible experience. SDL2 provides game controller support on Windows. Avalonia provides UI rendering. NAudio provides high-quality audio capture and playback.
+
+**Native Windows Integration**:
+
+Voice features use NAudio for superior audio quality and integration with Windows audio subsystem. Game controller support uses SDL2 for broad hardware compatibility. The application can take advantage of Windows-specific optimizations when beneficial.
 
 ## Testing Strategy
 
