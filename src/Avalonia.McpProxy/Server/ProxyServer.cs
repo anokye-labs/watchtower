@@ -407,27 +407,10 @@ public class ProxyServer : IDisposable
 
                     // Forward the app's response to the agent
                     // JSON-RPC 2.0: response must have either "result" OR "error", not both
-                    if (appResponse.TryGetProperty("error", out var errorEl))
-                    {
-                        var agentErrorResponse = new
-                        {
-                            jsonrpc = "2.0",
-                            id = requestId ?? 0,
-                            error = errorEl
-                        };
-                        await SendToAgentAsync(JsonSerializer.Serialize(agentErrorResponse), cancellationToken);
-                    }
-                    else if (appResponse.TryGetProperty("result", out var resultEl))
-                    {
-                        var agentResultResponse = new
-                        {
-                            jsonrpc = "2.0",
-                            id = requestId ?? 0,
-                            result = resultEl
-                        };
-                        await SendToAgentAsync(JsonSerializer.Serialize(agentResultResponse), cancellationToken);
-                    }
-                    else
+                    var hasError = appResponse.TryGetProperty("error", out var errorEl);
+                    var hasResult = appResponse.TryGetProperty("result", out var resultEl);
+
+                    if (!hasError && !hasResult)
                     {
                         // Malformed JSON-RPC response from app: missing both "result" and "error"
                         _logger.LogWarning("Received malformed response from app '{AppName}' for correlation ID: {CorrelationId} (missing both 'result' and 'error')",
@@ -435,6 +418,13 @@ public class ProxyServer : IDisposable
                         await SendErrorToAgentAsync("Malformed response from application: missing both 'result' and 'error'.", requestId, CancellationToken.None);
                         return;
                     }
+
+                    // Use ternary operator to create response based on whether error or result is present
+                    var agentResponse = hasError
+                        ? JsonSerializer.Serialize(new { jsonrpc = "2.0", id = requestId ?? 0, error = errorEl })
+                        : JsonSerializer.Serialize(new { jsonrpc = "2.0", id = requestId ?? 0, result = resultEl });
+
+                    await SendToAgentAsync(agentResponse, cancellationToken);
 
                     _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
                         app.Name, correlationId);
