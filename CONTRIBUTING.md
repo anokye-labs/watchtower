@@ -134,13 +134,13 @@ The main README provides project overview and quick start. The docs/ARCHITECTURE
 
 Write in clear, flowing prose. Avoid excessive bullet points in explanatory text. Use code blocks for commands and code examples. Keep documentation up to date with code changes.
 
-## Cross-Platform Considerations
+## Windows Focus
 
-WatchTower targets Windows, macOS, and Linux. All contributions should work on all platforms unless explicitly documented otherwise.
+WatchTower is a Windows-native application. All contributions should be tested on Windows.
 
-### Platform-Specific Code
+### Windows-Optimized Code
 
-Avoid platform-specific code when possible. If platform-specific code is necessary, use appropriate guards and document the limitation.
+When possible, leverage Windows-specific features to enhance user experience. Document any Windows-specific optimizations in the code.
 
 ### Testing
 

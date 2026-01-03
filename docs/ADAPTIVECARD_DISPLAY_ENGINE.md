@@ -116,14 +116,9 @@ The default sample card demonstrates:
 ✅ **Dependency Injection**: All dependencies injected via constructor  
 ✅ **Testability**: ViewModels have no UI dependencies
 
-## Cross-Platform Support
+## Windows Support
 
-The AdaptiveCard rendering works on:
-- Windows (win-x64)
-- macOS (osx-x64)
-- Linux (linux-x64)
-
-All maintained through Avalonia's cross-platform capabilities.
+The AdaptiveCard rendering works on Windows (win-x64), leveraging Avalonia's rendering capabilities.
 
 ## Future Enhancements
 
