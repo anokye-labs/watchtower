@@ -130,9 +130,9 @@ start coverage-report/index.html  # Windows
 
 ### Planned Workflows
 
-- **Code Formatting Check** (Issue #166) - Validates code follows .editorconfig standards
-- **Dependabot Configuration** (Issue #167) - Automated dependency updates
-- **CI Integration with Project Management** (Issue #168) - Links CI status to project board
+- **Code Formatting Check** - Validates code follows .editorconfig standards
+- **Dependabot Configuration** - Automated dependency updates
+- **CI Integration with Project Management** - Links CI status to project board
 
 ### Branch Protection
 

@@ -178,7 +178,6 @@ jobs:
             // Simple regex-based XML parsing for coverage
             // Note: While not ideal, regex parsing is used here to avoid additional dependencies
             // in GitHub Actions. The Cobertura XML format is stable and predictable.
-            const classRegex = /<class name="([^"]*)" filename="([^"]*)" line-rate="([^"]*)"/g;
             const lineRegex = /<line number="\d+" hits="(\d+)"/g;
             
             let servicesLines = 0, servicesCovered = 0;
@@ -283,17 +282,42 @@ jobs:
                 : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`}${thresholdNote}
             
             ---
-            📊 [View detailed HTML coverage report](../actions/runs/${{ github.run_id }}) in the workflow artifacts.
+            📊 [View detailed HTML coverage report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) in the workflow artifacts.
             `;
             
             // Post comment on PR
             if (context.payload.pull_request) {
-              await github.rest.issues.createComment({
+              // Find existing coverage report comment
+              const commentIdentifier = '<!-- coverage-report-comment -->';
+              const commentBody = `${commentIdentifier}\n${summary}`;
+              
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
-                body: summary
               });
+              
+              const existingComment = comments.find(comment => 
+                comment.body && comment.body.includes(commentIdentifier)
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: commentBody
+                });
+              }
             }
             
             // Output summary
@@ -301,13 +325,35 @@ jobs:
             await core.summary.write();
             
             // Check threshold and fail if needed (only if Services/ViewModels files changed)
-            if (shouldEnforceThreshold && parseFloat(combinedPercent) < threshold) {
-              core.setFailed(`Coverage ${combinedPercent}% is below the required threshold of ${threshold}%`);
+            const combinedValue = parseFloat(combinedPercent);
+            const noExecutableLines = servicesLines === 0 && viewModelsLines === 0;
+            
+            if (shouldEnforceThreshold) {
+              if (noExecutableLines) {
+                // Services/ViewModels files were modified but there are no executable lines
+                // in the coverage report for those directories. This likely indicates a
+                // configuration issue or that tests are not exercising those files.
+                core.setFailed(
+                  'Coverage data for Services/ViewModels is missing or reports 0 executable lines. ' +
+                  'Please verify that coverage collection is configured correctly and that tests are running against these files.'
+                );
+              } else if (Number.isNaN(combinedValue)) {
+                // Unable to parse coverage percentage; treat as a configuration error.
+                core.setFailed(
+                  'Unable to determine Services/ViewModels coverage percentage from the coverage report. ' +
+                  'Please verify that the coverage report was generated correctly.'
+                );
+              } else if (combinedValue < threshold) {
+                core.setFailed(`Coverage ${combinedPercent}% is below the required threshold of ${threshold}%`);
+              }
             }
             
             // Output values for use in other steps
             core.setOutput('services-coverage', servicesPercent);
             core.setOutput('viewmodels-coverage', viewModelsPercent);
             core.setOutput('combined-coverage', combinedPercent);
-            core.setOutput('threshold-met', parseFloat(combinedPercent) >= threshold);
+            core.setOutput(
+              'threshold-met',
+              !noExecutableLines && !Number.isNaN(combinedValue) && combinedValue >= threshold
+            );
             core.setOutput('threshold-enforced', shouldEnforceThreshold);
