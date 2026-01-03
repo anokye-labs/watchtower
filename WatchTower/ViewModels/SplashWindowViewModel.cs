@@ -43,7 +43,14 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
         // Get version from assembly
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
-        _appVersion = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.0";
+        if (version == null || (version.Major == 1 && version.Minor == 0 && version.Build == 0 && version.Revision == 0))
+        {
+            _appVersion = "Development Build";
+        }
+        else
+        {
+            _appVersion = $"v{version.Major}.{version.Minor}.{version.Build}";
+        }
         
         DiagnosticMessages = new ObservableCollection<string>();
         

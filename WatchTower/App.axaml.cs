@@ -180,9 +180,9 @@ public partial class App : Application
         }
     }
 
-    private void ShowWelcomeScreen(Views.ShellWindow shellWindow, IUserPreferencesService userPreferencesService, ILogger<App> logger)
+    private async void ShowWelcomeScreen(Views.ShellWindow shellWindow, IUserPreferencesService userPreferencesService, ILogger<App> logger)
     {
-        var welcomeViewModel = new WelcomeContentViewModel(userPreferencesService);
+        var welcomeViewModel = _serviceProvider!.GetRequiredService<WelcomeContentViewModel>();
         var welcomeContent = new Views.WelcomeContent
         {
             DataContext = welcomeViewModel
@@ -192,8 +192,8 @@ public partial class App : Application
         var welcomeWindow = new Avalonia.Controls.Window
         {
             Content = welcomeContent,
-            Width = 800,
-            Height = 600,
+            Width = 700,
+            Height = 550,
             CanResize = false,
             WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterOwner,
             Background = Avalonia.Media.Brushes.Transparent,
@@ -209,6 +209,6 @@ public partial class App : Application
             welcomeWindow.Close();
         };
 
-        welcomeWindow.ShowDialog(shellWindow);
+        await welcomeWindow.ShowDialog(shellWindow);
     }
 }
