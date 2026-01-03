@@ -293,7 +293,6 @@ Updated to reflect Windows-only target per #172. Removed cross-platform referenc
 - [ ] #139 - Enhance Splash Screen UI with Branding
 - [ ] #141 - Create Welcome Content Experience
 - [ ] #54 - Enhanced Welcome Screen (Epic)
-- [ ] #44 - Remember last display position
 - [ ] #55 - Panel frame extension
 - [ ] #130 - Testing Documentation & Patterns
 - [ ] #146 - Add Confidence Score Documentation
@@ -305,10 +304,12 @@ Updated to reflect Windows-only target per #172. Removed cross-platform referenc
 - [ ] #50 - MCP tool routing
 - [ ] #113 - Window System & Frame Enhancement Suite (Epic)
 
+**Note**: Issue #44 is already closed and excluded from this checklist.
+
 ### Statistics
-- Total Issues: 23
+- Total Issues: 22 (excluding #44 which is already closed)
 - Updated: 0
-- Remaining: 23
+- Remaining: 22
 
 ---
 
@@ -331,7 +332,15 @@ gh issue comment 135 --repo anokye-labs/watchtower --body "Updated to reflect Wi
 # ... continue for all issues
 ```
 
-**Note**: You would need to prepare the updated markdown files for each issue first.
+**Note**: You need to prepare `updated-<issue>.md` files for each issue before running this script.
+
+Each `updated-<issue>.md` file should:
+- Start from the current issue body retrieved from GitHub
+- Apply the **Update Pattern** described earlier in this document (remove cross-platform/macOS/Linux references, update acceptance criteria to "Windows 10/11" only, adjust CI matrix examples to Windows-only)
+- For CI/CD issues like **#162** and **#135**, follow the detailed instructions provided earlier so the workflows only target Windows runners
+- Save the fully updated issue body as `updated-162.md`, `updated-135.md`, etc., in the same directory where you run the script
+
+**Recommended approach**: Use the detailed find/replace instructions in `COMPLETE-ISSUE-UPDATE-INSTRUCTIONS.md` to create each updated file.
 
 ---
 

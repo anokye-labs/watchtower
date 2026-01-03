@@ -1,6 +1,6 @@
 # Complete Issue Update Instructions - Windows-Only Migration
 
-This document contains the complete, detailed update instructions for ALL 23+ identified issues that need cross-platform references removed.
+This document contains the complete, detailed update instructions for 22 open issues (of 23+ originally identified, with Issue #44 already closed) that need cross-platform references removed.
 
 ## Standard Update Comment
 Add to EVERY updated issue:
