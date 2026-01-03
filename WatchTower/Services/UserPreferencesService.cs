@@ -44,12 +44,34 @@ public class UserPreferencesService : IUserPreferencesService
 
     public void SavePreferences(UserPreferences preferences)
     {
+        UserPreferences? preferencesToNotify = null;
         lock (_lock)
         {
-            _preferences = preferences;
-            PersistPreferences();
+            // Create a copy to avoid mutating the caller's object
+            var json = JsonSerializer.Serialize(preferences, JsonOptions);
+            var preferencesCopy = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
+            
+            if (preferencesCopy != null)
+            {
+                // Preserve FirstRunDate - it should not be overwritten once set
+                if (_preferences.FirstRunDate.HasValue)
+                {
+                    preferencesCopy.FirstRunDate = _preferences.FirstRunDate;
+                }
+                
+                _preferences = preferencesCopy;
+                PersistPreferences();
+                
+                // Create defensive copy for event notification
+                preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(
+                    JsonSerializer.Serialize(_preferences, JsonOptions), JsonOptions);
+            }
         }
-        PreferencesChanged?.Invoke(this, preferences);
+        
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
     }
 
     public ThemeMode GetThemeMode()
@@ -101,6 +123,74 @@ public class UserPreferencesService : IUserPreferencesService
         PreferencesChanged?.Invoke(this, _preferences);
     }
 
+    public bool GetHasSeenWelcomeScreen()
+    {
+        lock (_lock)
+        {
+            return _preferences.HasSeenWelcomeScreen;
+        }
+    }
+
+    public void SetHasSeenWelcomeScreen(bool hasSeenWelcomeScreen)
+    {
+        UserPreferences? preferencesToNotify = null;
+        lock (_lock)
+        {
+            if (_preferences.HasSeenWelcomeScreen == hasSeenWelcomeScreen)
+                return;
+
+            _preferences.HasSeenWelcomeScreen = hasSeenWelcomeScreen;
+            PersistPreferences();
+            
+            // Create defensive copy for event notification outside the lock
+            var json = JsonSerializer.Serialize(_preferences, JsonOptions);
+            preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
+        }
+        _logger.LogInformation("HasSeenWelcomeScreen changed to {HasSeenWelcomeScreen}", hasSeenWelcomeScreen);
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
+    }
+
+    public bool GetShowWelcomeOnStartup()
+    {
+        lock (_lock)
+        {
+            return _preferences.ShowWelcomeOnStartup;
+        }
+    }
+
+    public void SetShowWelcomeOnStartup(bool showWelcomeOnStartup)
+    {
+        UserPreferences? preferencesToNotify = null;
+        lock (_lock)
+        {
+            if (_preferences.ShowWelcomeOnStartup == showWelcomeOnStartup)
+                return;
+
+            _preferences.ShowWelcomeOnStartup = showWelcomeOnStartup;
+            PersistPreferences();
+            
+            // Create defensive copy for event notification outside the lock
+            var json = JsonSerializer.Serialize(_preferences, JsonOptions);
+            preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
+        }
+        _logger.LogInformation("ShowWelcomeOnStartup changed to {ShowWelcomeOnStartup}", showWelcomeOnStartup);
+        if (preferencesToNotify != null)
+        {
+            PreferencesChanged?.Invoke(this, preferencesToNotify);
+        }
+    }
+
+    public DateTime? GetFirstRunDate()
+    {
+        lock (_lock)
+        {
+            return _preferences.FirstRunDate;
+        }
+    }
+
     public WindowPositionPreferences? GetWindowPosition()
     {
         lock (_lock)
@@ -146,6 +236,7 @@ public class UserPreferencesService : IUserPreferencesService
                 if (preferences != null)
                 {
                     _logger.LogDebug("Loaded user preferences from {Path}", _preferencesFilePath);
+                    ApplyMigrations(preferences);
                     return preferences;
                 }
             }
@@ -156,7 +247,40 @@ public class UserPreferencesService : IUserPreferencesService
         }
 
         _logger.LogDebug("Using default user preferences");
-        return new UserPreferences();
+        var defaultPreferences = new UserPreferences();
+        ApplyMigrations(defaultPreferences);
+        return defaultPreferences;
+    }
+
+    /// <summary>
+    /// Apply migration logic to preferences loaded from disk or newly created.
+    /// </summary>
+    private void ApplyMigrations(UserPreferences preferences)
+    {
+        bool needsSave = false;
+
+        // Set FirstRunDate if not already set
+        if (preferences.FirstRunDate == null)
+        {
+            preferences.FirstRunDate = DateTime.UtcNow;
+            needsSave = true;
+            _logger.LogInformation("First run detected, setting FirstRunDate to {FirstRunDate}", preferences.FirstRunDate);
+        }
+
+        // Persist changes if migrations were applied
+        if (needsSave)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(preferences, JsonOptions);
+                File.WriteAllText(_preferencesFilePath, json);
+                _logger.LogDebug("Saved migrated preferences to {Path}", _preferencesFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save migrated preferences to {Path}", _preferencesFilePath);
+            }
+        }
     }
 
     private void PersistPreferences()
