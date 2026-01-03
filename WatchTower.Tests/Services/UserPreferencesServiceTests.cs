@@ -10,7 +10,6 @@ namespace WatchTower.Tests.Services;
 
 public class UserPreferencesServiceTests : IDisposable
 {
-    private readonly string _testPreferencesPath;
     private readonly Mock<ILogger<UserPreferencesService>> _loggerMock;
 
     public UserPreferencesServiceTests()
@@ -18,7 +17,6 @@ public class UserPreferencesServiceTests : IDisposable
         // Create a temporary directory for test preferences
         var tempDir = Path.Combine(Path.GetTempPath(), $"WatchTowerTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(tempDir);
-        _testPreferencesPath = Path.Combine(tempDir, "user-preferences.json");
         
         // Mock the preferences file path by using environment variable
         Environment.SetEnvironmentVariable("APPDATA", tempDir);
@@ -137,13 +135,12 @@ public class UserPreferencesServiceTests : IDisposable
     {
         // Arrange
         var service1 = new UserPreferencesService(_loggerMock.Object);
-        var testDate = DateTime.UtcNow;
+        var originalFirstRunDate = service1.GetFirstRunDate();
 
         // Act - Save preferences with new properties set
         var preferences = service1.GetPreferences();
         preferences.HasSeenWelcomeScreen = true;
         preferences.ShowWelcomeOnStartup = false;
-        preferences.FirstRunDate = testDate;
         service1.SavePreferences(preferences);
 
         // Create a new service instance to load from disk
@@ -154,8 +151,8 @@ public class UserPreferencesServiceTests : IDisposable
         Assert.True(loadedPreferences.HasSeenWelcomeScreen);
         Assert.False(loadedPreferences.ShowWelcomeOnStartup);
         Assert.NotNull(loadedPreferences.FirstRunDate);
-        // Compare dates with some tolerance for serialization
-        Assert.True(Math.Abs((loadedPreferences.FirstRunDate.Value - testDate).TotalSeconds) < 1);
+        // FirstRunDate should be preserved (not changed by SavePreferences)
+        Assert.Equal(originalFirstRunDate, loadedPreferences.FirstRunDate);
     }
 
     [Fact]
@@ -301,5 +298,25 @@ public class UserPreferencesServiceTests : IDisposable
         Assert.Contains("hasSeenWelcomeScreen", json);
         Assert.Contains("showWelcomeOnStartup", json);
         Assert.Contains("firstRunDate", json);
+    }
+
+    [Fact]
+    public void SavePreferences_PreservesOriginalFirstRunDate()
+    {
+        // Arrange
+        var service = new UserPreferencesService(_loggerMock.Object);
+        var originalFirstRunDate = service.GetFirstRunDate();
+        Assert.NotNull(originalFirstRunDate);
+
+        // Act - Try to save preferences with a different FirstRunDate
+        var preferences = service.GetPreferences();
+        var newDate = DateTime.UtcNow.AddDays(10);
+        preferences.FirstRunDate = newDate;
+        service.SavePreferences(preferences);
+
+        // Assert - FirstRunDate should not have changed
+        var currentFirstRunDate = service.GetFirstRunDate();
+        Assert.Equal(originalFirstRunDate, currentFirstRunDate);
+        Assert.NotEqual(newDate, currentFirstRunDate);
     }
 }

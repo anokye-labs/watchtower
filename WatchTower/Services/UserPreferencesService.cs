@@ -46,6 +46,12 @@ public class UserPreferencesService : IUserPreferencesService
     {
         lock (_lock)
         {
+            // Preserve FirstRunDate - it should not be overwritten once set
+            if (_preferences.FirstRunDate.HasValue && preferences.FirstRunDate != _preferences.FirstRunDate)
+            {
+                preferences.FirstRunDate = _preferences.FirstRunDate;
+            }
+            
             _preferences = preferences;
             PersistPreferences();
         }
