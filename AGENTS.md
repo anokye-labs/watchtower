@@ -40,7 +40,7 @@ SplashWindow.axaml       ->  SplashWindowViewModel     ->  IVoiceOrchestrationSe
 
 1. **MVVM Architecture First** - All logic in ViewModels and Services, Views are presentation-only.
 2. **Open Source Only** - Use only MIT or Apache 2.0 licensed dependencies.
-3. **Windows-Native** - Optimized for Windows with native integrations and best-in-class Windows experience.
+3. **Windows-Native** - Optimized for Windows with native audio/input integration for best-in-class experience.
 4. **Testability Required** - ViewModels testable without UI dependencies using Avalonia.Headless.
 5. **Design System Compliance** - Use Avalonia CSS vars; dark theme primary, light supported.
 

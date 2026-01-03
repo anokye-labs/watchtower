@@ -136,15 +136,15 @@ Write in clear, flowing prose. Avoid excessive bullet points in explanatory text
 
 ## Windows Focus
 
-WatchTower is a Windows-native application. All contributions should be tested on Windows.
+WatchTower is a Windows-native application targeting Windows 10 and Windows 11. All contributions should be tested on Windows.
 
 ### Windows-Optimized Code
 
-When possible, leverage Windows-specific features to enhance user experience. Document any Windows-specific optimizations in the code.
+Leverage Windows-specific features and APIs when they enhance user experience. Document any Windows version requirements (e.g., Windows 10+ only features) or optimizations in the code.
 
 ### Testing
 
-Test on multiple platforms when possible. Document any platform-specific behavior.
+Test on Windows 10 and Windows 11. Document any version-specific behavior.
 
 ## License
 
