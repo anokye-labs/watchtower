@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This plan outlines the implementation of a full-screen adaptive card theme system for WatchTower with integrated gamepad navigation. The system will transform adaptive cards from embedded UI elements into immersive, full-screen experiences that align with the "Ancestral Futurism" design language while maintaining strict MVVM architecture and cross-platform compatibility.
+This plan outlines the implementation of a full-screen adaptive card theme system for WatchTower with integrated gamepad navigation. The system will transform adaptive cards from embedded UI elements into immersive, full-screen experiences that align with the "Ancestral Futurism" design language while maintaining strict MVVM architecture and Windows-native focus.
 
 ## Design Goals
 
@@ -10,7 +10,7 @@ This plan outlines the implementation of a full-screen adaptive card theme syste
 2. **Ancestral Futurism Theming** - Apply holographic cyan, Ashanti gold, mahogany, and void black color scheme
 3. **Gamepad-First Navigation** - XYFocus integration with visual feedback for D-Pad/analog stick control
 4. **MVVM Compliance** - All logic in ViewModels/Services, Views remain presentation-only
-5. **Cross-Platform** - Works on Windows, macOS, and Linux with consistent behavior
+5. **Windows-Native** - Optimized for Windows with consistent behavior
 
 ## Architecture Overview
 
@@ -1108,7 +1108,7 @@ Comprehensive documentation covering:
 - [ ] Phase 5.1-5.3: Adinkra elements
 - [ ] Phase 6: Testing and documentation
 - [ ] Performance optimization
-- [ ] Cross-platform validation
+- [ ] Windows validation
 
 ## Technical Considerations
 
@@ -1158,14 +1158,14 @@ Comprehensive documentation covering:
 - Profile with Avalonia DevTools
 - Set performance budgets (e.g., <16ms render time)
 
-### 6. Cross-Platform Font Availability
+### 6. Font Availability
 
-**Challenge:** Custom fonts (Rajdhani, Orbitron) may not be available on all platforms.
+**Challenge:** Custom fonts (Rajdhani, Orbitron) may need to be embedded for consistent rendering.
 
 **Solution:**
 - Embed fonts as resources in the application
 - Provide fallback font stacks
-- Test font rendering on Windows, macOS, and Linux
+- Test font rendering on Windows
 
 ## Success Metrics
 
@@ -1173,7 +1173,7 @@ Comprehensive documentation covering:
 2. **Gamepad Navigation:** 100% of interactive elements are gamepad-accessible
 3. **Performance:** Card rendering completes in <100ms for typical cards
 4. **Test Coverage:** >80% coverage for theme and navigation services
-5. **Cross-Platform:** Identical behavior on Windows, macOS, and Linux
+5. **Windows-Native:** Optimized behavior on Windows
 6. **Accessibility:** Keyboard-only navigation works alongside gamepad
 
 ## Future Enhancements

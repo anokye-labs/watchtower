@@ -6,7 +6,7 @@ namespace WatchTower.Services;
 
 /// <summary>
 /// Interface for game controller input service.
-/// Provides cross-platform game controller support for navigation and input.
+/// Provides game controller support for navigation and input.
 /// </summary>
 public interface IGameControllerService : IDisposable
 {
