@@ -6,9 +6,9 @@ WatchTower supports full-duplex voice capabilities with both **offline** and **o
 
 - **Offline Mode** (default): Uses Vosk for speech recognition and Piper for text-to-speech. No internet required.
 - **Online Mode**: Uses Azure Cognitive Services for both speech recognition and synthesis. Requires internet and API keys.
-- **Hybrid Mode**: *(Not yet implemented)* Intended to prefer offline with online fallback; currently behaves the same as offline mode.
+- **Hybrid Mode**: *(Not yet implemented)* Intended to prefer offline with online fallback; behaves the same as offline mode.
 
-**⚠️ Platform Support Note:** The current voice implementation uses NAudio for audio capture/playback, which is Windows-only. Linux and macOS support will require an alternative audio backend (e.g., SDL via Silk.NET).
+**Platform:** Voice features use NAudio for native Windows audio integration, providing reliable and high-performance audio capture/playback on Windows 10/11.
 
 ## Quick Start (Offline Mode)
 
@@ -115,7 +115,7 @@ The orchestration service needs to be configured to use Azure services for onlin
 
 - `"offline"` - Use only Vosk and Piper (no internet required)
 - `"online"` - Use only Azure Speech Services (requires API keys)
-- `"hybrid"` - *(Not yet implemented)* Currently behaves the same as offline mode
+- `"hybrid"` - *(Not yet implemented)* Behaves the same as offline mode
 
 ### Vosk Configuration
 

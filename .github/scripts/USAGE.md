@@ -69,6 +69,8 @@ await client.updateAllFields(itemId, fields, config);
 ### `getProjectItemId(issueNodeId)`
 Returns the project item ID for an issue, or null if not in project.
 
+**Pagination Support**: This method automatically paginates through all project items using cursor-based pagination. It will iterate through pages of 100 items each until the issue is found or all items have been checked.
+
 ### `addIssueToProject(issueNodeId)`
 Adds an issue to the project and returns the project item ID.
 
@@ -116,9 +118,21 @@ The module performs validation on inputs:
 - Text fields must be non-empty after trimming
 - Empty strings are filtered out to avoid unnecessary API calls
 
-## Limitations
+## Testing
 
-- `getProjectItemId` only fetches the first 100 project items. For larger projects (>100 items), issues beyond this limit may not be found and will need to be added via `addIssueToProject`.
+Run the test suite with:
+
+```bash
+npm test
+```
+
+Tests cover:
+- Pagination through multiple pages (>100 items)
+- Finding items on first and subsequent pages
+- Handling projects with exactly 100 items
+- Empty projects
+- Items not found after checking all pages
+- Early termination when item is found
 
 ## Field Mapping
 

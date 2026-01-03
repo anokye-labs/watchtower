@@ -42,6 +42,45 @@ public interface IUserPreferencesService
     void SetFontOverrides(FontOverrides? fontOverrides);
 
     /// <summary>
+    /// Gets whether the user has seen the welcome screen.
+    /// </summary>
+    bool GetHasSeenWelcomeScreen();
+
+    /// <summary>
+    /// Sets whether the user has seen the welcome screen and persists it.
+    /// </summary>
+    /// <param name="hasSeenWelcomeScreen">Whether the user has seen the welcome screen.</param>
+    void SetHasSeenWelcomeScreen(bool hasSeenWelcomeScreen);
+
+    /// <summary>
+    /// Gets whether to show the welcome screen on startup.
+    /// </summary>
+    bool GetShowWelcomeOnStartup();
+
+    /// <summary>
+    /// Sets whether to show the welcome screen on startup and persists it.
+    /// </summary>
+    /// <param name="showWelcomeOnStartup">Whether to show the welcome screen on startup.</param>
+    void SetShowWelcomeOnStartup(bool showWelcomeOnStartup);
+
+    /// <summary>
+    /// Gets the date when the application was first run, or null if not set.
+    /// FirstRunDate is automatically set on first load and is read-only thereafter.
+    /// </summary>
+    DateTime? GetFirstRunDate();
+
+    /// <summary>
+    /// Gets the window position preferences if configured.
+    /// </summary>
+    WindowPositionPreferences? GetWindowPosition();
+
+    /// <summary>
+    /// Sets the window position preferences and persists them.
+    /// </summary>
+    /// <param name="windowPosition">The window position preferences to set, or null to clear.</param>
+    void SetWindowPosition(WindowPositionPreferences? windowPosition);
+
+    /// <summary>
     /// Event raised when preferences change.
     /// </summary>
     event EventHandler<UserPreferences>? PreferencesChanged;

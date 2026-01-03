@@ -15,6 +15,42 @@ namespace WatchTower.Services;
 /// Provides speech-to-text without requiring internet connection.
 /// Note: Currently Windows-only due to NAudio dependency for audio capture.
 /// </summary>
+/// <remarks>
+/// <para><strong>Confidence Score Extraction:</strong></para>
+/// <para>
+/// Vosk provides word-level confidence scores in its JSON results. These scores indicate
+/// the recognition certainty for each individual word, ranging from 0.0 (no confidence)
+/// to 1.0 (highest confidence).
+/// </para>
+/// <para><strong>Aggregation Strategy:</strong></para>
+/// <list type="bullet">
+/// <item><description>Parses word-level confidence values from the JSON result structure</description></item>
+/// <item><description>Computes the mean (average) of all word confidences for the overall result confidence</description></item>
+/// <item><description>Returns 0.0f when confidence data is unavailable (e.g., partial results)</description></item>
+/// </list>
+/// <para><strong>JSON Structure Expectations:</strong></para>
+/// <para>
+/// Vosk returns results in JSON format with the following structure for final results:
+/// </para>
+/// <code>
+/// {
+///   "text": "recognized text",
+///   "result": [
+///     {"word": "recognized", "start": 0.5, "end": 1.2, "conf": 0.95},
+///     {"word": "text", "start": 1.2, "end": 1.8, "conf": 0.92}
+///   ]
+/// }
+/// </code>
+/// <para>
+/// Partial results contain only a "partial" field with text and no confidence information.
+/// </para>
+/// <para><strong>Current Implementation Note:</strong></para>
+/// <para>
+/// The current implementation uses a placeholder confidence value (0.9f) as word-level
+/// confidence parsing is not yet implemented. Full confidence extraction requires parsing
+/// the "result" array from the JSON response.
+/// </para>
+/// </remarks>
 public class VoskRecognitionService : IVoiceRecognitionService
 {
     // Voice activity detection threshold - empirically chosen for typical microphone levels
@@ -240,7 +276,6 @@ public class VoskRecognitionService : IVoiceRecognitionService
         }
         catch (JsonException ex)
         {
-            _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
             _logger.LogDebug(ex, "Failed to parse Vosk JSON result: {Json}", json);
         }
         return string.Empty;

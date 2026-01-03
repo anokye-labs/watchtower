@@ -129,4 +129,93 @@ public class ProxyServer
             }
         }
     }
+
+    /// <summary>
+    /// Handles a tool call request by forwarding it to the connected app and awaiting the response.
+    /// </summary>
+    /// <param name="connection">The app connection to send the request to.</param>
+    /// <param name="toolName">The name of the tool to execute.</param>
+    /// <param name="arguments">The arguments to pass to the tool.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation with the MCP response.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when connection or toolName is null.</exception>
+    public async Task<McpResponse> HandleCallToolAsync(
+        AppConnection connection,
+        string toolName,
+        object? arguments,
+        CancellationToken cancellationToken = default)
+    {
+        if (connection == null)
+        {
+            throw new ArgumentNullException(nameof(connection));
+        }
+
+        if (string.IsNullOrWhiteSpace(toolName))
+        {
+            throw new ArgumentException("Tool name cannot be null or empty.", nameof(toolName));
+        }
+
+        // Generate a unique correlation ID for this request
+        var correlationId = GenerateCorrelationId();
+
+        // Register the pending request before sending
+        var tcs = RegisterPendingRequest(correlationId);
+
+        try
+        {
+            // Build the JSON-RPC 2.0 request
+            var request = new JsonRpcRequest
+            {
+                JsonRpc = "2.0",
+                Id = correlationId.ToString(),
+                Method = "tools/call",
+                Params = new ToolCallParams
+                {
+                    Name = toolName,
+                    Arguments = arguments
+                }
+            };
+
+            // Register cancellation callback to cancel the pending request if cancellation is requested
+            using var registration = cancellationToken.Register(() =>
+            {
+                CancelPendingRequest(correlationId, "Operation was canceled.");
+            });
+
+            // Send the request to the app via TCP connection
+            await connection.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            // Await the response from the TaskCompletionSource with timeout
+            var timeout = TimeSpan.FromMinutes(2);
+            var timeoutCts = new CancellationTokenSource(timeout);
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            
+            try
+            {
+                using (timeoutCts)
+                using (linkedCts)
+                {
+                    linkedCts.Token.Register(() =>
+                    {
+                        if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+                        {
+                            CancelPendingRequest(correlationId, $"Tool call '{toolName}' timed out after {timeout.TotalSeconds} seconds.");
+                        }
+                    });
+                    
+                    return await tcs.Task.ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Tool call '{toolName}' did not complete within {timeout.TotalSeconds} seconds.");
+            }
+        }
+        catch
+        {
+            // If an error occurs, ensure the pending request is removed
+            RemovePendingRequest(correlationId);
+            throw;
+        }
+    }
 }
