@@ -1,11 +1,11 @@
-using System;
-using System.Collections.ObjectModel;
-using System.Windows.Input;
 using AdaptiveCards;
 using AdaptiveCards.Rendering;
 using AdaptiveCards.Rendering.Avalonia;
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 using WatchTower.Models;
 using WatchTower.Services;
 using WatchTower.Utilities;
@@ -217,7 +217,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     public ICommand RetryRenderCommand { get; }
 
     public MainWindowViewModel(
-        IGameControllerService gameControllerService, 
+        IGameControllerService gameControllerService,
         IAdaptiveCardService cardService,
         IAdaptiveCardThemeService themeService,
         ILogger<MainWindowViewModel> logger)
@@ -226,7 +226,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _cardService = cardService;
         _themeService = themeService;
         _logger = logger;
-        
+
         // Subscribe to controller events using SubscriptionManager
         _subscriptions.Subscribe(
             () => _gameControllerService.ButtonPressed += OnButtonPressed,
@@ -273,7 +273,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         RetryRenderCommand = new RelayCommand(RetryRender);
 
         UpdateStatus();
-        
+
         // Initialize host config BEFORE loading the card
         HostConfig = _themeService.GetHostConfig();
         _logger.LogInformation("HostConfig initialized: {IsNull}", HostConfig == null ? "NULL" : "NOT NULL");
@@ -282,7 +282,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             var bgColor = HostConfig.ContainerStyles?.Default?.BackgroundColor ?? "null";
             _logger.LogInformation("HostConfig background color: {BgColor}", bgColor);
         }
-        
+
         // Load the sample card (RenderCard will be called automatically)
         LoadSampleCard();
     }
@@ -331,7 +331,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
 
             var renderer = new AdaptiveCardRenderer(HostConfig);
             var renderedCard = renderer.RenderCard(CurrentCard);
-            
+
             // Wire up action handler with a reference we can unsubscribe
             _cardActionHandler = (sender, e) =>
             {
@@ -346,7 +346,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             RenderedCardControl = renderedCard.Control;
             RenderError = null; // Clear any previous error
             _logger.LogInformation("Card rendered successfully with {WarningCount} warnings", renderedCard.Warnings.Count);
-            
+
             // Log any warnings
             foreach (var warning in renderedCard.Warnings)
             {
@@ -402,7 +402,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
         ControllerEvents.Insert(0, $"[{timestamp}] {eventText}");
-        
+
         // Keep only last 20 events
         while (ControllerEvents.Count > 20)
         {
@@ -452,7 +452,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         var previousMode = CurrentInputMode;
         CurrentInputMode = InputOverlayMode.None;
-        
+
         // Only clear input text for input modes (not EventLog)
         if (previousMode == InputOverlayMode.RichText || previousMode == InputOverlayMode.Voice)
         {
@@ -512,7 +512,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private void OnCardSubmit(object? sender, AdaptiveCardSubmitEventArgs e)
     {
         _logger.LogInformation("Card submitted with {Count} inputs", e.InputValues.Count);
-        
+
         foreach (var kvp in e.InputValues)
         {
             _logger.LogDebug("Input: {Key} = {Value}", kvp.Key, kvp.Value);
@@ -527,7 +527,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (e.Action is AdaptiveOpenUrlAction openUrlAction)
         {
             _logger.LogInformation("Opening URL: {Url}", openUrlAction.Url);
-            
+
             // Open URL in default browser
             try
             {
@@ -552,7 +552,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (e.Action is AdaptiveExecuteAction executeAction)
         {
             _logger.LogInformation("Executing action verb: {Verb}", executeAction.Verb);
-            
+
             // TODO: Handle execute actions based on verb
             AddEvent($"Execute: {executeAction.Verb}");
         }
@@ -563,7 +563,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         if (e.Action is AdaptiveShowCardAction showCardAction)
         {
             _logger.LogInformation("Show card action triggered");
-            
+
             // ShowCard is typically handled inline by the renderer
             // This event is for custom handling if needed
             AddEvent("ShowCard triggered");

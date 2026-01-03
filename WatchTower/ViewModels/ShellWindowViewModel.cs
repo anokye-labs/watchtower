@@ -1,9 +1,9 @@
-using System;
-using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using System;
+using System.ComponentModel;
 using WatchTower.Services;
 using WatchTower.Utilities;
 
@@ -23,7 +23,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private readonly SubscriptionManager _subscriptions = new();
     private MainWindowViewModel? _mainViewModel;
     private bool _cleanedUp;
-    
+
     // Cached frame configuration for re-slicing on monitor switch
     private string? _frameSourceUri;
     private FrameSliceDefinition? _frameSliceDefinition;
@@ -40,17 +40,17 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private Bitmap? _topCenterSource;
     private Bitmap? _topRightStretchSource;
     private Bitmap? _topRightSource;
-    
+
     // Column 0: Left edge (rows 1-3)
     private Bitmap? _leftTopStretchSource;
     private Bitmap? _leftCenterSource;
     private Bitmap? _leftBottomStretchSource;
-    
+
     // Column 4: Right edge (rows 1-3)
     private Bitmap? _rightTopStretchSource;
     private Bitmap? _rightCenterSource;
     private Bitmap? _rightBottomStretchSource;
-    
+
     // Row 4: Bottom edge
     private Bitmap? _bottomLeftSource;
     private Bitmap? _bottomLeftStretchSource;
@@ -62,13 +62,13 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         : this(splashViewModel, new FrameSliceService())
     {
     }
-    
+
     public ShellWindowViewModel(SplashWindowViewModel splashViewModel, IFrameSliceService frameSliceService)
     {
         _splashViewModel = splashViewModel ?? throw new ArgumentNullException(nameof(splashViewModel));
         _frameSliceService = frameSliceService ?? throw new ArgumentNullException(nameof(frameSliceService));
         _currentContent = _splashViewModel;
-        
+
         // Forward exit request from splash using SubscriptionManager
         _subscriptions.Subscribe(
             () => _splashViewModel.ExitRequested += OnSplashExitRequested,
@@ -137,7 +137,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
             }
         }
     }
-    
+
     /// <summary>
     /// Gets or sets the padding applied to the content container underneath the frame.
     /// </summary>
@@ -146,7 +146,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _contentPadding;
         set => SetProperty(ref _contentPadding, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the background color for the padding area.
     /// </summary>
@@ -155,119 +155,119 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _backgroundColor;
         set => SetProperty(ref _backgroundColor, value);
     }
-    
+
     /// <summary>
     /// Gets the frame slice definition used for the current frame.
     /// </summary>
     public FrameSliceDefinition? FrameSliceDefinition => _frameSliceDefinition;
-    
+
     /// <summary>
     /// Gets the source size of the loaded frame image.
     /// </summary>
     public Size FrameSourceSize => _frameSourceSize;
-    
+
     // Frame bitmap sources - dynamically sliced from source image (16 pieces for 5x5 grid)
-    
+
     // Row 0: Top edge (5 pieces)
     public Bitmap? TopLeftSource
     {
         get => _topLeftSource;
         private set => SetProperty(ref _topLeftSource, value);
     }
-    
+
     public Bitmap? TopLeftStretchSource
     {
         get => _topLeftStretchSource;
         private set => SetProperty(ref _topLeftStretchSource, value);
     }
-    
+
     public Bitmap? TopCenterSource
     {
         get => _topCenterSource;
         private set => SetProperty(ref _topCenterSource, value);
     }
-    
+
     public Bitmap? TopRightStretchSource
     {
         get => _topRightStretchSource;
         private set => SetProperty(ref _topRightStretchSource, value);
     }
-    
+
     public Bitmap? TopRightSource
     {
         get => _topRightSource;
         private set => SetProperty(ref _topRightSource, value);
     }
-    
+
     // Column 0: Left edge (rows 1-3, 3 pieces)
     public Bitmap? LeftTopStretchSource
     {
         get => _leftTopStretchSource;
         private set => SetProperty(ref _leftTopStretchSource, value);
     }
-    
+
     public Bitmap? LeftCenterSource
     {
         get => _leftCenterSource;
         private set => SetProperty(ref _leftCenterSource, value);
     }
-    
+
     public Bitmap? LeftBottomStretchSource
     {
         get => _leftBottomStretchSource;
         private set => SetProperty(ref _leftBottomStretchSource, value);
     }
-    
+
     // Column 4: Right edge (rows 1-3, 3 pieces)
     public Bitmap? RightTopStretchSource
     {
         get => _rightTopStretchSource;
         private set => SetProperty(ref _rightTopStretchSource, value);
     }
-    
+
     public Bitmap? RightCenterSource
     {
         get => _rightCenterSource;
         private set => SetProperty(ref _rightCenterSource, value);
     }
-    
+
     public Bitmap? RightBottomStretchSource
     {
         get => _rightBottomStretchSource;
         private set => SetProperty(ref _rightBottomStretchSource, value);
     }
-    
+
     // Row 4: Bottom edge (5 pieces)
     public Bitmap? BottomLeftSource
     {
         get => _bottomLeftSource;
         private set => SetProperty(ref _bottomLeftSource, value);
     }
-    
+
     public Bitmap? BottomLeftStretchSource
     {
         get => _bottomLeftStretchSource;
         private set => SetProperty(ref _bottomLeftStretchSource, value);
     }
-    
+
     public Bitmap? BottomCenterSource
     {
         get => _bottomCenterSource;
         private set => SetProperty(ref _bottomCenterSource, value);
     }
-    
+
     public Bitmap? BottomRightStretchSource
     {
         get => _bottomRightStretchSource;
         private set => SetProperty(ref _bottomRightStretchSource, value);
     }
-    
+
     public Bitmap? BottomRightSource
     {
         get => _bottomRightSource;
         private set => SetProperty(ref _bottomRightSource, value);
     }
-    
+
     // Grid row/column definitions for the 5x5 frame layout
     // Rows: 0=Top corner, 1=Top stretch, 2=Center, 3=Bottom stretch, 4=Bottom corner
     // Cols: 0=Left corner, 1=Left stretch, 2=Center, 3=Right stretch, 4=Right corner
@@ -277,7 +277,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private GridLength _col0Width = GridLength.Auto;   // Left corner column (fixed)
     private GridLength _col2Width = GridLength.Auto;   // Center column (fixed)
     private GridLength _col4Width = GridLength.Auto;   // Right corner column (fixed)
-    
+
     /// <summary>
     /// Height of row 0 (top corners and top edge).
     /// </summary>
@@ -286,7 +286,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _row0Height;
         private set => SetProperty(ref _row0Height, value);
     }
-    
+
     /// <summary>
     /// Height of row 2 (center edge pieces - left center, right center).
     /// </summary>
@@ -295,7 +295,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _row2Height;
         private set => SetProperty(ref _row2Height, value);
     }
-    
+
     /// <summary>
     /// Height of row 4 (bottom corners and bottom edge).
     /// </summary>
@@ -304,7 +304,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _row4Height;
         private set => SetProperty(ref _row4Height, value);
     }
-    
+
     /// <summary>
     /// Width of column 0 (left corners and left edge).
     /// </summary>
@@ -313,7 +313,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _col0Width;
         private set => SetProperty(ref _col0Width, value);
     }
-    
+
     /// <summary>
     /// Width of column 2 (center edge pieces - top center, bottom center).
     /// </summary>
@@ -322,7 +322,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _col2Width;
         private set => SetProperty(ref _col2Width, value);
     }
-    
+
     /// <summary>
     /// Width of column 4 (right corners and right edge).
     /// </summary>
@@ -331,7 +331,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         get => _col4Width;
         private set => SetProperty(ref _col4Width, value);
     }
-    
+
     /// <summary>
     /// Loads and slices the frame image into 16 pieces for the 5x5 grid.
     /// Uses cached slices if available.
@@ -344,15 +344,15 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         // Cache configuration
         _frameSourceUri = sourceUri;
         _frameSliceDefinition = sliceDefinition;
-        
+
         // Load high-res source slices once (no resizing)
         var frameSlices = _frameSliceService.LoadAndSlice(sourceUri, sliceDefinition);
-        
+
         if (frameSlices == null)
         {
             return false;
         }
-        
+
         _frameSourceSize = frameSlices.SourceSize;
 
         // Update bitmap sources - this will trigger property changed notifications (16 pieces)
@@ -362,29 +362,29 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         TopCenterSource = frameSlices.TopCenter;
         TopRightStretchSource = frameSlices.TopRightStretch;
         TopRightSource = frameSlices.TopRight;
-        
+
         // Column 0 (rows 1-3)
         LeftTopStretchSource = frameSlices.LeftTopStretch;
         LeftCenterSource = frameSlices.LeftCenter;
         LeftBottomStretchSource = frameSlices.LeftBottomStretch;
-        
+
         // Column 4 (rows 1-3)
         RightTopStretchSource = frameSlices.RightTopStretch;
         RightCenterSource = frameSlices.RightCenter;
         RightBottomStretchSource = frameSlices.RightBottomStretch;
-        
+
         // Row 4
         BottomLeftSource = frameSlices.BottomLeft;
         BottomLeftStretchSource = frameSlices.BottomLeftStretch;
         BottomCenterSource = frameSlices.BottomCenter;
         BottomRightStretchSource = frameSlices.BottomRightStretch;
         BottomRightSource = frameSlices.BottomRight;
-        
+
         UpdateFrameDimensions();
-        
+
         return true;
     }
-    
+
     /// <summary>
     /// Updates frame dimensions based on current RenderScale for the 5x5 grid.
     /// Fixed rows/columns: 0, 2, 4 (corners and centers)
@@ -392,7 +392,8 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     /// </summary>
     private void UpdateFrameDimensions()
     {
-        if (_frameSliceDefinition == null) return;
+        if (_frameSliceDefinition == null)
+            return;
 
         var def = _frameSliceDefinition;
         var scale = RenderScale > 0 ? RenderScale : 1.0;
@@ -400,12 +401,12 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
 
         // Calculate logical dimensions based on physical slice definition and render scale
         // Physical * FrameScale / RenderScale = Logical
-        
+
         // Row heights (fixed rows: 0, 2, 4)
         Row0Height = new GridLength((def.Top * frameScale) / scale, GridUnitType.Pixel);
         Row2Height = new GridLength(((def.BottomInner - def.TopInner) * frameScale) / scale, GridUnitType.Pixel);
         Row4Height = new GridLength(((_frameSourceSize.Height - def.Bottom) * frameScale) / scale, GridUnitType.Pixel);
-        
+
         // Column widths (fixed columns: 0, 2, 4)
         Col0Width = new GridLength((def.Left * frameScale) / scale, GridUnitType.Pixel);
         Col2Width = new GridLength(((def.RightInner - def.LeftInner) * frameScale) / scale, GridUnitType.Pixel);
@@ -434,7 +435,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         }
 
         _mainViewModel = mainViewModel;
-        
+
         Dispatcher.UIThread.Post(() =>
         {
             CurrentContent = mainViewModel;
@@ -472,7 +473,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         // Unsubscribe from all events using SubscriptionManager
         _subscriptions.Dispose();
         _splashViewModel.Cleanup();
-        
+
         // Dispose MainWindowViewModel if it was created
         _mainViewModel?.Dispose();
         _mainViewModel = null;

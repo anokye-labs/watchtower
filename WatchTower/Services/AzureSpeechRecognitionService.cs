@@ -1,9 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
@@ -72,7 +72,7 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
             // Get Azure credentials from configuration or environment
             var speechKey = _configuration.GetValue<string>("Voice:Azure:SpeechKey")
                 ?? Environment.GetEnvironmentVariable("AZURE_SPEECH_KEY");
-            
+
             var speechRegion = _configuration.GetValue<string>("Voice:Azure:SpeechRegion")
                 ?? Environment.GetEnvironmentVariable("AZURE_SPEECH_REGION");
 
@@ -85,7 +85,7 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
 
             // Create speech configuration
             _speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
-            
+
             // Configure recognition language
             var language = _configuration.GetValue<string>("Voice:Azure:Language") ?? "en-US";
             _speechConfig.SpeechRecognitionLanguage = language;
@@ -135,7 +135,7 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
 
             // Start continuous recognition
             await _recognizer!.StartContinuousRecognitionAsync();
-            
+
             _isListening = true;
             _logger.LogInformation("Speech recognition started");
         }
@@ -219,7 +219,7 @@ public class AzureSpeechRecognitionService : IVoiceRecognitionService
 
         if (e.Reason == CancellationReason.Error)
         {
-            _logger.LogError("Error code: {ErrorCode}, Error details: {ErrorDetails}", 
+            _logger.LogError("Error code: {ErrorCode}, Error details: {ErrorDetails}",
                 e.ErrorCode, e.ErrorDetails);
         }
 

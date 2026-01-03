@@ -1,7 +1,7 @@
-using System.Text.Json;
 using Avalonia.McpProxy.Models;
 using Avalonia.McpProxy.Server;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Avalonia.McpProxy;
 

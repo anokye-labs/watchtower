@@ -9,17 +9,17 @@ public enum InputOverlayMode
     /// No overlay is shown.
     /// </summary>
     None,
-    
+
     /// <summary>
     /// Rich-text input overlay is shown.
     /// </summary>
     RichText,
-    
+
     /// <summary>
     /// Voice-based input overlay is shown.
     /// </summary>
     Voice,
-    
+
     /// <summary>
     /// Event log overlay is shown.
     /// </summary>

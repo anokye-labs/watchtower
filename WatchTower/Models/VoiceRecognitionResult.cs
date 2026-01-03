@@ -11,7 +11,7 @@ public class VoiceRecognitionResult
     /// The recognized text.
     /// </summary>
     public string Text { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Recognition confidence score (0.0 to 1.0).
     /// Higher values indicate greater confidence in the recognition result.
@@ -26,17 +26,17 @@ public class VoiceRecognitionResult
     /// </list>
     /// </remarks>
     public float Confidence { get; set; }
-    
+
     /// <summary>
     /// Whether this is a final result or an intermediate (partial) result.
     /// </summary>
     public bool IsFinal { get; set; }
-    
+
     /// <summary>
     /// Timestamp when the recognition occurred.
     /// </summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    
+
     /// <summary>
     /// The source of the recognition (e.g., "Vosk", "Azure").
     /// </summary>

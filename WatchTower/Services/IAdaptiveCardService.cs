@@ -1,6 +1,6 @@
+using AdaptiveCards;
 using System;
 using System.Collections.Generic;
-using AdaptiveCards;
 
 namespace WatchTower.Services;
 

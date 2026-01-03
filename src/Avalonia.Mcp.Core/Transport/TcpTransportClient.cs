@@ -1,6 +1,6 @@
+using Microsoft.Extensions.Logging;
 using System.Net.Sockets;
 using System.Text;
-using Microsoft.Extensions.Logging;
 
 namespace Avalonia.Mcp.Core.Transport;
 
@@ -61,7 +61,7 @@ public class TcpTransportClient : ITransportClient
         try
         {
             _receiveCts?.Cancel();
-            
+
             if (_receiveTask != null)
             {
                 await _receiveTask;
@@ -108,7 +108,7 @@ public class TcpTransportClient : ITransportClient
             while (!cancellationToken.IsCancellationRequested && _stream != null)
             {
                 var bytesRead = await _stream.ReadAsync(buffer, cancellationToken);
-                
+
                 if (bytesRead == 0)
                 {
                     // Connection closed
@@ -122,7 +122,7 @@ public class TcpTransportClient : ITransportClient
 
                 // Process line-delimited messages
                 var messages = messageBuffer.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                
+
                 if (messageBuffer.ToString().EndsWith('\n'))
                 {
                     // All messages are complete
@@ -157,11 +157,12 @@ public class TcpTransportClient : ITransportClient
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         // Cancel the receive task
         _receiveCts?.Cancel();
-        
+
         // Clean up synchronously
         _receiveCts?.Dispose();
         _stream?.Dispose();
@@ -173,7 +174,8 @@ public class TcpTransportClient : ITransportClient
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         await DisconnectAsync();
         _receiveCts?.Dispose();

@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
-using System.Text.Json;
 using Avalonia.Mcp.Core.Models;
 using Avalonia.Mcp.Core.Transport;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Text.Json;
 
 namespace Avalonia.Mcp.Core.Handlers;
 
@@ -31,11 +31,13 @@ public class McpHandler : IMcpHandler
 
     public void RegisterTool(McpToolDefinition tool, Func<Dictionary<string, object>?, Task<McpToolResult>> handler)
     {
-        if (tool == null) throw new ArgumentNullException(nameof(tool));
-        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        if (tool == null)
+            throw new ArgumentNullException(nameof(tool));
+        if (handler == null)
+            throw new ArgumentNullException(nameof(handler));
 
         var namespacedName = $"{ApplicationName}:{tool.Name}";
-        
+
         // Create a copy with namespaced name
         var namespacedTool = new McpToolDefinition
         {
@@ -43,7 +45,7 @@ public class McpHandler : IMcpHandler
             Description = tool.Description,
             InputSchema = tool.InputSchema
         };
-        
+
         _tools[namespacedName] = namespacedTool;
         _toolHandlers[namespacedName] = handler;
 
@@ -168,7 +170,8 @@ public class McpHandler : IMcpHandler
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         // Dispose synchronously - disconnect will be handled by finalizer or explicit DisposeAsync call
         _transportClient?.Dispose();
@@ -179,7 +182,8 @@ public class McpHandler : IMcpHandler
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         await DisconnectAsync();
         _transportClient?.Dispose();

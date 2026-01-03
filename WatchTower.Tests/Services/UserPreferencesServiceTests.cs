@@ -1,10 +1,10 @@
-using System;
-using System.IO;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
+using System;
+using System.IO;
 using WatchTower.Models;
 using WatchTower.Services;
+using Xunit;
 
 namespace WatchTower.Tests.Services;
 
@@ -18,18 +18,18 @@ public class UserPreferencesServiceTests : IDisposable
         // Create a temporary directory for test preferences
         var tempDir = Path.Combine(Path.GetTempPath(), $"WatchTowerTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(tempDir);
-        
+
         // Mock the preferences file path by using environment variable
         Environment.SetEnvironmentVariable("APPDATA", tempDir);
         Environment.SetEnvironmentVariable("HOME", tempDir);
-        
+
         _loggerMock = new Mock<ILogger<UserPreferencesService>>();
-        
+
         // Calculate the preferences file path
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var watchTowerPath = Path.Combine(appDataPath, "WatchTower");
         _preferencesFilePath = Path.Combine(watchTowerPath, "user-preferences.json");
-        
+
         // Clean up any existing preferences before each test
         if (File.Exists(_preferencesFilePath))
         {
@@ -77,11 +77,11 @@ public class UserPreferencesServiceTests : IDisposable
     {
         // Arrange
         var beforeCreation = DateTime.UtcNow.AddSeconds(-1);
-        
+
         // Act
         var service = new UserPreferencesService(_loggerMock.Object);
         var firstRunDate = service.GetFirstRunDate();
-        
+
         var afterCreation = DateTime.UtcNow.AddSeconds(1);
 
         // Assert
@@ -177,7 +177,7 @@ public class UserPreferencesServiceTests : IDisposable
         var watchTowerPath = Path.Combine(appDataPath, "WatchTower");
         Directory.CreateDirectory(watchTowerPath);
         var preferencesPath = Path.Combine(watchTowerPath, "user-preferences.json");
-        
+
         var oldPreferencesJson = @"{
   ""themeMode"": ""Dark"",
   ""fontOverrides"": null
@@ -232,7 +232,7 @@ public class UserPreferencesServiceTests : IDisposable
         // Arrange
         var service = new UserPreferencesService(_loggerMock.Object);
         service.SetHasSeenWelcomeScreen(false); // Set to default value
-        
+
         var eventRaised = false;
         service.PreferencesChanged += (sender, prefs) => eventRaised = true;
 
@@ -249,7 +249,7 @@ public class UserPreferencesServiceTests : IDisposable
         // Arrange
         var service = new UserPreferencesService(_loggerMock.Object);
         service.SetShowWelcomeOnStartup(true); // Set to default value
-        
+
         var eventRaised = false;
         service.PreferencesChanged += (sender, prefs) => eventRaised = true;
 
@@ -265,11 +265,11 @@ public class UserPreferencesServiceTests : IDisposable
     {
         // Arrange
         var service = new UserPreferencesService(_loggerMock.Object);
-        
+
         // Act
         var preferences1 = service.GetPreferences();
         preferences1.HasSeenWelcomeScreen = true;
-        
+
         var preferences2 = service.GetPreferences();
 
         // Assert - Changes to returned copy should not affect service state
@@ -297,11 +297,11 @@ public class UserPreferencesServiceTests : IDisposable
     {
         // Arrange
         var service = new UserPreferencesService(_loggerMock.Object);
-        
+
         // Act
         service.SetHasSeenWelcomeScreen(true);
         service.SetShowWelcomeOnStartup(false);
-        
+
         // Read the saved JSON file
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var watchTowerPath = Path.Combine(appDataPath, "WatchTower");
@@ -340,7 +340,7 @@ public class UserPreferencesServiceTests : IDisposable
         // Arrange
         var service = new UserPreferencesService(_loggerMock.Object);
         var originalFirstRunDate = service.GetFirstRunDate();
-        
+
         // Act - Try to save preferences with a different FirstRunDate
         var preferences = service.GetPreferences();
         var attemptedDate = DateTime.UtcNow.AddDays(10);
@@ -502,14 +502,14 @@ public class UserPreferencesServiceTests : IDisposable
         Assert.NotNull(retrievedPosition1);
         Assert.NotNull(retrievedPosition2);
         Assert.NotSame(retrievedPosition1, retrievedPosition2);
-        
+
         // Modify first copy - both top-level and nested properties
         retrievedPosition1.X = 999.0;
         if (retrievedPosition1.DisplayBounds != null)
         {
             retrievedPosition1.DisplayBounds.X = 9999;
         }
-        
+
         // Second copy should be unchanged (deep copy)
         Assert.Equal(100.0, retrievedPosition2.X);
         Assert.NotNull(retrievedPosition2.DisplayBounds);

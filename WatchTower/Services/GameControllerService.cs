@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Silk.NET.SDL;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using WatchTower.Models;
 using GameControllerButton = WatchTower.Models.GameControllerButton;
 
@@ -32,7 +32,7 @@ public unsafe class GameControllerService : IGameControllerService
 
     public bool IsInitialized => _initialized;
 
-    public IReadOnlyList<GameControllerState> ConnectedControllers => 
+    public IReadOnlyList<GameControllerState> ConnectedControllers =>
         _controllerStates.Values.Where(s => s.IsConnected).ToList();
 
     public GameControllerService(ILogger<GameControllerService> logger, IConfiguration configuration)
@@ -55,7 +55,7 @@ public unsafe class GameControllerService : IGameControllerService
         {
             _logger.LogInformation("Initializing SDL2 game controller service");
             _logger.LogInformation("Dead zone threshold: {DeadZone:P0}", _deadZone);
-            
+
             // Initialize SDL GameController subsystem
             if (_sdl.Init(Sdl.InitGamecontroller) < 0)
             {
@@ -68,7 +68,7 @@ public unsafe class GameControllerService : IGameControllerService
 
             _initialized = true;
             _logger.LogInformation("SDL2 game controller service initialized with {Count} gamepad(s)", _controllers.Count);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -106,8 +106,8 @@ public unsafe class GameControllerService : IGameControllerService
 
     public GameControllerState? GetControllerState(int controllerId)
     {
-        return _controllerStates.TryGetValue(controllerId, out var state) && state.IsConnected 
-            ? state 
+        return _controllerStates.TryGetValue(controllerId, out var state) && state.IsConnected
+            ? state
             : null;
     }
 
@@ -220,13 +220,13 @@ public unsafe class GameControllerService : IGameControllerService
         {
             var button = mapping.Key;
             var sdlButton = mapping.Value;
-            
+
             bool isPressed = _sdl.GameControllerGetButton(controller, sdlButton) == 1;
             state.ButtonStates[button] = isPressed;
 
             // Detect press/release events
             bool wasPrevPressed = _previousButtonStates[instanceId].TryGetValue(button, out var prev) && prev;
-            
+
             if (isPressed && !wasPrevPressed)
             {
                 _logger.LogDebug("Button pressed: {Button} on gamepad {Id}", button, instanceId);
@@ -297,20 +297,21 @@ public unsafe class GameControllerService : IGameControllerService
         // Rescale from dead zone edge to max range
         // Formula: (magnitude - deadZone) / (1.0 - deadZone)
         float normalizedMagnitude = (magnitude - _deadZone) / (1.0f - _deadZone);
-        
+
         // Clamp to [0, 1] range
         normalizedMagnitude = Math.Min(normalizedMagnitude, 1.0f);
 
         // Scale the vector to maintain direction
         float scale = normalizedMagnitude / magnitude;
-        
+
         return (x * scale, y * scale);
     }
 
     private string GetSdlError()
     {
         var errorPtr = _sdl.GetError();
-        if (errorPtr == null) return "Unknown error";
+        if (errorPtr == null)
+            return "Unknown error";
         return System.Text.Encoding.UTF8.GetString(
             System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpanFromNullTerminated(errorPtr));
     }
