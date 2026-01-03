@@ -419,7 +419,7 @@ reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
 
 # Open the report
 # Linux/macOS: xdg-open ./coveragereport/index.html
-# Windows: start ./coveragereport/index.html
+# Windows: start "" "./coveragereport/index.html"
 ```
 
 ### Coverage in CI/CD

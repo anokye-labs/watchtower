@@ -136,10 +136,10 @@ public class EventSubscriptionTestFixture : IDisposable
     /// </summary>
     public void VerifyCollected()
     {
-        // Force garbage collection
-        GC.Collect();
+        // Force garbage collection to help detect memory leaks in tests.
+        GC.Collect(); // Justification: Intentional GC for deterministic leak detection in test code
         GC.WaitForPendingFinalizers();
-        GC.Collect();
+        GC.Collect(); // Justification: Second collection after finalizers for complete cleanup verification
         
         // Check if objects were collected
         var aliveCount = _weakReferences.Count(wr => wr.IsAlive);

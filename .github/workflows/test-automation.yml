@@ -76,22 +76,51 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             
-            // Find the coverage file
-            const coverageDir = './coverage';
-            const files = fs.readdirSync(coverageDir, { recursive: true });
-            const coverageFile = files.find(f => f.endsWith('coverage.cobertura.xml'));
+            // Find the coverage file recursively (compatible with older Node.js)
+            function findCoverageFile(dir) {
+              const entries = fs.readdirSync(dir, { withFileTypes: true });
+              
+              for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                
+                if (entry.isDirectory()) {
+                  const found = findCoverageFile(fullPath);
+                  if (found) return found;
+                } else if (entry.isFile() && fullPath.endsWith('coverage.cobertura.xml')) {
+                  return fullPath;
+                }
+              }
+              
+              return null;
+            }
             
-            if (!coverageFile) {
+            const coverageDir = './coverage';
+            const coveragePath = findCoverageFile(coverageDir);
+            
+            if (!coveragePath) {
               console.log('No coverage file found');
               return;
             }
             
-            const coveragePath = path.join(coverageDir, coverageFile);
             const coverage = fs.readFileSync(coveragePath, 'utf8');
             
-            // Parse coverage percentage (simple regex)
-            const match = coverage.match(/line-rate="([0-9.]+)"/);
-            const lineRate = match ? (parseFloat(match[1]) * 100).toFixed(2) : 'N/A';
+            // Parse coverage percentage with error handling
+            let lineRate = 'N/A';
+            try {
+              const matches = [...coverage.matchAll(/line-rate="([0-9.]+)"/g)];
+              if (matches.length >= 1) {
+                const value = parseFloat(matches[0][1]);
+                if (!Number.isNaN(value)) {
+                  lineRate = (value * 100).toFixed(2);
+                } else {
+                  console.log('Failed to parse line-rate: value is not a valid number');
+                }
+              } else {
+                console.log('No line-rate attribute found in coverage file');
+              }
+            } catch (error) {
+              console.log('Failed to parse coverage line-rate from XML:', error);
+            }
             
             const comment = `## 📊 Test Coverage Report
             

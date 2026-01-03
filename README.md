@@ -1,7 +1,7 @@
 # WatchTower
 
 [![Test Status](https://github.com/anokye-labs/watchtower/actions/workflows/test-automation.yml/badge.svg)](https://github.com/anokye-labs/watchtower/actions/workflows/test-automation.yml)
-[![codecov](https://codecov.io/gh/anokye-labs/watchtower/branch/main/graph/badge.svg)](https://codecov.io/gh/anokye-labs/watchtower)
+[![codecov](https://codecov.io/gh/anokye-labs/watchtower/graph/badge.svg)](https://codecov.io/gh/anokye-labs/watchtower)
 
 A cross-platform desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. WatchTower showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, including Adinkra symbols.
 

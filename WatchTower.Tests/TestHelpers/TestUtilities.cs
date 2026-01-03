@@ -14,7 +14,7 @@ namespace WatchTower.Tests.TestHelpers;
 public static class TestUtilities
 {
     /// <summary>
-    /// Creates a temporary file path that will be cleaned up automatically.
+    /// Creates a temporary file path. Caller is responsible for cleanup.
     /// </summary>
     public static string CreateTempFilePath(string extension = ".json")
     {
