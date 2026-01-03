@@ -97,20 +97,6 @@ public class PanelFrameViewModelTests
     {
         // Arrange
         var viewModel = new PanelFrameViewModel();
-        var sliceDefinition = new FrameSliceDefinition
-        {
-            Left = 100,
-            LeftInner = 200,
-            RightInner = 300,
-            Right = 400,
-            Top = 100,
-            TopInner = 200,
-            BottomInner = 300,
-            Bottom = 400
-        };
-        
-        // Load a test frame (will fail but we just want to test the scale update mechanism)
-        // In a real test, we'd mock the IFrameSliceService
         
         // Act
         var initialScale = viewModel.RenderScale;

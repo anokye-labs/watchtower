@@ -28,8 +28,9 @@ public partial class PanelFrame : UserControl
     private const int DefaultSliceBottom = 2860;
     private const double DefaultFrameScale = 0.15;
     
-    private PanelFrameViewModel? _viewModel;
+    private readonly PanelFrameViewModel? _viewModel;
     private IConfiguration? _configuration;
+    private IDisposable? _slideDirectionSubscription;
     
     /// <summary>
     /// Defines the Content property for the panel's inner content.
@@ -72,7 +73,7 @@ public partial class PanelFrame : UserControl
         DataContext = _viewModel;
         
         // Subscribe to property changes
-        this.GetObservable(SlideDirectionProperty)
+        _slideDirectionSubscription = this.GetObservable(SlideDirectionProperty)
             .Subscribe(direction =>
             {
                 if (_viewModel != null)
@@ -80,6 +81,16 @@ public partial class PanelFrame : UserControl
                     _viewModel.SlideDirection = direction;
                 }
             });
+        
+        // Cleanup subscription when unloaded
+        Unloaded += OnUnloaded;
+    }
+    
+    private void OnUnloaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _slideDirectionSubscription?.Dispose();
+        _slideDirectionSubscription = null;
+        Unloaded -= OnUnloaded;
     }
     
     private void InitializeComponent()

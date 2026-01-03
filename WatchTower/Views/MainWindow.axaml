@@ -7,7 +7,6 @@
              xmlns:fluent="using:FluentIcons.Avalonia.Fluent"
              xmlns:converters="using:WatchTower.Converters"
              xmlns:controls="using:WatchTower.Controls"
-             xmlns:models="using:WatchTower.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="WatchTower.Views.MainWindow"
              x:DataType="vm:MainWindowViewModel">
