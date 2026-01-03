@@ -156,7 +156,7 @@ The SDL2 implementation provides:
 - **Real controller detection** - Enumerates connected gamepads on initialization
 - **SDL Game Controller Database** - Automatic button mapping for Xbox/PlayStation/generic controllers
 - **Hot-plug support** - Detects controller connection/disconnection via SDL events
-- **Windows-native** - Optimized for Windows with SDL2
+- **Windows-native** - Optimized for Windows 10/11
 - **60 FPS polling** - DispatcherTimer synchronized with UI rendering
 - **Dead zone processing** - Radial magnitude-based with configurable threshold (15% default)
 - **Y-axis correction** - Inverts SDL's down-positive to standard up-positive convention
@@ -167,10 +167,9 @@ The SDL2 implementation provides:
 - IntPtr dictionary storage to avoid generic type constraints
 - Event-driven architecture with state change detection
 - Proper cleanup with SDL_QuitSubSystem on dispose
-- **Windows**: XInput API (Xbox controllers)
-- **SDL2 library**: Gamepad support layer for Windows
+- **Input**: SDL2 library (Windows)
 
-Platform-specific implementations should inherit from `GameControllerService` and override hardware detection/polling methods.
+The implementation uses SDL2's XInput API for Xbox controller support on Windows.
 
 ## Testing Performed
 
@@ -275,7 +274,7 @@ The game controller support is **production-ready** with full SDL2 hardware inte
 
 ✅ **Complete SDL2 Integration**
 - Real hardware detection and polling
-- Windows support with SDL2
+- Windows-native support
 - SDL Game Controller Database for automatic mapping
 - Hot-plug support with connection events
 

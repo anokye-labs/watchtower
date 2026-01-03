@@ -39,6 +39,18 @@ public class UserPreferences
     public DateTime? WelcomeScreenDismissedDate { get; set; }
 
     /// <summary>
+    /// Indicates whether to show the welcome screen on application startup.
+    /// </summary>
+    [JsonPropertyName("showWelcomeOnStartup")]
+    public bool ShowWelcomeOnStartup { get; set; } = true;
+
+    /// <summary>
+    /// The date when the application was first run. Null indicates first run hasn't been recorded yet.
+    /// </summary>
+    [JsonPropertyName("firstRunDate")]
+    public DateTime? FirstRunDate { get; set; }
+
+    /// <summary>
     /// Window position and display preferences.
     /// </summary>
     [JsonPropertyName("windowPosition")]

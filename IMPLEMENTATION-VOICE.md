@@ -50,7 +50,7 @@ All services use NAudio for Windows audio integration.
 ### Technical Features
 - Event-driven architecture for real-time updates
 - Proper resource cleanup and disposal
-- Audio I/O via NAudio for high-quality Windows audio integration
+- Audio I/O via NAudio (Windows-native audio integration)
 - Configuration-based service registration
 - Automatic initialization on app startup
 - Thread-safe async/await patterns
@@ -304,6 +304,6 @@ This implementation provides a solid foundation for voice features in WatchTower
 - ✅ MVVM-compliant
 - ✅ Well-documented
 - ✅ Testable and maintainable
-- ✅ High-quality Windows audio integration with NAudio
+- ✅ Requires Windows 10 or later for full audio stack support
 
 The voice system is now ready for UI integration and real-world testing!
