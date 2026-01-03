@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using WatchTower.Models;
 using WatchTower.Services;
+using WatchTower.Utilities;
 
 namespace WatchTower.ViewModels;
 
@@ -15,6 +16,7 @@ namespace WatchTower.ViewModels;
 public class VoiceControlViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IVoiceOrchestrationService _voiceService;
+    private readonly SubscriptionManager _subscriptions = new();
     private string _recognizedText = string.Empty;
     private string _lastSpokenText = string.Empty;
     private bool _isListening;
@@ -30,10 +32,16 @@ public class VoiceControlViewModel : INotifyPropertyChanged, IDisposable
     {
         _voiceService = voiceService;
 
-        // Subscribe to voice service events
-        _voiceService.StateChanged += OnVoiceStateChanged;
-        _voiceService.SpeechRecognized += OnSpeechRecognized;
-        _voiceService.Speaking += OnSpeaking;
+        // Subscribe to voice service events using SubscriptionManager
+        _subscriptions.Subscribe(
+            () => _voiceService.StateChanged += OnVoiceStateChanged,
+            () => _voiceService.StateChanged -= OnVoiceStateChanged);
+        _subscriptions.Subscribe(
+            () => _voiceService.SpeechRecognized += OnSpeechRecognized,
+            () => _voiceService.SpeechRecognized -= OnSpeechRecognized);
+        _subscriptions.Subscribe(
+            () => _voiceService.Speaking += OnSpeaking,
+            () => _voiceService.Speaking -= OnSpeaking);
     }
 
     /// <summary>
@@ -272,9 +280,7 @@ public class VoiceControlViewModel : INotifyPropertyChanged, IDisposable
 
         _disposed = true;
 
-        // Unsubscribe from events to prevent memory leaks
-        _voiceService.StateChanged -= OnVoiceStateChanged;
-        _voiceService.SpeechRecognized -= OnSpeechRecognized;
-        _voiceService.Speaking -= OnSpeaking;
+        // Unsubscribe from all events using SubscriptionManager
+        _subscriptions.Dispose();
     }
 }

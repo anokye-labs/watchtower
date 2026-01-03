@@ -146,6 +146,32 @@ public class UserPreferencesService : IUserPreferencesService
         PreferencesChanged?.Invoke(this, _preferences);
     }
 
+    public WindowPositionPreferences? GetWindowPosition()
+    {
+        lock (_lock)
+        {
+            var windowPosition = _preferences.WindowPosition;
+            if (windowPosition == null)
+            {
+                return null;
+            }
+
+            // Return a defensive copy to avoid exposing internal mutable state outside the lock.
+            return windowPosition.Clone();
+        }
+    }
+
+    public void SetWindowPosition(WindowPositionPreferences? windowPosition)
+    {
+        lock (_lock)
+        {
+            _preferences.WindowPosition = windowPosition;
+            PersistPreferences();
+        }
+        _logger.LogDebug("Window position preferences updated");
+        PreferencesChanged?.Invoke(this, _preferences);
+    }
+
     private static string GetPreferencesFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

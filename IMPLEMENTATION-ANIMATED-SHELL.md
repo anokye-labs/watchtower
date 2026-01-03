@@ -97,7 +97,7 @@ The frame uses a 9-slice Grid layout for perfect scaling:
 
 ## Known Limitations
 
-1. **Cross-Platform**: Animation timing may vary slightly on different platforms due to rendering performance.
+1. **Animation Timing**: Animation timing may vary slightly due to rendering performance.
 
 2. **Screen Resolution**: The frame-based splash size is clamped to 90% of screen size to prevent oversized windows on small displays.
 
@@ -107,7 +107,7 @@ The frame uses a 9-slice Grid layout for perfect scaling:
 
 ✅ **MVVM**: Logic in ViewModels, Views only handle presentation
 ✅ **DI**: Services injected via ServiceProvider
-✅ **Cross-Platform**: Pure Avalonia, no platform-specific code
+✅ **Windows-Native**: Pure Avalonia, optimized for Windows
 ✅ **Testability**: ViewModels testable without UI dependencies
 ✅ **Open Source**: Only MIT/Apache 2.0 licensed dependencies
 

@@ -1,18 +1,18 @@
 # WatchTower
 
-A cross-platform desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. WatchTower showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, including Adinkra symbols.
+A Windows desktop application built with Avalonia UI on .NET 10, designed to provide an immersive, gamepad-first user interface experience. WatchTower showcases a distinctive "Ancestral Futurism" design language that combines modern UI patterns with cultural elements from West African visual traditions, including Adinkra symbols.
 
 ## Overview
 
-WatchTower serves as a platform for displaying dynamic, full-screen Adaptive Card interfaces with integrated gamepad navigation. The application is designed for end users who want to interact with rich, adaptive content through a gamepad-optimized interface, content creators designing Adaptive Card experiences, and developers building cross-platform desktop applications with Avalonia UI.
+WatchTower serves as a platform for displaying dynamic, full-screen Adaptive Card interfaces with integrated gamepad navigation. The application is designed for end users who want to interact with rich, adaptive content through a gamepad-optimized interface, content creators designing Adaptive Card experiences, and developers building Windows desktop applications with Avalonia UI.
 
 ### Key Capabilities
 
-The application provides Adaptive Card rendering with a custom "Ancestral Futurism" theme featuring holographic cyan, Ashanti gold, mahogany, and void black color schemes. It offers gamepad-first navigation through full SDL2 integration for game controller input with XYFocus navigation and visual feedback. Cross-platform deployment produces single-file, self-contained executables for Windows (win-x64), macOS (osx-x64), and Linux (linux-x64). Dynamic UI overlays include animated input panels for rich text and voice input, plus an event log with smooth transitions. The adaptive frame system provides resolution-independent decorative borders using 5x5 grid image slicing.
+The application provides Adaptive Card rendering with a custom "Ancestral Futurism" theme featuring holographic cyan, Ashanti gold, mahogany, and void black color schemes. It offers gamepad-first navigation through full SDL2 integration for game controller input with XYFocus navigation and visual feedback. Windows-native deployment produces a single-file, self-contained executable for win-x64. Dynamic UI overlays include animated input panels for rich text and voice input, plus an event log with smooth transitions. The adaptive frame system provides resolution-independent decorative borders using 5x5 grid image slicing.
 
 ## Features
 
-- **Cross-platform**: Windows, macOS, Linux support
+- **Windows-Native**: Optimized for Windows with native integrations
 - **MVVM Architecture**: Strict separation of concerns
 - **Game Controller Support**: Navigate with gamepad
 - **AI Agent Integration**: MCP (Model Context Protocol) support for AI-assisted development
@@ -96,7 +96,7 @@ SplashWindow.axaml       ->  SplashWindowViewModel     ->  IVoiceOrchestrationSe
 
 **Dependency Injection**: Services are registered in `App.axaml.cs` and injected via constructors.
 
-**Cross-Platform**: No platform-specific code. Works identically on Windows, macOS, and Linux.
+**Windows-Native**: Optimized for Windows with native integrations and best-in-class Windows experience.
 
 **Testability**: ViewModels are testable without UI dependencies through mocked service interfaces.
 
@@ -139,7 +139,7 @@ concept-art/                  # Visual design assets
 
 ### Game Controller Support
 
-Full hardware support for game controller input using SDL2 via Silk.NET. Features include real cross-platform gamepad detection, SDL Game Controller Database for automatic button mapping, hot-plug support for controller connect/disconnect, and 60 FPS polling synchronized with UI rendering.
+Full hardware support for game controller input using SDL2 via Silk.NET. Features include gamepad detection on Windows, SDL Game Controller Database for automatic button mapping, hot-plug support for controller connect/disconnect, and 60 FPS polling synchronized with UI rendering.
 
 See [Game Controller Support](docs/game-controller-support.md) for detailed documentation.
 
@@ -147,7 +147,7 @@ See [Game Controller Support](docs/game-controller-support.md) for detailed docu
 
 Full-duplex voice capabilities with both offline and online modes. Offline mode (default) uses Vosk for speech recognition and Piper for TTS with no internet required. Online mode uses Azure Speech Services for higher accuracy. Full-duplex mode enables listening and speaking simultaneously.
 
-Note: Voice features currently require Windows due to NAudio dependency. Linux and macOS support will require an alternative audio backend.
+Voice features use NAudio for high-quality Windows audio integration.
 
 See [Voice Setup Guide](docs/voice-setup-guide.md) for configuration and model downloads.
 
@@ -224,15 +224,9 @@ Press F5 in VS Code to attach the debugger. Set breakpoints in any C# file. XAML
 ```bash
 # Windows
 dotnet publish -c Release -r win-x64 --self-contained true
-
-# macOS
-dotnet publish -c Release -r osx-x64 --self-contained true
-
-# Linux
-dotnet publish -c Release -r linux-x64 --self-contained true
 ```
 
-Output: `WatchTower/bin/Release/net10.0/{rid}/publish/`
+Output: `WatchTower/bin/Release/net10.0/win-x64/publish/`
 
 ## Keyboard Shortcuts
 
