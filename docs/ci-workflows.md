@@ -20,10 +20,8 @@ The PR validation workflow runs on every pull request to ensure code quality and
 
 #### 1. Build and Test
 
-Runs on a matrix of operating systems to ensure cross-platform compatibility:
+Runs on Windows to build and test the application:
 
-- **ubuntu-latest** (Linux)
-- **macos-latest** (macOS)
 - **windows-latest** (Windows)
 
 **Steps:**
@@ -32,12 +30,12 @@ Runs on a matrix of operating systems to ensure cross-platform compatibility:
 3. Restore dependencies using `dotnet restore WatchTower.slnx`
 4. Build solution in Release mode with `dotnet build`
 5. Run tests with code coverage collection using `coverlet.collector`
-6. Upload coverage artifacts (Linux only)
+6. Upload coverage artifacts
 7. Upload test results as artifacts
 
 #### 2. Coverage Report
 
-Runs only on Linux (`ubuntu-latest`) after successful build/test completion.
+Runs on Windows after successful build/test completion.
 
 **Steps:**
 1. Download coverage results from build job
@@ -121,8 +119,6 @@ reportgenerator \
   -reporttypes:"Html;Cobertura"
 
 # Open report in browser
-open coverage-report/index.html  # macOS
-xdg-open coverage-report/index.html  # Linux
 start coverage-report/index.html  # Windows
 ```
 
@@ -141,9 +137,7 @@ Once all workflows are tested and stable, enable branch protection rules on `mai
 1. Navigate to Settings > Branches
 2. Add rule for `main` branch
 3. Require status checks to pass:
-   - Build and Test (ubuntu-latest)
-   - Build and Test (macos-latest)
-   - Build and Test (windows-latest)
+   - Build and Test
    - Coverage Report
 4. Require PR reviews before merging
 5. Dismiss stale PR approvals when new commits are pushed
@@ -155,7 +149,7 @@ Once all workflows are tested and stable, enable branch protection rules on `mai
 If the coverage report job fails with "Coverage file not found":
 
 1. Check that tests are running successfully in the build-and-test job
-2. Verify the coverage artifact was uploaded from ubuntu-latest runner
+2. Verify the coverage artifact was uploaded from the Windows runner
 3. Check that `coverlet.collector` is in WatchTower.Tests.csproj dependencies
 
 ### Coverage Parsing Errors
