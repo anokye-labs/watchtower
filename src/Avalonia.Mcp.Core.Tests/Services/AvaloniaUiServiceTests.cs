@@ -112,7 +112,7 @@ public class AvaloniaUiServiceTests
     }
 
     [AvaloniaFact]
-    public async Task FindElementAsync_WithNullWindow_ReturnsNull()
+    public async Task FindElementAsync_WithNullWindow_ReturnsNotFound()
     {
         // Arrange
         var service = new AvaloniaUiService(_loggerMock.Object, () => null);
@@ -121,7 +121,8 @@ public class AvaloniaUiServiceTests
         var result = await service.FindElementAsync("TestElement");
 
         // Assert
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.False(result.Found);
     }
 
     [AvaloniaFact]
@@ -197,13 +198,8 @@ public class AvaloniaUiServiceTests
 
         // Assert
         Assert.NotNull(result);
-        
-        var dict = result as IDictionary<string, object>;
-        if (dict != null)
-        {
-            Assert.True(dict.ContainsKey("found"));
-            Assert.Equal(true, dict["found"]);
-        }
+        Assert.True(result.Found);
+        Assert.Equal("TestButton", result.Name);
     }
 
     [AvaloniaFact]
@@ -231,13 +227,8 @@ public class AvaloniaUiServiceTests
 
         // Assert
         Assert.NotNull(result);
-        
-        var dict = result as IDictionary<string, object>;
-        if (dict != null)
-        {
-            Assert.True(dict.ContainsKey("found"));
-            Assert.Equal(false, dict["found"]);
-        }
+        Assert.False(result.Found);
+        Assert.Equal("NonExistentButton", result.Selector);
     }
 
     [AvaloniaFact]

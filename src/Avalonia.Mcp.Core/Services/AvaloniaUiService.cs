@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -44,6 +45,8 @@ public class AvaloniaUiService : IAvaloniaUiService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var window = GetMainWindow();
             if (window == null)
             {
@@ -56,6 +59,8 @@ public class AvaloniaUiService : IAvaloniaUiService
             {
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
                     var point = new Point(x, y);
                     
                     // Find the element at the specified coordinates
@@ -63,10 +68,13 @@ public class AvaloniaUiService : IAvaloniaUiService
                     
                     if (element != null)
                     {
+                        // Create pointer for events - reuse the same instance
+                        var pointer = new Pointer(0, PointerType.Mouse, true);
+                        
                         // Simulate pointer press and release
                         var pointerPressedEventArgs = new PointerPressedEventArgs(
                             element,
-                            new Pointer(0, PointerType.Mouse, true),
+                            pointer,
                             (Visual)element,
                             point,
                             (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -77,7 +85,7 @@ public class AvaloniaUiService : IAvaloniaUiService
 
                         var pointerReleasedEventArgs = new PointerReleasedEventArgs(
                             element,
-                            new Pointer(0, PointerType.Mouse, true),
+                            pointer,
                             (Visual)element,
                             point,
                             (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -103,6 +111,11 @@ public class AvaloniaUiService : IAvaloniaUiService
 
             return success;
         }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Click operation cancelled");
+            return false;
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to click at ({X}, {Y})", x, y);
@@ -114,6 +127,8 @@ public class AvaloniaUiService : IAvaloniaUiService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var window = GetMainWindow();
             if (window == null)
             {
@@ -126,22 +141,24 @@ public class AvaloniaUiService : IAvaloniaUiService
             {
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
                     // Get focused element from TopLevel
                     var topLevel = TopLevel.GetTopLevel(window);
                     var focusedElement = topLevel?.FocusManager?.GetFocusedElement() as InputElement;
                     
                     if (focusedElement != null)
                     {
-                        // Simulate text input for each character
-                        foreach (var c in text)
+                        // Simulate text input for each character using Select
+                        var textInputEvents = text.Select(c => new TextInputEventArgs
                         {
-                            var textInputEventArgs = new TextInputEventArgs
-                            {
-                                Text = c.ToString(),
-                                RoutedEvent = InputElement.TextInputEvent,
-                                Source = focusedElement
-                            };
+                            Text = c.ToString(),
+                            RoutedEvent = InputElement.TextInputEvent,
+                            Source = focusedElement
+                        });
 
+                        foreach (var textInputEventArgs in textInputEvents)
+                        {
                             focusedElement.RaiseEvent(textInputEventArgs);
                         }
 
@@ -161,6 +178,11 @@ public class AvaloniaUiService : IAvaloniaUiService
 
             return success;
         }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Type text operation cancelled");
+            return false;
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to type text: {Text}", text);
@@ -172,6 +194,8 @@ public class AvaloniaUiService : IAvaloniaUiService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var window = GetMainWindow();
             if (window == null)
             {
@@ -184,9 +208,10 @@ public class AvaloniaUiService : IAvaloniaUiService
             {
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
                     var pixelSize = new PixelSize((int)window.Width, (int)window.Height);
                     var dpiScale = window.RenderScaling;
-                    var size = new Size(window.Width, window.Height);
 
                     using var renderTarget = new RenderTargetBitmap(pixelSize, new Vector(96 * dpiScale, 96 * dpiScale));
                     renderTarget.Render(window);
@@ -215,6 +240,11 @@ public class AvaloniaUiService : IAvaloniaUiService
 
             return base64Data;
         }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Screenshot capture cancelled");
+            return null;
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to capture screenshot");
@@ -226,6 +256,8 @@ public class AvaloniaUiService : IAvaloniaUiService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var window = GetMainWindow();
             if (window == null)
             {
@@ -238,7 +270,10 @@ public class AvaloniaUiService : IAvaloniaUiService
             {
                 try
                 {
-                    result = BuildElementTree(window, 0, maxDepth);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
+                    var visited = new HashSet<Visual>();
+                    result = BuildElementTree(window, 0, maxDepth, visited);
                     _logger?.LogInformation("Built element tree with max depth {MaxDepth}", maxDepth);
                 }
                 catch (Exception ex)
@@ -249,6 +284,11 @@ public class AvaloniaUiService : IAvaloniaUiService
 
             return result;
         }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Get element tree cancelled");
+            return null;
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to get element tree");
@@ -256,8 +296,21 @@ public class AvaloniaUiService : IAvaloniaUiService
         }
     }
 
-    private object BuildElementTree(Visual visual, int currentDepth, int maxDepth)
+    private object BuildElementTree(Visual visual, int currentDepth, int maxDepth, HashSet<Visual> visited)
     {
+        // Protect against circular references
+        if (visited.Contains(visual))
+        {
+            return new
+            {
+                type = "CircularReference",
+                name = (visual as Control)?.Name ?? "",
+                children = Array.Empty<object>()
+            };
+        }
+
+        visited.Add(visual);
+        
         var elementType = visual.GetType().Name;
         var elementName = (visual as Control)?.Name ?? "";
         var automationId = AutomationProperties.GetAutomationId(visual) ?? "";
@@ -269,10 +322,7 @@ public class AvaloniaUiService : IAvaloniaUiService
         if (currentDepth < maxDepth)
         {
             var visualChildren = visual.GetVisualChildren();
-            foreach (var child in visualChildren)
-            {
-                children.Add(BuildElementTree(child, currentDepth + 1, maxDepth));
-            }
+            children.AddRange(visualChildren.Select(child => BuildElementTree(child, currentDepth + 1, maxDepth, visited)));
         }
 
         return new
@@ -286,80 +336,107 @@ public class AvaloniaUiService : IAvaloniaUiService
         };
     }
 
-    public async Task<object?> FindElementAsync(string selector, CancellationToken cancellationToken = default)
+    public async Task<ElementSearchResult> FindElementAsync(string selector, CancellationToken cancellationToken = default)
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var window = GetMainWindow();
             if (window == null)
             {
                 _logger?.LogWarning("No main window available for element search");
-                return null;
+                return new ElementSearchResult { Found = false, Selector = selector };
             }
 
-            object? result = null;
+            ElementSearchResult result = new ElementSearchResult { Found = false, Selector = selector };
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 try
                 {
-                    var element = FindElementRecursive(window, selector);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
+                    var visited = new HashSet<Visual>();
+                    var element = FindElementRecursive(window, selector, visited);
                     
                     if (element != null)
                     {
                         var bounds = element.Bounds;
-                        result = new
+                        result = new ElementSearchResult
                         {
-                            found = true,
-                            type = element.GetType().Name,
-                            name = (element as Control)?.Name ?? "",
-                            automationId = AutomationProperties.GetAutomationId(element) ?? "",
-                            bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
-                            isVisible = element.IsVisible
+                            Found = true,
+                            Selector = selector,
+                            Type = element.GetType().Name,
+                            Name = (element as Control)?.Name ?? "",
+                            AutomationId = AutomationProperties.GetAutomationId(element) ?? "",
+                            Bounds = new ElementBounds 
+                            { 
+                                X = bounds.X, 
+                                Y = bounds.Y, 
+                                Width = bounds.Width, 
+                                Height = bounds.Height 
+                            },
+                            IsVisible = element.IsVisible
                         };
                         
                         _logger?.LogInformation("Found element matching selector: {Selector}", selector);
                     }
                     else
                     {
-                        result = new { found = false, selector };
                         _logger?.LogInformation("Element not found for selector: {Selector}", selector);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "Error during element search");
-                    result = new { found = false, selector, error = ex.Message };
+                    result = new ElementSearchResult 
+                    { 
+                        Found = false, 
+                        Selector = selector, 
+                        Error = ex.Message 
+                    };
                 }
             });
 
             return result;
         }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Find element cancelled");
+            return new ElementSearchResult { Found = false, Selector = selector };
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to find element: {Selector}", selector);
-            return new { found = false, selector, error = ex.Message };
+            return new ElementSearchResult 
+            { 
+                Found = false, 
+                Selector = selector, 
+                Error = ex.Message 
+            };
         }
     }
 
-    private Visual? FindElementRecursive(Visual visual, string selector)
+    private Visual? FindElementRecursive(Visual visual, string selector, HashSet<Visual> visited)
     {
+        // Protect against circular references
+        if (visited.Contains(visual))
+        {
+            return null;
+        }
+
+        visited.Add(visual);
+        
         // Check if current element matches the selector
         if (MatchesSelector(visual, selector))
         {
             return visual;
         }
 
-        // Search in children
-        foreach (var child in visual.GetVisualChildren())
-        {
-            var found = FindElementRecursive(child, selector);
-            if (found != null)
-            {
-                return found;
-            }
-        }
-
-        return null;
+        // Search in children using Select for better style
+        return visual.GetVisualChildren()
+            .Select(child => FindElementRecursive(child, selector, visited))
+            .FirstOrDefault(found => found != null);
     }
 
     private bool MatchesSelector(Visual visual, string selector)
@@ -394,10 +471,10 @@ public class AvaloniaUiService : IAvaloniaUiService
     {
         try
         {
-            var startTime = DateTimeOffset.UtcNow;
+            var stopwatch = Stopwatch.StartNew();
             var pollInterval = 100; // Check every 100ms
 
-            while ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds < timeoutMs)
+            while (stopwatch.ElapsedMilliseconds < timeoutMs)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -405,31 +482,35 @@ public class AvaloniaUiService : IAvaloniaUiService
                     return false;
                 }
 
-                var result = await FindElementAsync(selector, cancellationToken);
-                
-                // Check if the result indicates the element was found
-                // Use dynamic to access the 'found' property from the anonymous type
-                if (result != null)
+                // Check remaining time before attempting to find element
+                var remainingTime = timeoutMs - stopwatch.ElapsedMilliseconds;
+                if (remainingTime <= 0)
                 {
-                    try
-                    {
-                        dynamic dynamicResult = result;
-                        if (dynamicResult.found == true)
-                        {
-                            _logger?.LogInformation("Element found within timeout: {Selector}", selector);
-                            return true;
-                        }
-                    }
-                    catch
-                    {
-                        // If accessing the property fails, continue polling
-                    }
+                    break;
                 }
 
-                await Task.Delay(pollInterval, cancellationToken);
+                var result = await FindElementAsync(selector, cancellationToken);
+                
+                if (result.Found)
+                {
+                    _logger?.LogInformation("Element found within timeout: {Selector}", selector);
+                    return true;
+                }
+
+                // Calculate delay to not exceed timeout
+                var delayMs = (int)Math.Min(pollInterval, remainingTime);
+                if (delayMs > 0)
+                {
+                    await Task.Delay(delayMs, cancellationToken);
+                }
             }
 
             _logger?.LogWarning("Element not found within timeout ({TimeoutMs}ms): {Selector}", timeoutMs, selector);
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger?.LogInformation("Wait for element cancelled: {Selector}", selector);
             return false;
         }
         catch (Exception ex)

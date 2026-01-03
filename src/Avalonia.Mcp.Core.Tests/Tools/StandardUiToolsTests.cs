@@ -186,7 +186,7 @@ public class StandardUiToolsTests
             .Callback<McpToolDefinition, Func<Dictionary<string, object>?, Task<McpToolResult>>>(
                 (def, handler) => findHandler = handler);
 
-        var mockResult = new { found = true, name = "TestButton" };
+        var mockResult = new ElementSearchResult { Found = true, Name = "TestButton" };
         _uiServiceMock
             .Setup(s => s.FindElementAsync("TestButton", It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockResult);

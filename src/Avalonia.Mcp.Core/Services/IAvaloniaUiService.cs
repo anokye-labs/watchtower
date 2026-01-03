@@ -47,8 +47,8 @@ public interface IAvaloniaUiService
     /// </summary>
     /// <param name="selector">The selector string.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Information about the found element, or null if not found.</returns>
-    Task<object?> FindElementAsync(string selector, CancellationToken cancellationToken = default);
+    /// <returns>Information about the found element.</returns>
+    Task<ElementSearchResult> FindElementAsync(string selector, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Waits for an element matching the selector to appear.

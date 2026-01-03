@@ -147,19 +147,14 @@ public class StandardUiTools
 
                 var base64Data = await _uiService.CaptureScreenshotAsync(format);
 
-                if (base64Data != null)
-                {
-                    return McpToolResult.Ok(new
+                return base64Data != null 
+                    ? McpToolResult.Ok(new
                     {
                         format,
                         base64Data,
                         timestamp = DateTime.UtcNow
-                    });
-                }
-                else
-                {
-                    return McpToolResult.Fail("Failed to capture screenshot");
-                }
+                    })
+                    : McpToolResult.Fail("Failed to capture screenshot");
             }
             catch (Exception ex)
             {
@@ -197,14 +192,9 @@ public class StandardUiTools
 
                 var tree = await _uiService.GetElementTreeAsync(maxDepth);
 
-                if (tree != null)
-                {
-                    return McpToolResult.Ok(new { root = tree });
-                }
-                else
-                {
-                    return McpToolResult.Fail("Failed to get element tree");
-                }
+                return tree != null 
+                    ? McpToolResult.Ok(new { root = tree })
+                    : McpToolResult.Fail("Failed to get element tree");
             }
             catch (Exception ex)
             {
@@ -243,19 +233,7 @@ public class StandardUiTools
 
                 var result = await _uiService.FindElementAsync(selector);
 
-                if (result != null)
-                {
-                    return McpToolResult.Ok(result);
-                }
-                else
-                {
-                    return McpToolResult.Ok(new
-                    {
-                        selector,
-                        found = false,
-                        message = "Element not found"
-                    });
-                }
+                return McpToolResult.Ok(result);
             }
             catch (Exception ex)
             {
