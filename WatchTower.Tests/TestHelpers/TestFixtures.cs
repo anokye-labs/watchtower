@@ -15,6 +15,6 @@ public static class TestFixtures
             ["Logging:LogLevel"] = "normal"
         };
     }
-    
+
     // Add more test fixture helpers as needed
 }

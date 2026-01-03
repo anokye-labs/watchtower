@@ -7,11 +7,11 @@ WatchTower includes full hardware support for game controller input, allowing na
 ### Implemented
 
 ✅ **SDL2 Hardware Support**
-- Real cross-platform gamepad detection via Silk.NET.SDL
+- Gamepad detection via Silk.NET.SDL
 - SDL Game Controller Database for automatic button mapping
 - Hot-plug support for controller connect/disconnect
 - Support for Xbox, PlayStation, and generic USB controllers
-- Cross-platform compatibility (Windows, macOS, Linux)
+- Windows compatibility
 
 ✅ **Input Processing**
 - Event-based button press/release notifications
@@ -53,7 +53,7 @@ The game controller support follows WatchTower's MVVM architecture:
                  │
 ┌────────────────▼────────────────────┐
 │     Silk.NET.SDL (v2.22.0)          │
-│  (Cross-platform SDL2 bindings)     │
+│        (SDL2 bindings)              │
 └─────────────────────────────────────┘
 ```
 
@@ -153,7 +153,7 @@ The current implementation provides **full hardware gamepad support** using SDL2
 - SDL2 gamepad detection and enumeration
 - SDL Game Controller Database for automatic button mapping
 - Hot-plug detection for controller connect/disconnect events
-- Cross-platform support (Windows, macOS, Linux)
+- Windows support
 - 60 FPS polling synchronized with UI rendering
 
 **Hardware Tested:**
@@ -253,12 +253,11 @@ SDL returns Y-axis values where positive = down. The service inverts this to sta
 **Possible causes:**
 1. SDL2 native libraries not found
 2. Controller not compatible with SDL Game Controller Database
-3. Permissions issues (Linux/macOS)
+3. Permissions issues
 
 **Solutions:**
 - Ensure SDL2 native libraries are deployed with the application
 - Check controller compatibility at [SDL_GameControllerDB](https://github.com/gabomdq/SDL_GameControllerDB)
-- On Linux, ensure user has access to `/dev/input` devices
 - Check logs for initialization errors
 
 ### Events Not Firing

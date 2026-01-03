@@ -308,7 +308,7 @@ Configuration values in `appsettings.json` that define the minimum content area 
 
 ### Avalonia.Headless
 
-A testing framework for Avalonia UI applications that enables UI testing without browser dependencies or actual window rendering. It allows testing of UI interactions in a headless environment for cross-platform test execution.
+A testing framework for Avalonia UI applications that enables UI testing without browser dependencies or actual window rendering. It allows testing of UI interactions in a headless environment.
 
 **See**: `AGENTS.md`
 

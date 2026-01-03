@@ -10,7 +10,6 @@
         x:Class="WatchTower.Views.ShellWindow"
         x:DataType="vm:ShellWindowViewModel"
         Title="WatchTower"
-        WindowStartupLocation="CenterScreen"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         SystemDecorations="None"
