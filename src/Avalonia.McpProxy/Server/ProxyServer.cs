@@ -176,7 +176,14 @@ public class ProxyServer : IDisposable
                 && jsonrpcElement.GetString() == "2.0"
                 && root.TryGetProperty("id", out var idElement))
             {
-                var correlationId = idElement.GetString();
+                // Handle both string and numeric correlation IDs
+                string? correlationId = idElement.ValueKind switch
+                {
+                    JsonValueKind.String => idElement.GetString(),
+                    JsonValueKind.Number => idElement.GetInt64().ToString(),
+                    _ => null
+                };
+
                 if (!string.IsNullOrEmpty(correlationId) && _pendingRequests.TryRemove(correlationId, out var tcs))
                 {
                     _logger.LogDebug("Received response for correlation ID: {CorrelationId}", correlationId);
@@ -388,7 +395,7 @@ public class ProxyServer : IDisposable
                 using var timeoutCts = new CancellationTokenSource(timeout);
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-                Task<JsonElement> responseTask;
+                var responseTask = tcs.Task;
                 try
                 {
                     linkedCts.Token.Register(() =>
@@ -402,7 +409,6 @@ public class ProxyServer : IDisposable
                         }
                     });
 
-                    responseTask = tcs.Task;
                     var appResponse = await responseTask.ConfigureAwait(false);
 
                     // Forward the app's response to the agent
@@ -415,7 +421,16 @@ public class ProxyServer : IDisposable
                         // Malformed JSON-RPC response from app: missing both "result" and "error"
                         _logger.LogWarning("Received malformed response from app '{AppName}' for correlation ID: {CorrelationId} (missing both 'result' and 'error')",
                             app.Name, correlationId);
-                        await SendErrorToAgentAsync("Malformed response from application: missing both 'result' and 'error'.", requestId, CancellationToken.None);
+                        // Use a short timeout to avoid hanging if stdout is blocked
+                        using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        try
+                        {
+                            await SendErrorToAgentAsync("Malformed response from application: missing both 'result' and 'error'.", requestId, errorCts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            _logger.LogWarning("Failed to send malformed response error to agent - stdout may be blocked");
+                        }
                         return;
                     }
 
@@ -429,19 +444,38 @@ public class ProxyServer : IDisposable
                     _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
                         app.Name, correlationId);
                 }
+                catch (OperationCanceledException) when (!responseTask.IsCompletedSuccessfully)
+                {
+                    // Only treat as canceled if the response task didn't complete successfully
+                    // If the task completed, the response was already forwarded above
+                    _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' was canceled", toolName, app.Name);
+                    _pendingRequests.TryRemove(correlationId, out _);
+                    // Use a short timeout to avoid hanging if stdout is blocked
+                    using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    try
+                    {
+                        await SendErrorToAgentAsync("Tool execution was canceled", requestId, errorCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _logger.LogWarning("Failed to send cancellation error to agent - stdout may be blocked");
+                    }
+                }
                 catch (TimeoutException)
                 {
                     _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' timed out after {Timeout} seconds", toolName, app.Name, timeout.TotalSeconds);
                     _pendingRequests.TryRemove(correlationId, out _);
-                    await SendErrorToAgentAsync($"Tool execution timed out after {timeout.TotalSeconds} seconds", requestId, CancellationToken.None);
+                    // Use a short timeout to avoid hanging if stdout is blocked
+                    using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    try
+                    {
+                        await SendErrorToAgentAsync($"Tool execution timed out after {timeout.TotalSeconds} seconds", requestId, errorCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _logger.LogWarning("Failed to send timeout error to agent - stdout may be blocked");
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' was canceled", toolName, app.Name);
-                _pendingRequests.TryRemove(correlationId, out _);
-                // Use CancellationToken.None to avoid throwing another OperationCanceledException
-                await SendErrorToAgentAsync("Tool execution was canceled", requestId, CancellationToken.None);
             }
             catch (Exception ex)
             {
