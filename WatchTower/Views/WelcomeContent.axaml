@@ -193,7 +193,8 @@
                          Content="Don't show this welcome screen again"
                          FontSize="13"
                          Foreground="#CCFFFFFF"
-                         VerticalAlignment="Center"/>
+                         VerticalAlignment="Center"
+                         AutomationProperties.Name="Don't show welcome screen again checkbox"/>
                 
                 <Button Grid.Column="1"
                        Content="Get Started"
@@ -205,7 +206,8 @@
                        Padding="24,12"
                        CornerRadius="6"
                        BorderThickness="0"
-                       Cursor="Hand">
+                       Cursor="Hand"
+                       AutomationProperties.Name="Get Started button, dismiss welcome screen">
                     <Button.Styles>
                         <Style Selector="Button:pointerover">
                             <Setter Property="Background" Value="#FFFFD700"/>

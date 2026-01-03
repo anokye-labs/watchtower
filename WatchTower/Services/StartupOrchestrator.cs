@@ -41,7 +41,6 @@ public class StartupOrchestrator : IStartupOrchestrator
             
             // Step 1: Initialize environment
             logger.ReportProgress(++currentStep, TotalSteps, "Initializing environment");
-            await Task.Delay(100); // Small delay for visual feedback
             
             // Step 2: Load configuration
             logger.ReportProgress(++currentStep, TotalSteps, "Loading configuration");
@@ -149,7 +148,7 @@ public class StartupOrchestrator : IStartupOrchestrator
             }
             
             // Step 10: Initialize voice services
-            logger.ReportProgress(++currentStep, TotalSteps, "Initializing voice services");
+            logger.ReportProgress(currentStep + 1, TotalSteps, "Initializing voice services");
             var voiceService = serviceProvider.GetRequiredService<IVoiceOrchestrationService>();
             
             if (await voiceService.InitializeAsync())

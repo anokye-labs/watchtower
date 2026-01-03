@@ -25,7 +25,10 @@ public class PercentageToWidthConverter : IValueConverter
                 maxWidth = customWidth;
             }
             
-            return (intValue / 100.0) * maxWidth;
+            // Clamp the percentage to the valid range [0, 100] to avoid negative or oversized widths
+            int clampedPercentage = Math.Clamp(intValue, 0, 100);
+            
+            return (clampedPercentage / 100.0) * maxWidth;
         }
 
         return 0.0;
