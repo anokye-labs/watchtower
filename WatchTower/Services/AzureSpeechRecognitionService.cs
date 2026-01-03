@@ -21,15 +21,15 @@ namespace WatchTower.Services;
 /// </para>
 /// <para><strong>Extraction Strategy:</strong></para>
 /// <list type="bullet">
-/// <item><description>Uses the <c>Best()</c> method to retrieve the highest-confidence alternative from NBest results</description></item>
-/// <item><description>The first item in the NBest list represents the most likely recognition</description></item>
+/// <item><description>Uses the <c>Best()</c> method to retrieve the highest-confidence alternative from the NBest results, regardless of list ordering</description></item>
+/// <item><description>NBest entries are often ordered by likelihood, but callers should not assume the first entry is always the highest-confidence one; always use <c>Best()</c> to obtain the best candidate</description></item>
 /// <item><description>Falls back to 0.0f when confidence data is unavailable</description></item>
 /// <item><description>Semantic segmentation results may not provide confidence scores</description></item>
 /// </list>
 /// <para><strong>Current Implementation Note:</strong></para>
 /// <para>
-/// The current implementation uses placeholder confidence values (0.5f for partial, 0.9f for final results)
-/// as a temporary measure. Full NBest integration requires additional result format configuration.
+/// The current implementation uses placeholder confidence values (0.5f for partial, 0.9f for final results).
+/// Full NBest integration requires additional result format configuration.
 /// </para>
 /// </remarks>
 public class AzureSpeechRecognitionService : IVoiceRecognitionService
