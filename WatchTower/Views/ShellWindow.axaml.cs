@@ -13,6 +13,7 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
+using WatchTower.Models;
 using WatchTower.Services;
 using WatchTower.ViewModels;
 
@@ -39,6 +40,7 @@ public partial class ShellWindow : AnimatableWindow
     
     // Frame grid reference
     private Grid? _frameGrid;
+    private IUserPreferencesService? _userPreferencesService;
     
     /// <summary>
     /// Sets the configuration for frame settings.
@@ -62,6 +64,15 @@ public partial class ShellWindow : AnimatableWindow
             throw new InvalidOperationException(
                 $"Startup:MinContentHeight must be between 100 and 2000. Current value: {_minContentHeight}");
         }
+    }
+
+    /// <summary>
+    /// Sets the user preferences service for window position persistence.
+    /// Call this before the window is shown.
+    /// </summary>
+    public void SetUserPreferencesService(IUserPreferencesService userPreferencesService)
+    {
+        _userPreferencesService = userPreferencesService;
     }
 
     public ShellWindow()
@@ -249,6 +260,9 @@ public partial class ShellWindow : AnimatableWindow
 
     private void OnWindowClosed(object? sender, EventArgs e)
     {
+        // Save window position before closing
+        SaveWindowPosition();
+        
         // Unsubscribe from events
         KeyDown -= OnKeyDown;
         Loaded -= OnLoaded;
@@ -371,11 +385,145 @@ public partial class ShellWindow : AnimatableWindow
     }
 
     /// <summary>
+    /// Attempts to restore the window position from saved preferences.
+    /// Returns true if a saved position was found and the display is available, false otherwise.
+    /// </summary>
+    private bool TryRestoreWindowPosition()
+    {
+        if (_userPreferencesService == null)
+        {
+            return false;
+        }
+
+        var savedPosition = _userPreferencesService.GetWindowPosition();
+        if (savedPosition == null || savedPosition.DisplayBounds == null)
+        {
+            return false;
+        }
+
+        // Try to find the saved display
+        // Note: For mirrored displays with identical bounds, the first matching screen is selected.
+        // This is acceptable since mirrored displays should show the same content.
+        Screen? targetScreen = null;
+        foreach (var screen in Screens.All)
+        {
+            var bounds = screen.Bounds;
+            if (bounds.X == savedPosition.DisplayBounds.X &&
+                bounds.Y == savedPosition.DisplayBounds.Y &&
+                bounds.Width == savedPosition.DisplayBounds.Width &&
+                bounds.Height == savedPosition.DisplayBounds.Height)
+            {
+                targetScreen = screen;
+                break;
+            }
+        }
+
+        if (targetScreen == null)
+        {
+            // Saved display not found, return false to use default positioning
+            return false;
+        }
+
+        // Validate that the saved size is positive and reasonable
+        var width = savedPosition.Width;
+        var height = savedPosition.Height;
+        var workingArea = targetScreen.WorkingArea;
+        var scaling = targetScreen.Scaling;
+        var maxLogicalWidth = workingArea.Width / scaling;
+        var maxLogicalHeight = workingArea.Height / scaling;
+        
+        if (width <= 0 || height <= 0 || width > maxLogicalWidth * 1.5 || height > maxLogicalHeight * 1.5)
+        {
+            // Invalid or unreasonable size, fall back to default positioning
+            return false;
+        }
+
+        // Validate that the saved position is at least partially visible on the target screen
+        var x = savedPosition.X;
+        var y = savedPosition.Y;
+        var logicalScreenX = workingArea.X / scaling;
+        var logicalScreenY = workingArea.Y / scaling;
+        
+        // Ensure at least 100 logical pixels of the window are visible on the screen
+        const double MinVisibleSize = 100;
+        if (x + width < logicalScreenX + MinVisibleSize ||
+            x > logicalScreenX + maxLogicalWidth - MinVisibleSize ||
+            y + height < logicalScreenY + MinVisibleSize ||
+            y > logicalScreenY + maxLogicalHeight - MinVisibleSize)
+        {
+            // Window would be mostly off-screen, fall back to default positioning
+            return false;
+        }
+
+        // Restore the saved position (AnimatedWidth/Height automatically sync to Width/Height)
+        AnimatedX = x;
+        AnimatedY = y;
+        AnimatedWidth = width;
+        AnimatedHeight = height;
+        
+        // Update current screen tracking
+        _currentScreen = targetScreen;
+        
+        // Remove WindowStartupLocation to use manual positioning
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        
+        // If the saved size matches the working area, skip the expansion animation
+        if (Math.Abs(width - maxLogicalWidth) < 1.0 && Math.Abs(height - maxLogicalHeight) < 1.0)
+        {
+            _hasAnimated = true;
+        }
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Saves the current window position to preferences.
+    /// </summary>
+    private void SaveWindowPosition()
+    {
+        if (_userPreferencesService == null)
+        {
+            return;
+        }
+
+        var screen = Screens.ScreenFromWindow(this);
+        if (screen == null)
+        {
+            return;
+        }
+
+        var bounds = screen.Bounds;
+        var position = new WindowPositionPreferences
+        {
+            X = AnimatedX,
+            Y = AnimatedY,
+            Width = AnimatedWidth,
+            Height = AnimatedHeight,
+            DisplayBounds = new DisplayBounds
+            {
+                X = bounds.X,
+                Y = bounds.Y,
+                Width = bounds.Width,
+                Height = bounds.Height
+            }
+        };
+
+        _userPreferencesService.SetWindowPosition(position);
+    }
+
+    /// <summary>
     /// Sets the initial splash window size based on frame static components plus minimum content area.
     /// All values use logical coordinates/pixels consistently.
     /// </summary>
     private void SetSplashSize()
     {
+        // Try to restore saved position first
+        if (TryRestoreWindowPosition())
+        {
+            // Successfully restored saved position
+            return;
+        }
+
         var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
         if (screen != null)
         {
@@ -728,6 +876,9 @@ public partial class ShellWindow : AnimatableWindow
         
         // Update frame scale for the new screen
         UpdateFrameScale();
+        
+        // Save the new window position after monitor switch
+        SaveWindowPosition();
         
         _viewModel?.EndExpansionAnimation();
         _isAnimating = false;

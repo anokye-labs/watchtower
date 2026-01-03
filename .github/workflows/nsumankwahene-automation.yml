@@ -103,9 +103,9 @@ jobs:
             }
             
             // Find the status field and "In progress" option
-            const statusField = project.fields.nodes.find(f => f.name === 'Status');
-            const prLinkField = project.fields.nodes.find(f => f.name === 'PR Link');
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const prLinkField = project.fields.nodes.find(f => f.name === 'pr_link');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
             
             if (!statusField) {
               console.log('Status field not found in project');
@@ -342,7 +342,7 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
             const inReviewOption = statusField?.options?.find(o => o.name === 'In review');
             
             if (!statusField || !inReviewOption) {
@@ -550,7 +550,7 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'Status');
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
             const doneOption = statusField?.options?.find(o => o.name === 'Done');
             
             if (!statusField || !doneOption) {
@@ -740,8 +740,8 @@ jobs:
               return;
             }
             
-            const statusField = project.fields.nodes.find(f => f.name === 'Status');
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
+            const statusField = project.fields.nodes.find(f => f.name === 'status');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
             const blockedOption = statusField?.options?.find(o => o.name === 'Blocked');
             
             if (!statusField || !blockedOption) {
@@ -762,11 +762,11 @@ jobs:
               for (const fieldValue of item.fieldValues.nodes) {
                 const fieldName = fieldValue.field?.name;
                 
-                if (fieldName === 'Status') {
+                if (fieldName === 'status') {
                   status = fieldValue.name;
                 }
                 
-                if (fieldName === 'Last Activity' && fieldValue.date) {
+                if (fieldName === 'last_activity' && fieldValue.date) {
                   lastActivity = new Date(fieldValue.date);
                 }
               }
@@ -817,16 +817,18 @@ jobs:
                     });
                     
                     // Comment on issue
-                    const comment = `⚠️ **Stale Issue: No activity for ${STALE_THRESHOLD_DAYS} days**
-
-This issue has remained in the 'In Progress' status for more than ${STALE_THRESHOLD_DAYS} days without activity.
-
-Please:
-1. Check if there are any blockers preventing progress
-2. Update the status to 'Blocked' if blocked externally
-3. Or continue work if the item is still active
-
-Assigning to @${STALE_ASSIGNEE} for review.`;
+                    const comment = [
+                      `⚠️ **Stale Issue: No activity for ${STALE_THRESHOLD_DAYS} days**`,
+                      '',
+                      `This issue has remained in the 'In Progress' status for more than ${STALE_THRESHOLD_DAYS} days without activity.`,
+                      '',
+                      'Please:',
+                      '1. Check if there are any blockers preventing progress',
+                      '2. Update the status to \'Blocked\' if blocked externally',
+                      '3. Or continue work if the item is still active',
+                      '',
+                      `Assigning to @${STALE_ASSIGNEE} for review.`
+                    ].join('\n');
                     
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
@@ -934,11 +936,11 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
               for (const fieldValue of item.fieldValues.nodes) {
                 const fieldName = fieldValue.field?.name;
                 
-                if (fieldName === 'Status') {
+                if (fieldName === 'status') {
                   status = fieldValue.name;
                 }
                 
-                if (fieldName === 'Last Activity' && fieldValue.date) {
+                if (fieldName === 'last_activity' && fieldValue.date) {
                   lastActivity = new Date(fieldValue.date);
                 }
               }
@@ -1030,9 +1032,9 @@ Assigning to @${STALE_ASSIGNEE} for review.`;
               return;
             }
             
-            const lastActivityField = project.fields.nodes.find(f => f.name === 'Last Activity');
+            const lastActivityField = project.fields.nodes.find(f => f.name === 'last_activity');
             if (!lastActivityField) {
-              console.log('Last Activity field not found');
+              console.log('last_activity field not found');
               return;
             }
             

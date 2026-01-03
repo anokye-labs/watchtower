@@ -44,7 +44,7 @@ Existing labels that map to components:
 - `ui` - User interface
 - `ux` - User experience
 - `tech-debt` - Technical debt
-- `cross-platform` - Cross-platform compatibility
+- `windows-native` - Windows-native features and optimizations
 - `architecture` - Architectural changes
 
 ### Workflow Labels
