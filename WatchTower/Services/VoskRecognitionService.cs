@@ -298,10 +298,6 @@ public class VoskRecognitionService : IVoiceRecognitionService
                     "Vosk recognition shutdown did not complete within {TimeoutSeconds}s",
                     shutdownTimeoutSeconds);
             }
-            else
-            {
-                _logger.LogInformation("Vosk recognition shutdown completed successfully");
-            }
         }
         catch (Exception ex)
         {

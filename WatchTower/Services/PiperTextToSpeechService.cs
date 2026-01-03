@@ -194,17 +194,16 @@ public class PiperTextToSpeechService : ITextToSpeechService
 
     private async Task PlayAudioAsync(byte[] audioData)
     {
-        // Piper outputs raw PCM audio at 22050 Hz, 16-bit, mono
-        using var memoryStream = new MemoryStream(audioData);
-        using var rawSource = new RawSourceWaveStream(memoryStream, new WaveFormat(22050, 16, 1));
-
-        // Create wave output for playback
-        // Note: We store a reference in _waveOut for StopAsync to access, but we use 'using'
-        // for automatic cleanup. The finally block clears the reference before disposal.
-        using var waveOut = new WaveOutEvent();
+        WaveOutEvent? waveOut = null;
         
         try
         {
+            // Piper outputs raw PCM audio at 22050 Hz, 16-bit, mono
+            using var memoryStream = new MemoryStream(audioData);
+            using var rawSource = new RawSourceWaveStream(memoryStream, new WaveFormat(22050, 16, 1));
+
+            // Create wave output for playback
+            waveOut = new WaveOutEvent();
             _waveOut = waveOut; // Store reference for StopAsync to access
             
             waveOut.Init(rawSource);
@@ -237,10 +236,10 @@ public class PiperTextToSpeechService : ITextToSpeechService
         }
         finally
         {
-            // Clear reference before the using statement disposes the object
-            // This prevents StopAsync from accessing an object that's about to be disposed
+            // Clean up - dispose if not already disposed by StopAsync
             if (_waveOut == waveOut)
             {
+                _waveOut?.Dispose();
                 _waveOut = null;
             }
         }
