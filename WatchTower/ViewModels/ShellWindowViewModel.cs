@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Microsoft.Extensions.Configuration;
 using WatchTower.Services;
 using WatchTower.Utilities;
 
@@ -32,6 +33,23 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private double _frameDisplayScale = 1.0;
     private Thickness _contentPadding;
     private string _backgroundColor = "#1A1A1A";
+    
+    // Windowed mode configuration
+    private bool _isWindowedModeEnabled;
+    private double _initialWindowWidth = 1280;
+    private double _initialWindowHeight = 720;
+    private bool _windowedModeConfigurationLoaded;
+    
+    // Windowed mode validation constants
+    // Note: These represent absolute minimums for the window dimensions.
+    // The actual minimum enforced at runtime by SetMinimumSizeConstraints includes
+    // frame padding (MinWidth = MinContentWidth + padding), which may be larger.
+    // These validation constants ensure configuration values are reasonable before
+    // runtime padding calculations occur.
+    private const double MinWindowWidth = 400;
+    private const double MaxWindowWidth = 4000;
+    private const double MinWindowHeight = 300;
+    private const double MaxWindowHeight = 4000;
 
     // Frame bitmap sources (dynamically sliced from source image) - 16 pieces for 5x5 grid
     // Row 0: Top edge
@@ -106,6 +124,33 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     /// Gets the splash view model for direct access.
     /// </summary>
     public SplashWindowViewModel SplashViewModel => _splashViewModel;
+
+    /// <summary>
+    /// Gets whether windowed mode is enabled (non-fullscreen with configurable size).
+    /// </summary>
+    public bool IsWindowedModeEnabled
+    {
+        get => _isWindowedModeEnabled;
+        set => SetProperty(ref _isWindowedModeEnabled, value);
+    }
+    
+    /// <summary>
+    /// Gets the initial window width for windowed mode (in logical pixels).
+    /// </summary>
+    public double InitialWindowWidth
+    {
+        get => _initialWindowWidth;
+        set => SetProperty(ref _initialWindowWidth, value);
+    }
+    
+    /// <summary>
+    /// Gets the initial window height for windowed mode (in logical pixels).
+    /// </summary>
+    public double InitialWindowHeight
+    {
+        get => _initialWindowHeight;
+        set => SetProperty(ref _initialWindowHeight, value);
+    }
 
     /// <summary>
     /// Gets or sets the current render scaling factor (DPI scale).
@@ -383,6 +428,54 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         UpdateFrameDimensions();
         
         return true;
+    }
+    
+    /// <summary>
+    /// Loads windowed mode configuration from IConfiguration.
+    /// Should be called during initialization.
+    /// Only loads configuration once to avoid overwriting values.
+    /// </summary>
+    /// <param name="configuration">The configuration instance to load from.</param>
+    public void LoadWindowedModeConfiguration(IConfiguration configuration)
+    {
+        if (configuration == null || _windowedModeConfigurationLoaded)
+        {
+            return;
+        }
+        
+        // Parse configuration values with defaults and safe parsing
+        var enabledStr = configuration["Frame:EnableWindowedMode"];
+        if (!string.IsNullOrEmpty(enabledStr) && bool.TryParse(enabledStr, out var enabled))
+        {
+            IsWindowedModeEnabled = enabled;
+        }
+        
+        // Parse and validate width
+        var widthStr = configuration["Frame:InitialWidth"];
+        if (!string.IsNullOrEmpty(widthStr) && double.TryParse(widthStr, out var width))
+        {
+            if (width < MinWindowWidth || width > MaxWindowWidth)
+            {
+                throw new InvalidOperationException(
+                    $"Frame:InitialWidth must be between {MinWindowWidth} and {MaxWindowWidth}. Current value: {width}");
+            }
+            InitialWindowWidth = width;
+        }
+        
+        // Parse and validate height
+        var heightStr = configuration["Frame:InitialHeight"];
+        if (!string.IsNullOrEmpty(heightStr) && double.TryParse(heightStr, out var height))
+        {
+            if (height < MinWindowHeight || height > MaxWindowHeight)
+            {
+                throw new InvalidOperationException(
+                    $"Frame:InitialHeight must be between {MinWindowHeight} and {MaxWindowHeight}. Current value: {height}");
+            }
+            InitialWindowHeight = height;
+        }
+        
+        // Mark configuration as loaded to prevent duplicate loading
+        _windowedModeConfigurationLoaded = true;
     }
     
     /// <summary>
