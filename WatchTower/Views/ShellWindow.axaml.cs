@@ -17,6 +17,32 @@ using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
+/// <summary>
+/// Defines the type of window resize operation based on frame region.
+/// </summary>
+internal enum ResizeMode
+{
+    None,
+    TopLeft,
+    Top,
+    TopRight,
+    Left,
+    Right,
+    BottomLeft,
+    Bottom,
+    BottomRight
+}
+
+/// <summary>
+/// Result of a frame hit test operation.
+/// </summary>
+internal record FrameHitTestResult
+{
+    public bool IsOpaque { get; init; }
+    public ResizeMode ResizeMode { get; init; }
+    public StandardCursorType CursorType { get; init; }
+}
+
 public partial class ShellWindow : AnimatableWindow
 {
     private ScrollViewer? _diagnosticsScroller;
@@ -141,7 +167,6 @@ public partial class ShellWindow : AnimatableWindow
         var backgroundColor = _configuration?.GetValue<string>("Frame:BackgroundColor") ?? "#1A1A1A";
         
         // Read frame interaction configuration
-        var alphaThreshold = _configuration?.GetValue<double>("Frame:ClickThroughAlphaThreshold") ?? 0.75;
         var enableWindowedMode = _configuration?.GetValue<bool>("Frame:EnableWindowedMode") ?? true;
         var resizeHandleSize = _configuration?.GetValue<double>("Frame:ResizeHandleSize") ?? 8.0;
         
@@ -163,15 +188,8 @@ public partial class ShellWindow : AnimatableWindow
             _viewModel.RenderScale = RenderScaling;
             _viewModel.ContentPadding = new Thickness(paddingLeft, paddingTop, paddingRight, paddingBottom);
             _viewModel.BackgroundColor = backgroundColor;
-            _viewModel.ClickThroughAlphaThreshold = alphaThreshold;
             _viewModel.EnableWindowedMode = enableWindowedMode;
             _viewModel.ResizeHandleSize = resizeHandleSize;
-        }
-        {
-            _viewModel.FrameDisplayScale = frameScale;
-            _viewModel.RenderScale = RenderScaling;
-            _viewModel.ContentPadding = new Thickness(paddingLeft, paddingTop, paddingRight, paddingBottom);
-            _viewModel.BackgroundColor = backgroundColor;
         }
     }
     
@@ -856,24 +874,28 @@ public partial class ShellWindow : AnimatableWindow
         var scale = RenderScaling > 0 ? RenderScaling : 1.0;
         var frameScale = _viewModel.FrameDisplayScale;
         
-        // Calculate logical dimensions of fixed frame regions
+        // Calculate logical dimensions of all frame regions (including stretchable)
         var col0Width = (def.Left * frameScale) / scale;
-        var col2Width = ((def.RightInner - def.LeftInner) * frameScale) / scale;
+        var col1Width = ((def.LeftInner - def.Left) * frameScale) / scale;
+        var col3Width = ((def.Right - def.RightInner) * frameScale) / scale;
         var col4Width = ((sourceSize.Width - def.Right) * frameScale) / scale;
         
         var row0Height = (def.Top * frameScale) / scale;
-        var row2Height = ((def.BottomInner - def.TopInner) * frameScale) / scale;
+        var row1Height = ((def.TopInner - def.Top) * frameScale) / scale;
+        var row3Height = ((def.Bottom - def.BottomInner) * frameScale) / scale;
         var row4Height = ((sourceSize.Height - def.Bottom) * frameScale) / scale;
         
-        // Check if point is in frame border region (not in content area)
-        var isInLeftBorder = point.X < col0Width;
-        var isInRightBorder = point.X > windowSize.Width - col4Width;
-        var isInTopBorder = point.Y < row0Height;
-        var isInBottomBorder = point.Y > windowSize.Height - row4Height;
+        // Calculate content area boundaries (excluding all frame border regions)
+        var contentLeft = col0Width + col1Width;
+        var contentRight = windowSize.Width - col3Width - col4Width;
+        var contentTop = row0Height + row1Height;
+        var contentBottom = windowSize.Height - row3Height - row4Height;
         
-        var isInFrameRegion = isInLeftBorder || isInRightBorder || isInTopBorder || isInBottomBorder;
+        // Check if point is in content area (center of 5x5 grid)
+        var isInContentArea = point.X >= contentLeft && point.X < contentRight &&
+                              point.Y >= contentTop && point.Y < contentBottom;
         
-        if (!isInFrameRegion)
+        if (isInContentArea)
         {
             // Point is in content area
             return new FrameHitTestResult

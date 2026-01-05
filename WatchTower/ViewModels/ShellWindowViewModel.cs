@@ -23,7 +23,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _cleanedUp;
     
     // Frame interaction configuration
-    private double _clickThroughAlphaThreshold = 0.75;
     private bool _enableWindowedMode = true;
     private double _resizeHandleSize = 8.0;
     
@@ -156,16 +155,6 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     {
         get => _backgroundColor;
         set => SetProperty(ref _backgroundColor, value);
-    }
-    
-    /// <summary>
-    /// Gets or sets the alpha threshold for click-through behavior (0.0-1.0).
-    /// Pixels with alpha below this threshold pass clicks through to content.
-    /// </summary>
-    public double ClickThroughAlphaThreshold
-    {
-        get => _clickThroughAlphaThreshold;
-        set => SetProperty(ref _clickThroughAlphaThreshold, Math.Clamp(value, 0.0, 1.0));
     }
     
     /// <summary>

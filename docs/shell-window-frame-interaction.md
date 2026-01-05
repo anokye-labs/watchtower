@@ -2,21 +2,21 @@
 
 ## Overview
 
-The Shell Window frame system provides an interactive, decorative frame around the application content with alpha-based click-through and window management capabilities. This guide explains how the frame interaction system works and how to configure it.
+The Shell Window frame system provides an interactive, decorative frame around the application content with geometry-based click-through and window management capabilities. This guide explains how the frame interaction system works and how to configure it.
 
 ## Features
 
-### 1. Alpha-Based Click-Through
+### 1. Geometry-Based Click-Through
 
-The frame uses alpha transparency to determine whether clicks should:
-- **Pass through** to content below (transparent regions)
-- **Be captured** for window interaction (opaque regions)
+The frame uses the 5x5 grid slice boundaries to determine whether clicks should:
+- **Pass through** to content below (content area - the center region of the 5x5 grid)
+- **Be captured** for window interaction (frame border regions - outer cells of the 5x5 grid)
 
-This is controlled by the `ClickThroughAlphaThreshold` configuration value (default: 0.75). Pixels with alpha values above this threshold are considered opaque and capture clicks.
+The system checks if a click point is within the content area boundaries, which are calculated based on the frame slice definition. Clicks within the content area pass through, while clicks within the decorative border are captured for window interaction.
 
 ### 2. Window Resizing
 
-When clicking on opaque frame regions near window edges or corners, the window can be resized:
+When clicking on frame border regions near window edges or corners, the window can be resized:
 
 - **Corner regions**: Enable diagonal resize (both width and height)
   - Top-Left, Top-Right, Bottom-Left, Bottom-Right
@@ -28,7 +28,7 @@ The resize handle size is configurable via `ResizeHandleSize` (default: 8 logica
 
 ### 3. Window Dragging
 
-Clicking and holding on opaque frame regions that are not in resize zones allows dragging the window to reposition it on the screen.
+Clicking and holding on frame border regions that are not in resize zones allows dragging the window to reposition it on the screen.
 
 ### 4. Cursor Feedback
 
@@ -48,7 +48,6 @@ Frame interaction is configured in `appsettings.json` under the `Frame` section:
     "SourceUri": "avares://WatchTower/Assets/main-frame.png",
     "Scale": 0.20,
     "BackgroundColor": "#261208",
-    "ClickThroughAlphaThreshold": 0.75,
     "EnableWindowedMode": true,
     "ResizeHandleSize": 8,
     "Padding": {
@@ -75,7 +74,6 @@ Frame interaction is configured in `appsettings.json` under the `Frame` section:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `ClickThroughAlphaThreshold` | double | 0.75 | Alpha threshold (0.0-1.0) above which pixels are considered opaque and capture clicks |
 | `EnableWindowedMode` | bool | true | Enables/disables frame-based window resizing and dragging |
 | `ResizeHandleSize` | double | 8.0 | Size of resize handle zones in logical pixels (minimum: 4.0) |
 
@@ -83,23 +81,19 @@ Frame interaction is configured in `appsettings.json` under the `Frame` section:
 
 ### Components
 
-1. **IFrameHitTestService** / **FrameHitTestService**
-   - Performs hit testing on frame regions
-   - Determines if a point is on an opaque frame region
-   - Identifies resize zones and appropriate cursors
-
-2. **ShellWindowViewModel**
+1. **ShellWindowViewModel**
    - Manages frame configuration properties
    - Provides access to frame slices and slice definitions
-   - Exposes alpha threshold, windowed mode, and resize handle size
+   - Exposes windowed mode flag and resize handle size
 
-3. **ShellWindow.axaml.cs**
+2. **ShellWindow.axaml.cs**
    - Handles pointer events (Pressed, Moved, Released)
    - Implements window dragging and resizing logic
+   - Performs geometry-based hit testing using frame slice boundaries
    - Updates cursor based on frame region
    - Respects minimum window size constraints
 
-4. **ShellWindow.axaml**
+3. **ShellWindow.axaml**
    - Frame grid with pointer event handlers
    - 5x5 grid layout with 16 border pieces
 
@@ -111,17 +105,19 @@ Frame interaction is configured in `appsettings.json` under the `Frame` section:
 2. Get pointer position (window coordinates)
    ↓
 3. PerformFrameHitTest()
-   - Check if point is in frame border region
-   - Determine resize mode based on proximity to edges/corners
+   - Calculate content area boundaries from frame slice definition
+   - Check if point is in content area (center 3x3 region of 5x5 grid)
+   - If in content area: mark as non-opaque (click-through)
+   - If in frame border: mark as opaque and determine resize mode
    ↓
 4. Return FrameHitTestResult
-   - IsOpaque: true/false
+   - IsOpaque: true (border) or false (content area)
    - ResizeMode: None, Top, TopLeft, etc.
    - CursorType: Appropriate cursor for region
    ↓
 5. Handle based on result
-   - Non-opaque: Pass event through (e.Handled = false)
-   - Opaque: Capture event for window interaction (e.Handled = true)
+   - Content area: Pass event through (e.Handled = false)
+   - Frame border: Capture event for window interaction (e.Handled = true)
 ```
 
 ### Resize/Drag Operations
@@ -196,7 +192,7 @@ When disabled:
 
 Potential future improvements to the frame interaction system:
 
-1. **Actual pixel alpha sampling**: Currently uses a simplified heuristic approach. Could be enhanced to read actual pixel alpha values from bitmaps for more accurate hit testing.
+1. **Actual pixel alpha sampling**: The current implementation uses geometry-based hit testing (frame slice boundaries). This could be enhanced to read actual pixel alpha values from frame bitmaps for more flexible frame designs with irregular transparency patterns.
 
 2. **Configurable resize zones per frame region**: Allow defining which frame regions support resize operations.
 

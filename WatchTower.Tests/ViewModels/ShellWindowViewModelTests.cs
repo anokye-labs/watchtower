@@ -24,43 +24,6 @@ public class ShellWindowViewModelTests
     }
     
     [Fact]
-    public void ClickThroughAlphaThreshold_DefaultValue_Is075()
-    {
-        // Arrange
-        var splashViewModel = new SplashWindowViewModel();
-        var viewModel = new ShellWindowViewModel(splashViewModel);
-        
-        // Act & Assert
-        Assert.Equal(0.75, viewModel.ClickThroughAlphaThreshold);
-    }
-    
-    [Fact]
-    public void ClickThroughAlphaThreshold_SetValue_IsClamped()
-    {
-        // Arrange
-        var splashViewModel = new SplashWindowViewModel();
-        var viewModel = new ShellWindowViewModel(splashViewModel);
-        
-        // Act - Test upper bound
-        viewModel.ClickThroughAlphaThreshold = 1.5;
-        
-        // Assert
-        Assert.Equal(1.0, viewModel.ClickThroughAlphaThreshold);
-        
-        // Act - Test lower bound
-        viewModel.ClickThroughAlphaThreshold = -0.5;
-        
-        // Assert
-        Assert.Equal(0.0, viewModel.ClickThroughAlphaThreshold);
-        
-        // Act - Test valid value
-        viewModel.ClickThroughAlphaThreshold = 0.5;
-        
-        // Assert
-        Assert.Equal(0.5, viewModel.ClickThroughAlphaThreshold);
-    }
-    
-    [Fact]
     public void EnableWindowedMode_DefaultValue_IsTrue()
     {
         // Arrange
