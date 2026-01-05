@@ -41,6 +41,11 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private bool _windowedModeConfigurationLoaded;
     
     // Windowed mode validation constants
+    // Note: These represent absolute minimums for the window dimensions.
+    // The actual minimum enforced at runtime by SetMinimumSizeConstraints includes
+    // frame padding (MinWidth = MinContentWidth + padding), which may be larger.
+    // These validation constants ensure configuration values are reasonable before
+    // runtime padding calculations occur.
     private const double MinWindowWidth = 400;
     private const double MaxWindowWidth = 4000;
     private const double MinWindowHeight = 300;

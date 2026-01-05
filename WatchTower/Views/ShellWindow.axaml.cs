@@ -643,6 +643,59 @@ public partial class ShellWindow : AnimatableWindow
     }
 
     /// <summary>
+    /// Calculates target window bounds based on windowed mode setting.
+    /// In windowed mode, returns configured size centered on screen with bounds checking.
+    /// In fullscreen mode, returns working area dimensions.
+    /// </summary>
+    /// <param name="workingArea">The working area of the target screen</param>
+    /// <param name="scaling">The DPI scaling factor of the target screen</param>
+    /// <param name="useCurrentSize">If true in windowed mode, uses current window size instead of configured initial size (for monitor switching)</param>
+    /// <returns>Tuple of (X, Y, Width, Height) in logical coordinates</returns>
+    private (double X, double Y, double Width, double Height) CalculateTargetWindowBounds(PixelRect workingArea, double scaling, bool useCurrentSize = false)
+    {
+        double targetX, targetY, targetWidth, targetHeight;
+        
+        if (_viewModel?.IsWindowedModeEnabled == true)
+        {
+            // Windowed mode: use configured or current size, keep centered
+            if (useCurrentSize)
+            {
+                targetWidth = AnimatedWidth;
+                targetHeight = AnimatedHeight;
+            }
+            else
+            {
+                targetWidth = _viewModel.InitialWindowWidth;
+                targetHeight = _viewModel.InitialWindowHeight;
+            }
+            
+            // Convert working area to logical coordinates
+            var logicalScreenX = workingArea.X / scaling;
+            var logicalScreenY = workingArea.Y / scaling;
+            var logicalScreenWidth = workingArea.Width / scaling;
+            var logicalScreenHeight = workingArea.Height / scaling;
+            
+            // Clamp target size to fit within screen (prevents off-screen windows)
+            targetWidth = Math.Min(targetWidth, logicalScreenWidth);
+            targetHeight = Math.Min(targetHeight, logicalScreenHeight);
+            
+            // Center on screen with clamped size
+            targetX = logicalScreenX + (logicalScreenWidth - targetWidth) / 2;
+            targetY = logicalScreenY + (logicalScreenHeight - targetHeight) / 2;
+        }
+        else
+        {
+            // Fullscreen mode: expand to working area (existing behavior)
+            targetX = workingArea.X / scaling;
+            targetY = workingArea.Y / scaling;
+            targetWidth = workingArea.Width / scaling;
+            targetHeight = workingArea.Height / scaling;
+        }
+        
+        return (targetX, targetY, targetWidth, targetHeight);
+    }
+
+    /// <summary>
     /// Animates the window expansion from splash size to full-screen or windowed size.
     /// All values use logical coordinates/pixels consistently.
     /// Uses Avalonia's Animation system with KeyFrame animations.
@@ -680,31 +733,8 @@ public partial class ShellWindow : AnimatableWindow
             var startWidth = AnimatedWidth;
             var startHeight = AnimatedHeight;
             
-            // Calculate target values based on windowed mode setting
-            double targetX, targetY, targetWidth, targetHeight;
-            
-            if (_viewModel?.IsWindowedModeEnabled == true)
-            {
-                // Windowed mode: animate to configured initial size, keep centered
-                targetWidth = _viewModel.InitialWindowWidth;
-                targetHeight = _viewModel.InitialWindowHeight;
-                
-                // Center on screen
-                var logicalScreenX = workingArea.X / scaling;
-                var logicalScreenY = workingArea.Y / scaling;
-                var logicalScreenWidth = workingArea.Width / scaling;
-                var logicalScreenHeight = workingArea.Height / scaling;
-                targetX = logicalScreenX + (logicalScreenWidth - targetWidth) / 2;
-                targetY = logicalScreenY + (logicalScreenHeight - targetHeight) / 2;
-            }
-            else
-            {
-                // Fullscreen mode: animate to working area (existing behavior)
-                targetX = workingArea.X / scaling;
-                targetY = workingArea.Y / scaling;
-                targetWidth = workingArea.Width / scaling;
-                targetHeight = workingArea.Height / scaling;
-            }
+            // Calculate target values using helper method
+            var (targetX, targetY, targetWidth, targetHeight) = CalculateTargetWindowBounds(workingArea, scaling);
 
             // Run all animations in parallel
             await Task.WhenAll(
@@ -779,25 +809,8 @@ public partial class ShellWindow : AnimatableWindow
             // Phase 2: Brief pause at splash size (100ms)
             await Task.Delay(100);
 
-            // Phase 3: Expand back - respect windowed mode setting
-            double targetX, targetY, targetWidth, targetHeight;
-            
-            if (_viewModel?.IsWindowedModeEnabled == true)
-            {
-                // Windowed mode: expand to configured initial size
-                targetWidth = _viewModel.InitialWindowWidth;
-                targetHeight = _viewModel.InitialWindowHeight;
-                targetX = logicalScreenX + (logicalScreenWidth - targetWidth) / 2;
-                targetY = logicalScreenY + (logicalScreenHeight - targetHeight) / 2;
-            }
-            else
-            {
-                // Fullscreen mode: expand to working area (existing behavior)
-                targetX = logicalScreenX;
-                targetY = logicalScreenY;
-                targetWidth = logicalScreenWidth;
-                targetHeight = logicalScreenHeight;
-            }
+            // Phase 3: Expand back - use helper method to calculate target
+            var (targetX, targetY, targetWidth, targetHeight) = CalculateTargetWindowBounds(workingArea, scaling);
             
             await Task.WhenAll(
                 CreateAnimation(AnimatedXProperty, splashLeft, targetX, 500).RunAsync(this),
@@ -885,30 +898,8 @@ public partial class ShellWindow : AnimatableWindow
         var currentWidth = AnimatedWidth;
         var currentHeight = AnimatedHeight;
 
-        // Calculate target position and size based on windowed mode
-        double targetX, targetY, targetWidth, targetHeight;
-        
-        if (_viewModel?.IsWindowedModeEnabled == true)
-        {
-            // Windowed mode: maintain current size, just re-center on new screen
-            targetWidth = currentWidth;
-            targetHeight = currentHeight;
-            
-            var logicalScreenX = workingArea.X / scaling;
-            var logicalScreenY = workingArea.Y / scaling;
-            var logicalScreenWidth = workingArea.Width / scaling;
-            var logicalScreenHeight = workingArea.Height / scaling;
-            targetX = logicalScreenX + (logicalScreenWidth - targetWidth) / 2;
-            targetY = logicalScreenY + (logicalScreenHeight - targetHeight) / 2;
-        }
-        else
-        {
-            // Fullscreen mode: expand to new screen's working area (existing behavior)
-            targetX = workingArea.X / scaling;
-            targetY = workingArea.Y / scaling;
-            targetWidth = workingArea.Width / scaling;
-            targetHeight = workingArea.Height / scaling;
-        }
+        // Calculate target position and size - in windowed mode, use current size
+        var (targetX, targetY, targetWidth, targetHeight) = CalculateTargetWindowBounds(workingArea, scaling, useCurrentSize: true);
         
         // Smoothly animate to new position/size (300ms)
         await Task.WhenAll(
