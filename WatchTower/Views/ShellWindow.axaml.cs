@@ -18,6 +18,32 @@ using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
+/// <summary>
+/// Defines the type of window resize operation based on frame region.
+/// </summary>
+internal enum ResizeMode
+{
+    None,
+    TopLeft,
+    Top,
+    TopRight,
+    Left,
+    Right,
+    BottomLeft,
+    Bottom,
+    BottomRight
+}
+
+/// <summary>
+/// Result of a frame hit test operation.
+/// </summary>
+internal record FrameHitTestResult
+{
+    public bool IsOpaque { get; init; }
+    public ResizeMode ResizeMode { get; init; }
+    public StandardCursorType CursorType { get; init; }
+}
+
 public partial class ShellWindow : AnimatableWindow
 {
     private ScrollViewer? _diagnosticsScroller;
@@ -40,6 +66,14 @@ public partial class ShellWindow : AnimatableWindow
     // Frame grid reference
     private Grid? _frameGrid;
     private IUserPreferencesService? _userPreferencesService;
+    
+    // Frame interaction state
+    private bool _isResizing;
+    private bool _isDragging;
+    private ResizeMode _currentResizeMode;
+    private Point _dragStartPosition;
+    private PixelPoint _windowStartPosition;
+    private Size _windowStartSize;
     
     /// <summary>
     /// Sets the configuration for frame settings.
@@ -143,6 +177,10 @@ public partial class ShellWindow : AnimatableWindow
         var paddingBottom = _configuration?.GetValue<double>("Frame:Padding:Bottom") ?? 0;
         var backgroundColor = _configuration?.GetValue<string>("Frame:BackgroundColor") ?? "#1A1A1A";
         
+        // Read frame interaction configuration
+        var enableWindowedMode = _configuration?.GetValue<bool>("Frame:EnableWindowedMode") ?? true;
+        var resizeHandleSize = _configuration?.GetValue<double>("Frame:ResizeHandleSize") ?? 8.0;
+        
         var sliceDefinition = new FrameSliceDefinition
         {
             Left = sliceLeft,
@@ -161,6 +199,8 @@ public partial class ShellWindow : AnimatableWindow
             _viewModel.RenderScale = RenderScaling;
             _viewModel.ContentPadding = new Thickness(paddingLeft, paddingTop, paddingRight, paddingBottom);
             _viewModel.BackgroundColor = backgroundColor;
+            _viewModel.EnableWindowedMode = enableWindowedMode;
+            _viewModel.ResizeHandleSize = resizeHandleSize;
         }
     }
     
@@ -848,5 +888,366 @@ public partial class ShellWindow : AnimatableWindow
         {
             mainViewModel.CloseOverlayCommand.Execute(null);
         }
+    }
+    
+    /// <summary>
+    /// Handles pointer pressed events on the frame grid for window dragging and resizing.
+    /// </summary>
+    private void OnFramePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_viewModel == null || !_viewModel.EnableWindowedMode || _isAnimating)
+        {
+            // Pass through - let clicks reach content below
+            e.Handled = false;
+            return;
+        }
+        
+        // Get the pointer position relative to the window
+        var position = e.GetPosition(this);
+        var windowSize = new Size(Width, Height);
+        
+        // Perform hit test using simplified heuristic
+        var hitResult = PerformFrameHitTest(position, windowSize);
+        
+        if (!hitResult.IsOpaque)
+        {
+            // Transparent region - pass through to content
+            e.Handled = false;
+            return;
+        }
+        
+        // Opaque region - capture for window interaction
+        e.Handled = true;
+        
+        _currentResizeMode = hitResult.ResizeMode;
+        _dragStartPosition = position;
+        _windowStartPosition = Position;
+        _windowStartSize = new Size(Width, Height);
+        
+        if (hitResult.ResizeMode == ResizeMode.None)
+        {
+            // No resize zone - enable dragging
+            _isDragging = true;
+        }
+        else
+        {
+            // In resize zone - enable resizing
+            _isResizing = true;
+        }
+    }
+    
+    /// <summary>
+    /// Handles pointer moved events on the frame grid for cursor updates and resize/drag operations.
+    /// </summary>
+    private void OnFramePointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_viewModel == null || !_viewModel.EnableWindowedMode || _isAnimating)
+        {
+            return;
+        }
+        
+        var position = e.GetPosition(this);
+        
+        // Handle active resize or drag
+        if (_isResizing)
+        {
+            PerformResize(position);
+            e.Handled = true;
+            return;
+        }
+        
+        if (_isDragging)
+        {
+            PerformDrag(position);
+            e.Handled = true;
+            return;
+        }
+        
+        // Update cursor based on frame region
+        var windowSize = new Size(Width, Height);
+        var hitResult = PerformFrameHitTest(position, windowSize);
+        
+        if (hitResult.IsOpaque)
+        {
+            Cursor = new Cursor(hitResult.CursorType);
+            e.Handled = true;
+        }
+        else
+        {
+            Cursor = Cursor.Default;
+            e.Handled = false;
+        }
+    }
+    
+    /// <summary>
+    /// Handles pointer released events on the frame grid to end resize/drag operations.
+    /// </summary>
+    private void OnFramePointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_isResizing || _isDragging)
+        {
+            _isResizing = false;
+            _isDragging = false;
+            _currentResizeMode = ResizeMode.None;
+            e.Handled = true;
+        }
+    }
+    
+    /// <summary>
+    /// Performs a simplified frame hit test to determine if a point is on an opaque frame region.
+    /// </summary>
+    private FrameHitTestResult PerformFrameHitTest(Point point, Size windowSize)
+    {
+        if (_viewModel?.CurrentFrameSlices == null)
+        {
+            return new FrameHitTestResult
+            {
+                IsOpaque = false,
+                ResizeMode = ResizeMode.None,
+                CursorType = StandardCursorType.Arrow
+            };
+        }
+        
+        // Use simplified heuristic approach for hit testing
+        // This checks if the point is within the frame border regions
+        var def = _viewModel.FrameSliceDefinition;
+        if (def == null)
+        {
+            return new FrameHitTestResult
+            {
+                IsOpaque = false,
+                ResizeMode = ResizeMode.None,
+                CursorType = StandardCursorType.Arrow
+            };
+        }
+        
+        var sourceSize = _viewModel.FrameSourceSize;
+        var scale = RenderScaling > 0 ? RenderScaling : 1.0;
+        var frameScale = _viewModel.FrameDisplayScale;
+        
+        // Calculate logical dimensions of all frame regions (including stretchable)
+        var col0Width = (def.Left * frameScale) / scale;
+        var col1Width = ((def.LeftInner - def.Left) * frameScale) / scale;
+        var col3Width = ((def.Right - def.RightInner) * frameScale) / scale;
+        var col4Width = ((sourceSize.Width - def.Right) * frameScale) / scale;
+        
+        var row0Height = (def.Top * frameScale) / scale;
+        var row1Height = ((def.TopInner - def.Top) * frameScale) / scale;
+        var row3Height = ((def.Bottom - def.BottomInner) * frameScale) / scale;
+        var row4Height = ((sourceSize.Height - def.Bottom) * frameScale) / scale;
+        
+        // Calculate content area boundaries (excluding all frame border regions)
+        var contentLeft = col0Width + col1Width;
+        var contentRight = windowSize.Width - col3Width - col4Width;
+        var contentTop = row0Height + row1Height;
+        var contentBottom = windowSize.Height - row3Height - row4Height;
+        
+        // Check if point is in content area (center of 5x5 grid)
+        var isInContentArea = point.X >= contentLeft && point.X < contentRight &&
+                              point.Y >= contentTop && point.Y < contentBottom;
+        
+        if (isInContentArea)
+        {
+            // Point is in content area
+            return new FrameHitTestResult
+            {
+                IsOpaque = false,
+                ResizeMode = ResizeMode.None,
+                CursorType = StandardCursorType.Arrow
+            };
+        }
+        
+        // Point is in frame region - determine resize mode
+        var resizeMode = DetermineResizeMode(point, windowSize);
+        var cursorType = GetCursorForResizeMode(resizeMode);
+        
+        return new FrameHitTestResult
+        {
+            IsOpaque = true,
+            ResizeMode = resizeMode,
+            CursorType = cursorType
+        };
+    }
+    
+    /// <summary>
+    /// Determines the resize mode based on pointer position.
+    /// </summary>
+    private ResizeMode DetermineResizeMode(Point point, Size windowSize)
+    {
+        var handleSize = _viewModel?.ResizeHandleSize ?? 8.0;
+        
+        var nearLeft = point.X < handleSize;
+        var nearRight = point.X > windowSize.Width - handleSize;
+        var nearTop = point.Y < handleSize;
+        var nearBottom = point.Y > windowSize.Height - handleSize;
+        
+        // Check corners first
+        if (nearTop && nearLeft) return ResizeMode.TopLeft;
+        if (nearTop && nearRight) return ResizeMode.TopRight;
+        if (nearBottom && nearLeft) return ResizeMode.BottomLeft;
+        if (nearBottom && nearRight) return ResizeMode.BottomRight;
+        
+        // Check edges
+        if (nearTop) return ResizeMode.Top;
+        if (nearBottom) return ResizeMode.Bottom;
+        if (nearLeft) return ResizeMode.Left;
+        if (nearRight) return ResizeMode.Right;
+        
+        // Not in a resize zone - allow dragging
+        return ResizeMode.None;
+    }
+    
+    /// <summary>
+    /// Gets the appropriate cursor for a resize mode.
+    /// </summary>
+    private StandardCursorType GetCursorForResizeMode(ResizeMode mode)
+    {
+        return mode switch
+        {
+            ResizeMode.TopLeft => StandardCursorType.TopLeftCorner,
+            ResizeMode.Top => StandardCursorType.TopSide,
+            ResizeMode.TopRight => StandardCursorType.TopRightCorner,
+            ResizeMode.Left => StandardCursorType.LeftSide,
+            ResizeMode.Right => StandardCursorType.RightSide,
+            ResizeMode.BottomLeft => StandardCursorType.BottomLeftCorner,
+            ResizeMode.Bottom => StandardCursorType.BottomSide,
+            ResizeMode.BottomRight => StandardCursorType.BottomRightCorner,
+            _ => StandardCursorType.Arrow
+        };
+    }
+    
+    /// <summary>
+    /// Performs window resize based on pointer movement.
+    /// </summary>
+    private void PerformResize(Point currentPosition)
+    {
+        var deltaX = currentPosition.X - _dragStartPosition.X;
+        var deltaY = currentPosition.Y - _dragStartPosition.Y;
+        
+        var newX = _windowStartPosition.X;
+        var newY = _windowStartPosition.Y;
+        var newWidth = _windowStartSize.Width;
+        var newHeight = _windowStartSize.Height;
+        
+        // Calculate frame dimensions to respect minimum size
+        var frameWidth = 0.0;
+        var frameHeight = 0.0;
+        
+        if (_viewModel?.FrameSliceDefinition != null)
+        {
+            var def = _viewModel.FrameSliceDefinition;
+            var sourceSize = _viewModel.FrameSourceSize;
+            var scale = RenderScaling > 0 ? RenderScaling : 1.0;
+            var frameScale = _viewModel.FrameDisplayScale;
+            var padding = _viewModel.ContentPadding;
+            
+            var col0Width = (def.Left * frameScale) / scale;
+            var col2Width = ((def.RightInner - def.LeftInner) * frameScale) / scale;
+            var col4Width = ((sourceSize.Width - def.Right) * frameScale) / scale;
+            
+            var row0Height = (def.Top * frameScale) / scale;
+            var row2Height = ((def.BottomInner - def.TopInner) * frameScale) / scale;
+            var row4Height = ((sourceSize.Height - def.Bottom) * frameScale) / scale;
+            
+            frameWidth = col0Width + col2Width + col4Width + padding.Left + padding.Right;
+            frameHeight = row0Height + row2Height + row4Height + padding.Top + padding.Bottom;
+        }
+        
+        var minWidth = Math.Max(frameWidth + _minContentWidth, 200);
+        var minHeight = Math.Max(frameHeight + _minContentHeight, 150);
+        
+        var scaling = GetCurrentScaling();
+        
+        switch (_currentResizeMode)
+        {
+            case ResizeMode.TopLeft:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width - deltaX);
+                newHeight = Math.Max(minHeight, _windowStartSize.Height - deltaY);
+                if (newWidth > minWidth)
+                {
+                    newX = _windowStartPosition.X + (int)(deltaX * scaling);
+                }
+                if (newHeight > minHeight)
+                {
+                    newY = _windowStartPosition.Y + (int)(deltaY * scaling);
+                }
+                break;
+                
+            case ResizeMode.Top:
+                newHeight = Math.Max(minHeight, _windowStartSize.Height - deltaY);
+                if (newHeight > minHeight)
+                {
+                    newY = _windowStartPosition.Y + (int)(deltaY * scaling);
+                }
+                break;
+                
+            case ResizeMode.TopRight:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width + deltaX);
+                newHeight = Math.Max(minHeight, _windowStartSize.Height - deltaY);
+                if (newHeight > minHeight)
+                {
+                    newY = _windowStartPosition.Y + (int)(deltaY * scaling);
+                }
+                break;
+                
+            case ResizeMode.Left:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width - deltaX);
+                if (newWidth > minWidth)
+                {
+                    newX = _windowStartPosition.X + (int)(deltaX * scaling);
+                }
+                break;
+                
+            case ResizeMode.Right:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width + deltaX);
+                break;
+                
+            case ResizeMode.BottomLeft:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width - deltaX);
+                newHeight = Math.Max(minHeight, _windowStartSize.Height + deltaY);
+                if (newWidth > minWidth)
+                {
+                    newX = _windowStartPosition.X + (int)(deltaX * scaling);
+                }
+                break;
+                
+            case ResizeMode.Bottom:
+                newHeight = Math.Max(minHeight, _windowStartSize.Height + deltaY);
+                break;
+                
+            case ResizeMode.BottomRight:
+                newWidth = Math.Max(minWidth, _windowStartSize.Width + deltaX);
+                newHeight = Math.Max(minHeight, _windowStartSize.Height + deltaY);
+                break;
+        }
+        
+        // Apply new dimensions
+        Position = new PixelPoint(newX, newY);
+        Width = newWidth;
+        Height = newHeight;
+    }
+    
+    /// <summary>
+    /// Performs window drag based on pointer movement.
+    /// </summary>
+    private void PerformDrag(Point currentPosition)
+    {
+        var deltaX = currentPosition.X - _dragStartPosition.X;
+        var deltaY = currentPosition.Y - _dragStartPosition.Y;
+        
+        var scaling = GetCurrentScaling();
+        var newX = _windowStartPosition.X + (int)(deltaX * scaling);
+        var newY = _windowStartPosition.Y + (int)(deltaY * scaling);
+        
+        Position = new PixelPoint(newX, newY);
+    }
+    
+    /// <summary>
+    /// Gets the current DPI scaling factor for this window.
+    /// </summary>
+    private double GetCurrentScaling()
+    {
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        return screen?.Scaling ?? 1.0;
     }
 }

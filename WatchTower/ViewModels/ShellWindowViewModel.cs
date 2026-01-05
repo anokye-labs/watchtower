@@ -24,9 +24,14 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     private MainWindowViewModel? _mainViewModel;
     private bool _cleanedUp;
     
+    // Frame interaction configuration
+    private bool _enableWindowedMode = true;
+    private double _resizeHandleSize = 8.0;
+    
     // Cached frame configuration for re-slicing on monitor switch
     private string? _frameSourceUri;
     private FrameSliceDefinition? _frameSliceDefinition;
+    private FrameSlices? _currentFrameSlices;
     private Size _frameSourceSize;
     private double _renderScale = 1.0;
     private double _frameDisplayScale = 1.0;
@@ -157,9 +162,32 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     }
     
     /// <summary>
+    /// Gets or sets whether windowed mode is enabled (allows resizing/dragging via frame).
+    /// </summary>
+    public bool EnableWindowedMode
+    {
+        get => _enableWindowedMode;
+        set => SetProperty(ref _enableWindowedMode, value);
+    }
+    
+    /// <summary>
+    /// Gets or sets the size of resize handle zones in logical pixels.
+    /// </summary>
+    public double ResizeHandleSize
+    {
+        get => _resizeHandleSize;
+        set => SetProperty(ref _resizeHandleSize, Math.Max(4.0, value));
+    }
+    
+    /// <summary>
     /// Gets the frame slice definition used for the current frame.
     /// </summary>
     public FrameSliceDefinition? FrameSliceDefinition => _frameSliceDefinition;
+    
+    /// <summary>
+    /// Gets the current frame slices being displayed.
+    /// </summary>
+    public FrameSlices? CurrentFrameSlices => _currentFrameSlices;
     
     /// <summary>
     /// Gets the source size of the loaded frame image.
@@ -354,6 +382,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
         }
         
         _frameSourceSize = frameSlices.SourceSize;
+        _currentFrameSlices = frameSlices;
 
         // Update bitmap sources - this will trigger property changed notifications (16 pieces)
         // Row 0

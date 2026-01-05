@@ -126,6 +126,10 @@ Frame rendering loads `main-frame.png` and slices it into 16 border pieces using
 
 The decorative frame uses a 5x5 grid slicing system for resolution-independent scaling. The slice coordinates define 8 boundary points (Left, LeftInner, RightInner, Right, Top, TopInner, BottomInner, Bottom) that divide the source image into 16 border pieces. This ensures corners maintain their detail while edges stretch smoothly during window animations.
 
+**Frame Interaction** (See [Shell Window Frame Interaction Guide](shell-window-frame-interaction.md)):
+
+The frame uses geometry-based hit-testing derived from the 5x5 slice boundaries: clicks within the inner content region are passed through to underlying content, while clicks within the decorative border regions are captured for window interaction. Window resizing is enabled via frame edges and corners with appropriate cursor feedback. Window dragging is supported by clicking and holding border regions. Configuration includes `EnableWindowedMode` (default: true) and `ResizeHandleSize` (default: 8 pixels).
+
 ### 3. Main UI System
 
 The Main UI system displays Adaptive Cards and manages input overlays.
