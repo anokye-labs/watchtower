@@ -1,0 +1,220 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchTower.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="WatchTower.Views.WelcomeContent"
+             x:DataType="vm:WelcomeContentViewModel">
+
+    <Border Background="#DD050508"
+            CornerRadius="16"
+            BorderBrush="#80FFD700"
+            BorderThickness="2"
+            BoxShadow="0 12 48 12 #AA000000"
+            MaxWidth="700"
+            MaxHeight="550"
+            Padding="40">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="8">
+                <TextBlock Text="Welcome to WatchTower"
+                          FontSize="32"
+                          FontWeight="Bold"
+                          Foreground="#FFD700"
+                          HorizontalAlignment="Center"/>
+                <TextBlock Text="Ancestral Futurism AI Framework"
+                          FontSize="14"
+                          Foreground="#00F0FF"
+                          HorizontalAlignment="Center"
+                          Opacity="0.9"/>
+            </StackPanel>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="2"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="24">
+                    <!-- Introduction -->
+                    <Border Background="#1A4A1812"
+                            CornerRadius="8"
+                            Padding="20">
+                        <TextBlock TextWrapping="Wrap"
+                                  FontSize="14"
+                                  Foreground="White"
+                                  LineHeight="22">
+                            <Run Text="WatchTower combines modern AI orchestration with West African cultural elements, creating an immersive interface experience. "/>
+                            <Run Text="This guide will help you get started with the key features and controls." FontWeight="SemiBold"/>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- Keyboard Shortcuts Section -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="⌨ Keyboard Shortcuts"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Foreground="#FFD700"/>
+                        <Border Background="#1A00F0FF"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="Ctrl + R"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Open rich text input overlay"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="Ctrl + M"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Open voice input overlay"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="Ctrl + L"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Toggle event log"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="Escape"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Close overlays"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Gamepad Guide Section -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="🎮 Gamepad Controls"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Foreground="#FFD700"/>
+                        <Border Background="#1A00F0FF"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="D-Pad / Left Stick"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Navigate UI elements"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="A Button"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Select / Confirm"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="140,*">
+                                    <TextBlock Grid.Column="0" 
+                                              Text="B Button"
+                                              FontFamily="Consolas,Courier New"
+                                              FontSize="13"
+                                              Foreground="#00F0FF"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="Back / Cancel"
+                                              FontSize="13"
+                                              Foreground="White"/>
+                                </Grid>
+                                <TextBlock Text="Note: Controllers are automatically detected when connected"
+                                          FontSize="12"
+                                          FontStyle="Italic"
+                                          Foreground="#CCFFFFFF"
+                                          Opacity="0.7"
+                                          Margin="0,6,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Adaptive Cards Info -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="✨ Adaptive Cards"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Foreground="#FFD700"/>
+                        <Border Background="#1A4A1812"
+                                CornerRadius="8"
+                                Padding="16">
+                            <TextBlock TextWrapping="Wrap"
+                                      FontSize="13"
+                                      Foreground="White"
+                                      LineHeight="20"
+                                      Text="WatchTower uses Microsoft Adaptive Cards with a custom 'Ancestral Futurism' theme. Cards adapt to the interface and provide rich, interactive content with gamepad-first navigation."/>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer with checkbox and button -->
+            <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
+                <CheckBox Grid.Column="0"
+                         IsChecked="{Binding DontShowAgain}"
+                         Content="Don't show this welcome screen again"
+                         FontSize="13"
+                         Foreground="#CCFFFFFF"
+                         VerticalAlignment="Center"
+                         AutomationProperties.Name="Don't show welcome screen again checkbox"/>
+                
+                <Button Grid.Column="1"
+                       Content="Get Started"
+                       Command="{Binding DismissCommand}"
+                       Background="#FF00F0FF"
+                       Foreground="#050508"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Padding="24,12"
+                       CornerRadius="6"
+                       BorderThickness="0"
+                       Cursor="Hand"
+                       AutomationProperties.Name="Get Started button, dismiss welcome screen">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#FFFFD700"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

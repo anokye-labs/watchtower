@@ -462,6 +462,7 @@ public class ShellWindowViewModel : ViewModelBase, IStartupLogger
     public void Info(string message) => _splashViewModel.Info(message);
     public void Warn(string message) => _splashViewModel.Warn(message);
     public void Error(string message, Exception? exception = null) => _splashViewModel.Error(message, exception);
+    public void ReportProgress(int currentStep, int totalSteps, string description) => _splashViewModel.ReportProgress(currentStep, totalSteps, description);
 
     public void Cleanup()
     {

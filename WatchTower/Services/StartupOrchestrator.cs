@@ -30,37 +30,38 @@ public class StartupOrchestrator : IStartupOrchestrator
         IConfiguration configuration,
         IUserPreferencesService? userPreferencesService)
     {
+        const int TotalSteps = 10;
+        int currentStep = 0;
+
         try
         {
             logger.Info("=== Application Startup ===");
             logger.Info($"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
             logger.Info($"Platform: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
             
-            // Phase 1: Initial preparation
-            logger.Info("Phase 1/4: Preparing services...");
-            logger.Info("Initial preparation complete");
+            // Step 1: Initialize environment
+            logger.ReportProgress(++currentStep, TotalSteps, "Initializing environment");
             
-            // Phase 2: Dependency Injection Setup
-            logger.Info("Phase 2/4: Configuring dependency injection...");
+            // Step 2: Load configuration
+            logger.ReportProgress(++currentStep, TotalSteps, "Loading configuration");
+            logger.Info("Configuration loaded from appsettings.json");
+            
+            // Step 3: Setup dependency injection
+            logger.ReportProgress(++currentStep, TotalSteps, "Configuring dependency injection");
             var services = new ServiceCollection();
             
             // Register the shared configuration
             services.AddSingleton(configuration);
             
-            // Register logging service (it will use the shared configuration)
+            // Step 4: Register logging services
+            logger.ReportProgress(++currentStep, TotalSteps, "Registering logging services");
             var loggingService = new LoggingService();
             services.AddSingleton(loggingService);
             services.AddSingleton<ILoggerFactory>(loggingService.LoggerFactory);
-            
-            // Register ILogger<T> using the factory
             services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
             
-            logger.Info("Logging services registered");
-            
-            // Phase 3: Services Registration
-            logger.Info("Phase 3/4: Registering application services...");
-            
-            // Register core services
+            // Step 5: Register core services
+            logger.ReportProgress(++currentStep, TotalSteps, "Registering core services");
             if (userPreferencesService != null)
             {
                 // Use the pre-created instance (e.g., for early window positioning)
@@ -73,13 +74,10 @@ public class StartupOrchestrator : IStartupOrchestrator
             services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
+            logger.Info("Core services registered (UserPreferences, AdaptiveCard, GameController)");
             
-            logger.Info("UserPreferencesService registered");
-            logger.Info("AdaptiveCardThemeService registered");
-            logger.Info("AdaptiveCardService registered");
-            logger.Info("GameControllerService registered");
-            
-            // Register MCP handler
+            // Step 6: Register MCP handler
+            logger.ReportProgress(++currentStep, TotalSteps, "Registering MCP handler");
             services.AddMcpHandler(config =>
             {
                 config.ApplicationName = "WatchTower";
@@ -87,30 +85,27 @@ public class StartupOrchestrator : IStartupOrchestrator
                 config.AutoConnect = true;
                 config.HeadlessMode = false;
             }, registerStandardTools: true);
-            
             logger.Info("MCP handler registered");
             
-            // Register voice services based on configured mode
+            // Step 7: Register voice services
+            logger.ReportProgress(++currentStep, TotalSteps, "Registering voice services");
             var voiceMode = configuration.GetValue<string>("Voice:Mode") ?? "offline";
             logger.Info($"Voice mode: {voiceMode}");
             
             if (voiceMode.Equals("offline", StringComparison.OrdinalIgnoreCase))
             {
-                // Register offline voice services
                 services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
                 services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
                 logger.Info("Offline voice services registered (Vosk + Piper)");
             }
             else if (voiceMode.Equals("online", StringComparison.OrdinalIgnoreCase))
             {
-                // Register online voice services
                 services.AddSingleton<IVoiceRecognitionService, AzureSpeechRecognitionService>();
                 services.AddSingleton<ITextToSpeechService, AzureSpeechSynthesisService>();
                 logger.Info("Online voice services registered (Azure Speech)");
             }
             else if (voiceMode.Equals("hybrid", StringComparison.OrdinalIgnoreCase))
             {
-                // Hybrid mode is not yet implemented; falls back to offline behavior
                 logger.Warn("Hybrid voice mode is not fully implemented; defaulting to offline voice services");
                 services.AddSingleton<IVoiceRecognitionService, VoskRecognitionService>();
                 services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
@@ -123,29 +118,26 @@ public class StartupOrchestrator : IStartupOrchestrator
                 services.AddSingleton<ITextToSpeechService, PiperTextToSpeechService>();
             }
             
-            // Register voice orchestration service
             services.AddSingleton<IVoiceOrchestrationService, VoiceOrchestrationService>();
             logger.Info("VoiceOrchestrationService registered");
             
             // Register ViewModels
             services.AddTransient<ViewModels.MainWindowViewModel>();
             services.AddTransient<ViewModels.VoiceControlViewModel>();
+            services.AddTransient<ViewModels.WelcomeContentViewModel>();
             logger.Info("ViewModels registered");
             
-            // Build service provider
+            // Step 8: Build service provider
+            logger.ReportProgress(++currentStep, TotalSteps, "Building service provider");
             var serviceProvider = services.BuildServiceProvider();
             logger.Info("Service provider built successfully");
             
-            // Phase 4: Service Initialization
-            logger.Info("Phase 4/4: Initializing services...");
-            
+            // Step 9: Initialize game controller
+            logger.ReportProgress(++currentStep, TotalSteps, "Initializing game controller");
             var msLogger = serviceProvider.GetRequiredService<ILogger<StartupOrchestrator>>();
             msLogger.LogInformation("Service provider initialized");
             
-            // Initialize game controller service
             var gameControllerService = serviceProvider.GetRequiredService<IGameControllerService>();
-            logger.Info("Initializing game controller service...");
-            
             if (gameControllerService.Initialize())
             {
                 logger.Info("Game controller service initialized successfully");
@@ -155,9 +147,9 @@ public class StartupOrchestrator : IStartupOrchestrator
                 logger.Warn("Game controller service initialization failed");
             }
             
-            // Initialize voice orchestration service
+            // Step 10: Initialize voice services
+            logger.ReportProgress(currentStep + 1, TotalSteps, "Initializing voice services");
             var voiceService = serviceProvider.GetRequiredService<IVoiceOrchestrationService>();
-            logger.Info("Initializing voice orchestration service...");
             
             if (await voiceService.InitializeAsync())
             {

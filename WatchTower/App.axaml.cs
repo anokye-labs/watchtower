@@ -159,11 +159,56 @@ public partial class App : Application
                 shellViewModel.TransitionToMainContent(mainViewModel);
                 logger.LogInformation("Transitioned to main content");
             });
+
+            // Check if this is first run and show welcome screen
+            if (userPreferencesService.IsFirstRun() || !userPreferencesService.HasSeenWelcomeScreen())
+            {
+                logger.LogInformation("First run detected, showing welcome screen");
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    ShowWelcomeScreen(shellWindow, userPreferencesService, logger);
+                });
+                
+                // Mark first run as complete
+                userPreferencesService.MarkFirstRunComplete();
+            }
         }
         catch (Exception ex)
         {
             splashViewModel.Error("Startup workflow failed", ex);
             splashViewModel.MarkStartupFailed();
         }
+    }
+
+    private async void ShowWelcomeScreen(Views.ShellWindow shellWindow, IUserPreferencesService userPreferencesService, ILogger<App> logger)
+    {
+        var welcomeViewModel = _serviceProvider!.GetRequiredService<WelcomeContentViewModel>();
+        var welcomeContent = new Views.WelcomeContent
+        {
+            DataContext = welcomeViewModel
+        };
+
+        // Create a window to host the welcome content
+        var welcomeWindow = new Avalonia.Controls.Window
+        {
+            Content = welcomeContent,
+            Width = 700,
+            Height = 550,
+            CanResize = false,
+            WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterOwner,
+            Background = Avalonia.Media.Brushes.Transparent,
+            TransparencyLevelHint = new[] { Avalonia.Controls.WindowTransparencyLevel.Transparent },
+            SystemDecorations = Avalonia.Controls.SystemDecorations.None,
+            ShowInTaskbar = false
+        };
+
+        // Handle dismiss
+        welcomeViewModel.WelcomeDismissed += (s, e) =>
+        {
+            logger.LogInformation("Welcome screen dismissed");
+            welcomeWindow.Close();
+        };
+
+        await welcomeWindow.ShowDialog(shellWindow);
     }
 }
