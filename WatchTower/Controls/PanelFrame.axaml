@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchTower.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="WatchTower.Controls.PanelFrame"
+             x:DataType="vm:PanelFrameViewModel">
+    
+    <!-- Root Grid: Content behind frame -->
+    <Grid ClipToBounds="True">
+        
+        <!-- Content layer - BEHIND the frame -->
+        <ContentPresenter Content="{Binding $parent[UserControl].Content}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          ZIndex="-1"
+                          Name="PanelContent"/>
+        
+        <!-- Frame layer - 5x5 grid, IsHitTestVisible=False so clicks pass through -->
+        <Grid IsHitTestVisible="False" ZIndex="0" Name="FrameGrid" ShowGridLines="False">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding Row0Height}"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="{Binding Row2Height}"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="{Binding Row4Height}"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding Col0Width}"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="{Binding Col2Width}"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="{Binding Col4Width}"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- ========== ROW 0: Top Edge (5 cells) ========== -->
+            <!-- Only visible if ShowTopEdge is true -->
+            
+            <Border Grid.Row="0" Grid.Column="0" ClipToBounds="True" 
+                    IsVisible="{Binding ShowTopEdge}">
+                <Image Source="{Binding TopLeftSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="0" Grid.Column="1" ClipToBounds="True"
+                    IsVisible="{Binding ShowTopEdge}">
+                <Image Source="{Binding TopLeftStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="0" Grid.Column="2" ClipToBounds="True"
+                    IsVisible="{Binding ShowTopEdge}">
+                <Image Source="{Binding TopCenterSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="0" Grid.Column="3" ClipToBounds="True"
+                    IsVisible="{Binding ShowTopEdge}">
+                <Image Source="{Binding TopRightStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="0" Grid.Column="4" ClipToBounds="True"
+                    IsVisible="{Binding ShowTopEdge}">
+                <Image Source="{Binding TopRightSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <!-- ========== ROW 1: Top Stretch Row (left and right edges only) ========== -->
+            
+            <Border Grid.Row="1" Grid.Column="0" ClipToBounds="True"
+                    IsVisible="{Binding ShowLeftEdge}">
+                <Image Source="{Binding LeftTopStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="1" Grid.Column="4" ClipToBounds="True"
+                    IsVisible="{Binding ShowRightEdge}">
+                <Image Source="{Binding RightTopStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <!-- ========== ROW 2: Center Row (left and right edges only) ========== -->
+            
+            <Border Grid.Row="2" Grid.Column="0" ClipToBounds="True"
+                    IsVisible="{Binding ShowLeftEdge}">
+                <Image Source="{Binding LeftCenterSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="2" Grid.Column="4" ClipToBounds="True"
+                    IsVisible="{Binding ShowRightEdge}">
+                <Image Source="{Binding RightCenterSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <!-- ========== ROW 3: Bottom Stretch Row (left and right edges only) ========== -->
+            
+            <Border Grid.Row="3" Grid.Column="0" ClipToBounds="True"
+                    IsVisible="{Binding ShowLeftEdge}">
+                <Image Source="{Binding LeftBottomStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="3" Grid.Column="4" ClipToBounds="True"
+                    IsVisible="{Binding ShowRightEdge}">
+                <Image Source="{Binding RightBottomStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <!-- ========== ROW 4: Bottom Edge (5 cells) ========== -->
+            <!-- Only visible if ShowBottomEdge is true -->
+            
+            <Border Grid.Row="4" Grid.Column="0" ClipToBounds="True"
+                    IsVisible="{Binding ShowBottomEdge}">
+                <Image Source="{Binding BottomLeftSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="4" Grid.Column="1" ClipToBounds="True"
+                    IsVisible="{Binding ShowBottomEdge}">
+                <Image Source="{Binding BottomLeftStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="4" Grid.Column="2" ClipToBounds="True"
+                    IsVisible="{Binding ShowBottomEdge}">
+                <Image Source="{Binding BottomCenterSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="4" Grid.Column="3" ClipToBounds="True"
+                    IsVisible="{Binding ShowBottomEdge}">
+                <Image Source="{Binding BottomRightStretchSource}"
+                       Stretch="Fill"/>
+            </Border>
+            
+            <Border Grid.Row="4" Grid.Column="4" ClipToBounds="True"
+                    IsVisible="{Binding ShowBottomEdge}">
+                <Image Source="{Binding BottomRightSource}"
+                       Stretch="Fill"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

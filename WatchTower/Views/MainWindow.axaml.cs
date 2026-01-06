@@ -6,21 +6,24 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using WatchTower.Controls;
 using WatchTower.ViewModels;
 
 namespace WatchTower.Views;
 
 public partial class MainWindow : UserControl
 {
-    private Border? _overlayPanel;
+    private PanelFrame? _overlayPanel;
     private TranslateTransform? _overlayTransform;
-    private Border? _eventLogPanel;
+    private PanelFrame? _eventLogPanel;
     private TranslateTransform? _eventLogTransform;
     private MainWindowViewModel? _previousViewModel;
+    private IConfiguration? _configuration;
     
     // Reusable transitions for better performance
     private Transitions? _overlayTransitions;
@@ -37,6 +40,15 @@ public partial class MainWindow : UserControl
         
         // Cleanup subscriptions when the control is unloaded
         Unloaded += OnUnloaded;
+    }
+    
+    /// <summary>
+    /// Sets the configuration for panel frames.
+    /// Should be called after the control is created.
+    /// </summary>
+    public void SetConfiguration(IConfiguration configuration)
+    {
+        _configuration = configuration;
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -72,11 +84,17 @@ public partial class MainWindow : UserControl
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        _overlayPanel = this.FindControl<Border>("OverlayPanel");
+        _overlayPanel = this.FindControl<PanelFrame>("OverlayPanel");
         _overlayTransform = _overlayPanel?.RenderTransform as TranslateTransform;
-        _eventLogPanel = this.FindControl<Border>("EventLogPanel");
+        _eventLogPanel = this.FindControl<PanelFrame>("EventLogPanel");
         _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
         
+        // Initialize panel frames with configuration if available
+        if (_configuration != null)
+        {
+            _overlayPanel?.SetConfiguration(_configuration);
+            _eventLogPanel?.SetConfiguration(_configuration);
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -92,8 +110,14 @@ public partial class MainWindow : UserControl
             // Ensure controls are initialized (happens if property changes before OnLoaded)
             if (_overlayPanel == null || _overlayTransform == null)
             {
-                _overlayPanel = this.FindControl<Border>("OverlayPanel");
+                _overlayPanel = this.FindControl<PanelFrame>("OverlayPanel");
                 _overlayTransform = _overlayPanel?.RenderTransform as TranslateTransform;
+                
+                // Initialize with configuration if available
+                if (_configuration != null && _overlayPanel != null)
+                {
+                    _overlayPanel.SetConfiguration(_configuration);
+                }
             }
 
             if (_overlayPanel != null && _overlayTransform != null)
@@ -157,8 +181,14 @@ public partial class MainWindow : UserControl
             // Ensure controls are initialized
             if (_eventLogPanel == null || _eventLogTransform == null)
             {
-                _eventLogPanel = this.FindControl<Border>("EventLogPanel");
+                _eventLogPanel = this.FindControl<PanelFrame>("EventLogPanel");
                 _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
+                
+                // Initialize with configuration if available
+                if (_configuration != null && _eventLogPanel != null)
+                {
+                    _eventLogPanel.SetConfiguration(_configuration);
+                }
             }
 
             if (_eventLogPanel != null && _eventLogTransform != null)

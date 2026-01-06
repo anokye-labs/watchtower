@@ -6,6 +6,7 @@
              xmlns:vm="using:WatchTower.ViewModels"
              xmlns:fluent="using:FluentIcons.Avalonia.Fluent"
              xmlns:converters="using:WatchTower.Converters"
+             xmlns:controls="using:WatchTower.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="WatchTower.Views.MainWindow"
              x:DataType="vm:MainWindowViewModel">
@@ -92,65 +93,64 @@
                     AutomationProperties.Name="Click to close the event log overlay"
                     Tapped="OnBackdropTapped"/>
             
-            <!-- Event Log Panel Container -->
-            <Border Background="#EE1A1A1A"
-                    CornerRadius="0 12 12 0"
-                    BorderBrush="#4AFFFFFF"
-                    BorderThickness="0 1 1 1"
-                    Padding="24"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    BoxShadow="8 0 32 4 #80000000"
-                    Name="EventLogPanel">
-                <Border.Styles>
-                    <Style Selector="Border#EventLogPanel">
+            <!-- Event Log Panel Container with PanelFrame -->
+            <controls:PanelFrame SlideDirection="Left"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Stretch"
+                                Name="EventLogPanel">
+                <controls:PanelFrame.Styles>
+                    <Style Selector="controls|PanelFrame#EventLogPanel">
                         <Setter Property="Width" Value="{Binding $parent[UserControl].Bounds.Width, Converter={x:Static converters:HalfWidthConverter.Instance}}"/>
                     </Style>
-                </Border.Styles>
-                <Border.RenderTransform>
+                </controls:PanelFrame.Styles>
+                <controls:PanelFrame.RenderTransform>
                     <TranslateTransform X="0" />
-                </Border.RenderTransform>
+                </controls:PanelFrame.RenderTransform>
                 
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="16"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- Header -->
-                    <Grid Grid.Row="0">
-                        <TextBlock Text="Event Log"
-                                   FontSize="20" 
-                                   FontWeight="SemiBold"
-                                   Foreground="White"/>
-                        <Button Content="✕" 
-                                Command="{Binding CloseOverlayCommand}"
-                                HorizontalAlignment="Right"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Foreground="#CCFFFFFF"
-                                FontSize="20"
-                                Padding="8,0"
-                                ToolTip.Tip="Close (Esc)"/>
+                <!-- Panel Content -->
+                <Border Background="#EE1A1A1A"
+                        Padding="24">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="16"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header -->
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="Event Log"
+                                       FontSize="20" 
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <Button Content="✕" 
+                                    Command="{Binding CloseOverlayCommand}"
+                                    HorizontalAlignment="Right"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="#CCFFFFFF"
+                                    FontSize="20"
+                                    Padding="8,0"
+                                    ToolTip.Tip="Close (Esc)"/>
+                        </Grid>
+                        
+                        <!-- Event Log Content -->
+                        <ScrollViewer Grid.Row="2">
+                            <ItemsControl ItemsSource="{Binding ControllerEvents}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" 
+                                                   FontFamily="Consolas,Courier New"
+                                                   FontSize="12"
+                                                   Foreground="#CCFFFFFF"
+                                                   Margin="0,2" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Grid>
-                    
-                    <!-- Event Log Content -->
-                    <ScrollViewer Grid.Row="2">
-                        <ItemsControl ItemsSource="{Binding ControllerEvents}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" 
-                                               FontFamily="Consolas,Courier New"
-                                               FontSize="12"
-                                               Foreground="#CCFFFFFF"
-                                               Margin="0,2" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
+                </Border>
+            </controls:PanelFrame>
         </Grid>
         
         <!-- Input Overlay (slides from bottom) -->
@@ -160,129 +160,128 @@
                     AutomationProperties.Name="Click to close the input overlay"
                     Tapped="OnBackdropTapped"/>
             
-            <!-- Input Panel Container -->
-            <Border Background="#EE1A1A1A"
-                    CornerRadius="12 12 0 0"
-                    BorderBrush="#4AFFFFFF"
-                    BorderThickness="1 1 1 0"
-                    MaxHeight="400"
-                    Padding="24"
-                    Margin="20,0,20,0"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Bottom"
-                    BoxShadow="0 -8 32 4 #80000000"
-                    Name="OverlayPanel">
-                <Border.RenderTransform>
+            <!-- Input Panel Container with PanelFrame -->
+            <controls:PanelFrame SlideDirection="Bottom"
+                                MaxHeight="400"
+                                Margin="20,0,20,0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Bottom"
+                                Name="OverlayPanel">
+                <controls:PanelFrame.RenderTransform>
                     <TranslateTransform Y="0" />
-                </Border.RenderTransform>
+                </controls:PanelFrame.RenderTransform>
                 
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- Header -->
-                    <Grid Grid.Row="0" Margin="0,0,0,16">
-                        <TextBlock FontSize="20" 
-                                   FontWeight="SemiBold"
-                                   Foreground="White">
-                            <TextBlock.Text>
-                                <MultiBinding StringFormat="{}{0} Input">
-                                    <Binding Path="IsRichTextMode">
-                                        <Binding.Converter>
-                                            <converters:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
-                                        </Binding.Converter>
-                                    </Binding>
-                                </MultiBinding>
-                            </TextBlock.Text>
-                        </TextBlock>
-                        <Button Content="✕" 
-                                Command="{Binding CloseOverlayCommand}"
-                                HorizontalAlignment="Right"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Foreground="#CCFFFFFF"
-                                FontSize="20"
-                                Padding="8,0"
-                                ToolTip.Tip="Close (Esc)"/>
-                    </Grid>
-                    
-                    <!-- Rich Text Input Panel with Overlay Buttons -->
-                    <Border Grid.Row="1" 
-                            IsVisible="{Binding IsRichTextMode}"
-                            Background="#1AFFFFFF"
-                            CornerRadius="6">
-                        <Grid>
-                            <!-- TextBox with bottom padding to avoid button overlap -->
-                            <TextBox Text="{Binding InputText}"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     Watermark="Enter your text here..."
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     FontSize="14"
-                                     MinHeight="200"
-                                     Padding="12,12,12,56"
-                                     Name="InputTextBox"/>
-                            
-                            <!-- Overlay Action Buttons -->
-                            <StackPanel Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Bottom"
-                                        Spacing="8"
-                                        Margin="12">
-                                <Button Content="Cancel" 
-                                        Command="{Binding CloseOverlayCommand}"
-                                        Padding="12,6"
-                                        MinWidth="80"
-                                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                        CornerRadius="4"
-                                        ToolTip.Tip="Cancel (Esc)"/>
-                                <Button Content="Submit" 
-                                        Command="{Binding SubmitInputCommand}"
-                                        Padding="12,6"
-                                        MinWidth="80"
-                                        Background="{DynamicResource SystemAccentColor}"
-                                        CornerRadius="4"
-                                        Classes="accent"
-                                        ToolTip.Tip="Submit (Ctrl+Enter)"/>
-                            </StackPanel>
+                <!-- Panel Content -->
+                <Border Background="#EE1A1A1A"
+                        Padding="24">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <TextBlock FontSize="20" 
+                                       FontWeight="SemiBold"
+                                       Foreground="White">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} Input">
+                                        <Binding Path="IsRichTextMode">
+                                            <Binding.Converter>
+                                                <converters:BoolToTextConverter TrueValue="Rich Text" FalseValue="Voice"/>
+                                            </Binding.Converter>
+                                        </Binding>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <Button Content="✕" 
+                                    Command="{Binding CloseOverlayCommand}"
+                                    HorizontalAlignment="Right"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="#CCFFFFFF"
+                                    FontSize="20"
+                                    Padding="8,0"
+                                    ToolTip.Tip="Close (Esc)"/>
                         </Grid>
-                    </Border>
-                    
-                    <!-- Voice Input Panel (no action buttons - use Close or Esc to exit) -->
-                    <Border Grid.Row="1" 
-                            IsVisible="{Binding IsVoiceMode}"
-                            Background="#1AFFFFFF"
-                            CornerRadius="6"
-                            Padding="12">
-                        <StackPanel VerticalAlignment="Center" 
-                                    HorizontalAlignment="Center"
-                                    Spacing="16">
-                            <Ellipse Width="80" 
-                                     Height="80" 
-                                     Fill="#FF4444"
-                                     HorizontalAlignment="Center">
-                                <Ellipse.Transitions>
-                                    <Transitions>
-                                        <DoubleTransition Property="Opacity" Duration="0:0:1"/>
-                                    </Transitions>
-                                </Ellipse.Transitions>
-                            </Ellipse>
-                            <TextBlock Text="Voice recording ready..."
-                                       FontSize="16"
-                                       HorizontalAlignment="Center"
-                                       Foreground="#CCFFFFFF"/>
-                            <TextBlock Text="Press Esc or ✕ to close"
-                                       FontSize="12"
-                                       HorizontalAlignment="Center"
-                                       Foreground="#88FFFFFF"
-                                       FontStyle="Italic"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+                        
+                        <!-- Rich Text Input Panel with Overlay Buttons -->
+                        <Border Grid.Row="1" 
+                                IsVisible="{Binding IsRichTextMode}"
+                                Background="#1AFFFFFF"
+                                CornerRadius="6">
+                            <Grid>
+                                <!-- TextBox with bottom padding to avoid button overlap -->
+                                <TextBox Text="{Binding InputText}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Watermark="Enter your text here..."
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         FontSize="14"
+                                         MinHeight="200"
+                                         Padding="12,12,12,56"
+                                         Name="InputTextBox"/>
+                                
+                                <!-- Overlay Action Buttons -->
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom"
+                                            Spacing="8"
+                                            Margin="12">
+                                    <Button Content="Cancel" 
+                                            Command="{Binding CloseOverlayCommand}"
+                                            Padding="12,6"
+                                            MinWidth="80"
+                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                            CornerRadius="4"
+                                            ToolTip.Tip="Cancel (Esc)"/>
+                                    <Button Content="Submit" 
+                                            Command="{Binding SubmitInputCommand}"
+                                            Padding="12,6"
+                                            MinWidth="80"
+                                            Background="{DynamicResource SystemAccentColor}"
+                                            CornerRadius="4"
+                                            Classes="accent"
+                                            ToolTip.Tip="Submit (Ctrl+Enter)"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Voice Input Panel (no action buttons - use Close or Esc to exit) -->
+                        <Border Grid.Row="1" 
+                                IsVisible="{Binding IsVoiceMode}"
+                                Background="#1AFFFFFF"
+                                CornerRadius="6"
+                                Padding="12">
+                            <StackPanel VerticalAlignment="Center" 
+                                        HorizontalAlignment="Center"
+                                        Spacing="16">
+                                <Ellipse Width="80" 
+                                         Height="80" 
+                                         Fill="#FF4444"
+                                         HorizontalAlignment="Center">
+                                    <Ellipse.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Property="Opacity" Duration="0:0:1"/>
+                                        </Transitions>
+                                    </Ellipse.Transitions>
+                                </Ellipse>
+                                <TextBlock Text="Voice recording ready..."
+                                           FontSize="16"
+                                           HorizontalAlignment="Center"
+                                           Foreground="#CCFFFFFF"/>
+                                <TextBlock Text="Press Esc or ✕ to close"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           Foreground="#88FFFFFF"
+                                           FontStyle="Italic"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:PanelFrame>
         </Grid>
     </Panel>
 </UserControl>
