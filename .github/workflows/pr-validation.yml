@@ -87,10 +87,10 @@ jobs:
       
       - name: Generate HTML coverage report
         run: |
-          reportgenerator \
-            -reports:coverage/**/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:"Html;Cobertura" \
+          reportgenerator `
+            -reports:coverage/**/coverage.cobertura.xml `
+            -targetdir:coverage-report `
+            -reporttypes:"Html;Cobertura" `
             -classfilters:"+WatchTower.Services.*;+WatchTower.ViewModels.*"
       
       - name: Upload HTML coverage report
