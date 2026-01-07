@@ -437,10 +437,12 @@ Tests run automatically on:
 
 ### Multi-Platform Testing
 
-Tests run on all supported platforms:
-- **Ubuntu (Linux)**: linux-x64 runtime
-- **Windows**: win-x64 runtime
-- **macOS**: osx-x64 runtime
+Tests run automatically on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop`
+- Manual workflow dispatch
+
+The test suite runs on Windows (win-x64), which is the primary supported platform for WatchTower.
 
 ### Test Failure Policy
 
