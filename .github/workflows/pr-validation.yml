@@ -61,9 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            coverage/**/*.trx
-            coverage/**/*.xml
+          path: coverage/**/*.trx
           retention-days: 30
 
   coverage-report:
@@ -255,6 +253,12 @@ jobs:
               ? '\n\n> ℹ️ **Note**: No Services or ViewModels files were modified in this PR, so the coverage threshold check is informational only.'
               : '';
             
+            const statusMessage = parseFloat(combinedPercent) >= threshold 
+              ? `Great job! The Services and ViewModels coverage meets the ${threshold}% threshold.` 
+              : shouldEnforceThreshold 
+                ? `⚠️ Coverage is below the ${threshold}% threshold. Please add tests to improve coverage for Services and ViewModels.`
+                : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`;
+            
             const summary = [
               '## Code Coverage Report',
               '',
@@ -273,11 +277,7 @@ jobs:
               `- **Current Coverage**: ${combinedPercent}%`,
               `- **Status**: ${parseFloat(combinedPercent) >= threshold ? '✅ PASSED' : shouldEnforceThreshold ? '❌ FAILED' : 'ℹ️ INFORMATIONAL'}`,
               '',
-              parseFloat(combinedPercent) >= threshold 
-                ? `Great job! The Services and ViewModels coverage meets the ${threshold}% threshold.` 
-                : shouldEnforceThreshold 
-                  ? `⚠️ Coverage is below the ${threshold}% threshold. Please add tests to improve coverage for Services and ViewModels.`
-                  : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`,
+              statusMessage,
               thresholdNote,
               '',
               '---',
