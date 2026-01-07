@@ -132,8 +132,6 @@ Some labels are automatically applied by GitHub Actions or agents:
 - Added/incremented when CI fails consecutively
 - Completely removed when CI passes
 - Used to trigger automatic status transitions (e.g., to "Blocked" after 2 consecutive failures)
-- `ɔkyeame:dwuma` - Applied by agent when starting work
-- `nnipa-gyinae-hia` - Applied by agent when blocked
 
 ## Related Documentation
 

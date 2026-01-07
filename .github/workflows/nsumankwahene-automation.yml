@@ -280,9 +280,14 @@ jobs:
             
             // Optional: Filter for specific workflow (pr-validation.yml)
             // Uncomment when pr-validation.yml workflow exists
-            // const workflowName = context.payload.check_suite.head_branch;
-            // if (!context.payload.check_suite.app?.slug?.includes('github-actions')) {
-            //   console.log('Check suite not from GitHub Actions, skipping');
+            // const checkRuns = await github.rest.checks.listForSuite({
+            //   owner: context.repo.owner,
+            //   repo: context.repo.repo,
+            //   check_suite_id: context.payload.check_suite.id
+            // });
+            // const workflowName = checkRuns.data.check_runs[0]?.name;
+            // if (!workflowName?.includes('pr-validation')) {
+            //   console.log('Check suite not from pr-validation workflow, skipping');
             //   return;
             // }
             
@@ -488,9 +493,14 @@ jobs:
             
             // Optional: Filter for specific workflow (pr-validation.yml)
             // Uncomment when pr-validation.yml workflow exists
-            // const workflowName = context.payload.check_suite.head_branch;
-            // if (!context.payload.check_suite.app?.slug?.includes('github-actions')) {
-            //   console.log('Check suite not from GitHub Actions, skipping');
+            // const checkRuns = await github.rest.checks.listForSuite({
+            //   owner: context.repo.owner,
+            //   repo: context.repo.repo,
+            //   check_suite_id: context.payload.check_suite.id
+            // });
+            // const workflowName = checkRuns.data.check_runs[0]?.name;
+            // if (!workflowName?.includes('pr-validation')) {
+            //   console.log('Check suite not from pr-validation workflow, skipping');
             //   return;
             // }
             
@@ -599,7 +609,12 @@ jobs:
               
               // Process each linked issue
               for (const ref of issueRefs) {
-                const issueNumber = parseInt(ref.match(/#(\d+)/)[1]);
+                const match = ref.match(/#(\d+)/i);
+                if (!match) {
+                  console.log(`Could not extract issue number from reference: ${ref}`);
+                  continue;
+                }
+                const issueNumber = parseInt(match[1], 10);
                 
                 try {
                   // Get current labels on the issue

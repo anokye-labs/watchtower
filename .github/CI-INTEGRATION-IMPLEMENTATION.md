@@ -128,9 +128,14 @@ Code includes commented filter for `pr-validation.yml`:
 
 ```javascript
 // Uncomment when pr-validation.yml workflow exists
-// const workflowName = context.payload.check_suite.head_branch;
-// if (!context.payload.check_suite.app?.slug?.includes('github-actions')) {
-//   console.log('Check suite not from GitHub Actions, skipping');
+// const checkRuns = await github.rest.checks.listForSuite({
+//   owner: context.repo.owner,
+//   repo: context.repo.repo,
+//   check_suite_id: context.payload.check_suite.id
+// });
+// const workflowName = checkRuns.data.check_runs[0]?.name;
+// if (!workflowName?.includes('pr-validation')) {
+//   console.log('Check suite not from pr-validation workflow, skipping');
 //   return;
 // }
 ```

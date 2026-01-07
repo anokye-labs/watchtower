@@ -66,8 +66,10 @@ gh api graphql -f query='
       }
     }
   }
-' -f owner='anokye-labs' -f repo='watchtower' -F issueNumber=TEST-001
+' -f owner='anokye-labs' -f repo='watchtower' -F issueNumber=<ISSUE_NUMBER>
 ```
+
+**Note:** Replace `<ISSUE_NUMBER>` with the actual numeric issue number (e.g., `123`).
 
 ### Scenario 3: Third Consecutive CI Failure
 
