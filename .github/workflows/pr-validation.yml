@@ -62,8 +62,8 @@ jobs:
         with:
           name: test-results
           path: |
-            **/TestResults/**/*.trx
-            **/TestResults/**/*.xml
+            coverage/**/*.trx
+            coverage/**/*.xml
           retention-days: 30
 
   coverage-report:
@@ -255,32 +255,34 @@ jobs:
               ? '\n\n> ℹ️ **Note**: No Services or ViewModels files were modified in this PR, so the coverage threshold check is informational only.'
               : '';
             
-            const summary = `## Code Coverage Report
-            
-            ### Coverage by Category
-            
-            | Category | Coverage | Lines Covered | Total Lines |
-            |----------|----------|---------------|-------------|
-            | **Services** | ${servicesPercent}% | ${servicesCovered} | ${servicesLines} |
-            | **ViewModels** | ${viewModelsPercent}% | ${viewModelsCovered} | ${viewModelsLines} |
-            | **Combined Services/ViewModels** | **${combinedPercent}%** | ${servicesCovered + viewModelsCovered} | ${servicesLines + viewModelsLines} |
-            | Overall Project | ${totalPercent}% | ${totalCovered} | ${totalLines} |
-            
-            ### Threshold Status
-            
-            - **Required Coverage**: ${threshold}%
-            - **Current Coverage**: ${combinedPercent}%
-            - **Status**: ${parseFloat(combinedPercent) >= threshold ? '✅ PASSED' : shouldEnforceThreshold ? '❌ FAILED' : 'ℹ️ INFORMATIONAL'}
-            
-            ${parseFloat(combinedPercent) >= threshold 
-              ? `Great job! The Services and ViewModels coverage meets the ${threshold}% threshold.` 
-              : shouldEnforceThreshold 
-                ? `⚠️ Coverage is below the ${threshold}% threshold. Please add tests to improve coverage for Services and ViewModels.`
-                : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`}${thresholdNote}
-            
-            ---
-            📊 [View detailed HTML coverage report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) in the workflow artifacts.
-            `;
+            const summary = [
+              '## Code Coverage Report',
+              '',
+              '### Coverage by Category',
+              '',
+              '| Category | Coverage | Lines Covered | Total Lines |',
+              '|----------|----------|---------------|-------------|',
+              `| **Services** | ${servicesPercent}% | ${servicesCovered} | ${servicesLines} |`,
+              `| **ViewModels** | ${viewModelsPercent}% | ${viewModelsCovered} | ${viewModelsLines} |`,
+              `| **Combined Services/ViewModels** | **${combinedPercent}%** | ${servicesCovered + viewModelsCovered} | ${servicesLines + viewModelsLines} |`,
+              `| Overall Project | ${totalPercent}% | ${totalCovered} | ${totalLines} |`,
+              '',
+              '### Threshold Status',
+              '',
+              `- **Required Coverage**: ${threshold}%`,
+              `- **Current Coverage**: ${combinedPercent}%`,
+              `- **Status**: ${parseFloat(combinedPercent) >= threshold ? '✅ PASSED' : shouldEnforceThreshold ? '❌ FAILED' : 'ℹ️ INFORMATIONAL'}`,
+              '',
+              parseFloat(combinedPercent) >= threshold 
+                ? `Great job! The Services and ViewModels coverage meets the ${threshold}% threshold.` 
+                : shouldEnforceThreshold 
+                  ? `⚠️ Coverage is below the ${threshold}% threshold. Please add tests to improve coverage for Services and ViewModels.`
+                  : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`,
+              thresholdNote,
+              '',
+              '---',
+              `📊 [View detailed HTML coverage report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) in the workflow artifacts.`
+            ].join('\n');
             
             // Post comment on PR
             if (context.payload.pull_request) {
