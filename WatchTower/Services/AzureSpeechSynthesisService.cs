@@ -1,9 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 using AzureSpeechSynthesisEventArgs = Microsoft.CognitiveServices.Speech.SpeechSynthesisEventArgs;
 
 namespace WatchTower.Services;
@@ -53,7 +53,7 @@ public class AzureSpeechSynthesisService : ITextToSpeechService
             // Get Azure credentials from configuration or environment
             var speechKey = _configuration.GetValue<string>("Voice:Azure:SpeechKey")
                 ?? Environment.GetEnvironmentVariable("AZURE_SPEECH_KEY");
-            
+
             var speechRegion = _configuration.GetValue<string>("Voice:Azure:SpeechRegion")
                 ?? Environment.GetEnvironmentVariable("AZURE_SPEECH_REGION");
 
@@ -66,9 +66,9 @@ public class AzureSpeechSynthesisService : ITextToSpeechService
 
             // Create speech configuration
             _speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
-            
+
             // Configure synthesis voice
-            var voiceName = _configuration.GetValue<string>("Voice:Azure:VoiceName") 
+            var voiceName = _configuration.GetValue<string>("Voice:Azure:VoiceName")
                 ?? "en-US-AriaNeural";
             _speechConfig.SpeechSynthesisVoiceName = voiceName;
 
@@ -128,11 +128,11 @@ public class AzureSpeechSynthesisService : ITextToSpeechService
             if (result.Reason == ResultReason.Canceled)
             {
                 var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
-                _logger.LogError("Synthesis canceled: {Reason}, Error: {ErrorDetails}", 
+                _logger.LogError("Synthesis canceled: {Reason}, Error: {ErrorDetails}",
                     cancellation.Reason, cancellation.ErrorDetails);
-                
-                var error = new SpeechSynthesisErrorEventArgs(text, 
-                    $"Synthesis canceled: {cancellation.Reason}", 
+
+                var error = new SpeechSynthesisErrorEventArgs(text,
+                    $"Synthesis canceled: {cancellation.Reason}",
                     new Exception(cancellation.ErrorDetails));
                 SynthesisError?.Invoke(this, error);
             }

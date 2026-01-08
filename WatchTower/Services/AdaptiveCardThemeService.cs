@@ -1,11 +1,11 @@
-using System;
-using System.IO;
 using AdaptiveCards.Rendering;
 using Avalonia;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.IO;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
@@ -122,7 +122,7 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
         // Create working copies with font overrides applied
         _darkHostConfig = CloneHostConfig(_darkHostConfigOriginal);
         _lightHostConfig = CloneHostConfig(_lightHostConfigOriginal);
-        
+
         if (_darkHostConfig != null)
         {
             ApplyFontOverrides(_darkHostConfig);
@@ -143,7 +143,7 @@ public class AdaptiveCardThemeService : IAdaptiveCardThemeService
             var json = reader.ReadToEnd();
 
             var hostConfig = AdaptiveHostConfig.FromJson(json);
-            
+
             // Log the loaded background color to verify it's correct
             var bgColor = hostConfig.ContainerStyles?.Default?.BackgroundColor;
             _logger.LogInformation("Loaded theme from {Path}, background color: {BackgroundColor}", resourcePath, bgColor ?? "null");

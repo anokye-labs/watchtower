@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
-using System.Text.Json;
 using Avalonia.Mcp.Core.Models;
 using Avalonia.Mcp.Core.Transport;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Text.Json;
 
 namespace Avalonia.Mcp.Core.Handlers;
 
@@ -31,11 +31,13 @@ public class McpHandler : IMcpHandler
 
     public void RegisterTool(McpToolDefinition tool, Func<Dictionary<string, object>?, Task<McpToolResult>> handler)
     {
-        if (tool == null) throw new ArgumentNullException(nameof(tool));
-        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        if (tool == null)
+            throw new ArgumentNullException(nameof(tool));
+        if (handler == null)
+            throw new ArgumentNullException(nameof(handler));
 
         var namespacedName = $"{ApplicationName}:{tool.Name}";
-        
+
         // Create a copy with namespaced name
         var namespacedTool = new McpToolDefinition
         {
@@ -43,7 +45,7 @@ public class McpHandler : IMcpHandler
             Description = tool.Description,
             InputSchema = tool.InputSchema
         };
-        
+
         _tools[namespacedName] = namespacedTool;
         _toolHandlers[namespacedName] = handler;
 
@@ -144,13 +146,58 @@ public class McpHandler : IMcpHandler
             {
                 _logger?.LogDebug("Received message: {Message}", message);
 
-                // Parse message and handle tool invocation
-                var invocation = JsonSerializer.Deserialize<McpToolInvocation>(message);
-                if (invocation != null)
+                // Parse the message to extract type and correlation ID
+                var jsonDoc = JsonDocument.Parse(message);
+                var root = jsonDoc.RootElement;
+
+                // Check if this is a tool invocation message
+                if (root.TryGetProperty("type", out var typeEl) && typeEl.GetString() == "toolInvocation")
                 {
+                    // Extract correlation ID
+                    var correlationId = root.TryGetProperty("correlationId", out var corrIdEl)
+                        ? corrIdEl.GetInt64()
+                        : 0;
+
+                    // Extract tool name and parameters
+                    var toolName = root.GetProperty("tool").GetString()!;
+                    Dictionary<string, object>? parameters = null;
+                    if (root.TryGetProperty("parameters", out var paramsEl) && paramsEl.ValueKind != JsonValueKind.Null)
+                    {
+                        // Deserialize to Dictionary<string, JsonElement> first for safer handling
+                        var paramDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(paramsEl.GetRawText());
+                        if (paramDict != null)
+                        {
+                            parameters = new Dictionary<string, object>();
+                            foreach (var kvp in paramDict)
+                            {
+                                parameters[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+
+                    // Create tool invocation
+                    var invocation = new McpToolInvocation
+                    {
+                        ToolName = toolName,
+                        Parameters = parameters
+                    };
+
+                    // Execute the tool
                     var result = await ExecuteToolAsync(invocation);
-                    var responseJson = JsonSerializer.Serialize(result);
+
+                    // Send response with correlation ID
+                    var response = new
+                    {
+                        type = "toolResponse",
+                        correlationId = correlationId,
+                        result = result
+                    };
+
+                    var responseJson = JsonSerializer.Serialize(response) + "\n";
                     await _transportClient!.SendMessageAsync(responseJson);
+
+                    _logger?.LogInformation("Executed tool '{ToolName}' with correlation ID {CorrelationId}, success: {Success}",
+                        toolName, correlationId, result.Success);
                 }
             }
             catch (Exception ex)
@@ -168,7 +215,8 @@ public class McpHandler : IMcpHandler
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         // Dispose synchronously - disconnect will be handled by finalizer or explicit DisposeAsync call
         _transportClient?.Dispose();
@@ -179,7 +227,8 @@ public class McpHandler : IMcpHandler
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         await DisconnectAsync();
         _transportClient?.Dispose();

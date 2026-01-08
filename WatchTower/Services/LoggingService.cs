@@ -67,7 +67,7 @@ public class LoggingService
     private LogLevel GetConfiguredLogLevel()
     {
         var logLevelString = _configuration["Logging:LogLevel"] ?? "normal";
-        
+
         return logLevelString.ToLowerInvariant() switch
         {
             "minimal" => LogLevel.Warning,      // Only warnings and errors

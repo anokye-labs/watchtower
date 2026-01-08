@@ -1,11 +1,11 @@
+using Avalonia.Mcp.Core.Models;
+using Avalonia.McpProxy.Models;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using Avalonia.Mcp.Core.Models;
-using Avalonia.McpProxy.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Avalonia.McpProxy.Server;
 
@@ -23,8 +23,9 @@ public class ProxyServer : IDisposable
     private Task? _listenerTask;
     private Task? _stdinTask;
     private readonly ConcurrentDictionary<string, TcpClient> _appConnections = new();
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new();
+    private readonly ConcurrentDictionary<string, NetworkStream> _appStreams = new();
     private long _nextCorrelationId;
+    private readonly ConcurrentDictionary<long, TaskCompletionSource<McpToolResult>> _pendingRequests = new();
     private bool _disposed;
 
     public ProxyServer(ProxyConfiguration config, AppRegistry registry, ILogger<ProxyServer> logger)
@@ -113,6 +114,7 @@ public class ProxyServer : IDisposable
         {
             _appConnections[connectionId] = client;
             var stream = client.GetStream();
+            _appStreams[connectionId] = stream;
             var buffer = new byte[8192];
             var messageBuffer = new StringBuilder();
 
@@ -159,6 +161,7 @@ public class ProxyServer : IDisposable
         {
             _registry.MarkDisconnected(connectionId);
             _appConnections.TryRemove(connectionId, out _);
+            _appStreams.TryRemove(connectionId, out _);
             client.Close();
         }
     }
@@ -170,36 +173,6 @@ public class ProxyServer : IDisposable
             var json = JsonDocument.Parse(message);
             var root = json.RootElement;
 
-            // Check if this is a JSON-RPC response (has "jsonrpc": "2.0" and "id")
-            if (root.TryGetProperty("jsonrpc", out var jsonrpcElement)
-                && jsonrpcElement.ValueKind == JsonValueKind.String
-                && jsonrpcElement.GetString() == "2.0"
-                && root.TryGetProperty("id", out var idElement))
-            {
-                // Handle both string and numeric correlation IDs
-                string? correlationId = idElement.ValueKind switch
-                {
-                    JsonValueKind.String => idElement.GetString(),
-                    JsonValueKind.Number => idElement.GetInt64().ToString(),
-                    _ => null
-                };
-
-                if (!string.IsNullOrEmpty(correlationId) && _pendingRequests.TryRemove(correlationId, out var tcs))
-                {
-                    _logger.LogDebug("Received response for correlation ID: {CorrelationId}", correlationId);
-                    tcs.TrySetResult(root);
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        "Received response for unknown or expired correlation ID: {CorrelationId} from {ConnectionId}. This may occur after a request timeout or cancellation.",
-                        correlationId,
-                        connectionId);
-                }
-                return;
-            }
-
-            // Handle registration messages
             if (root.TryGetProperty("type", out var typeElement))
             {
                 var type = typeElement.GetString();
@@ -212,6 +185,41 @@ public class ProxyServer : IDisposable
                         : null;
 
                     _registry.RegisterApp(connectionId, appName, tools);
+                }
+                else if (type == "toolResponse" && root.TryGetProperty("correlationId", out var corrIdElement))
+                {
+                    // Handle tool execution response
+                    var correlationId = corrIdElement.GetInt64();
+                        
+                    // Parse the result
+                    McpToolResult result;
+                    if (root.TryGetProperty("result", out var resultElement))
+                    {
+                        if (resultElement.ValueKind == JsonValueKind.Null)
+                        {
+                            result = McpToolResult.Fail("Null result");
+                        }
+                        else
+                        {
+                            var deserializedResult = JsonSerializer.Deserialize<McpToolResult>(resultElement.GetRawText());
+                            result = deserializedResult ?? McpToolResult.Fail("Null result");
+                        }
+                    }
+                    else
+                    {
+                        result = McpToolResult.Fail("Missing result property");
+                    }
+
+                    // Complete the pending request
+                    if (_pendingRequests.TryRemove(correlationId, out var tcs))
+                    {
+                        tcs.TrySetResult(result);
+                        _logger.LogDebug("Completed pending request {CorrelationId}", correlationId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Received response for unknown correlation ID: {CorrelationId}", correlationId);
+                    }
                 }
             }
         }
@@ -228,11 +236,11 @@ public class ProxyServer : IDisposable
             _logger.LogInformation("Starting stdio handler for agent communication");
 
             using var reader = Console.In;
-            
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync(cancellationToken);
-                
+
                 if (line == null)
                 {
                     _logger.LogInformation("Stdin closed, shutting down");
@@ -290,7 +298,7 @@ public class ProxyServer : IDisposable
         try
         {
             var tools = _registry.GetAllTools();
-            
+
             var response = new
             {
                 jsonrpc = "2.0",
@@ -317,7 +325,7 @@ public class ProxyServer : IDisposable
     private async Task HandleCallToolAsync(JsonElement request, CancellationToken cancellationToken)
     {
         var requestId = request.TryGetProperty("id", out var idEl) ? (int?)idEl.GetInt32() : null;
-        
+
         try
         {
             if (!request.TryGetProperty("params", out var paramsEl) ||
@@ -336,151 +344,103 @@ public class ProxyServer : IDisposable
                 return;
             }
 
-            // Get the TCP connection for this app
-            if (!_appConnections.TryGetValue(app.ConnectionId, out var tcpClient) || !tcpClient.Connected)
+            // Check if app is still connected
+            if (!_appStreams.TryGetValue(app.ConnectionId, out var stream))
             {
                 await SendErrorToAgentAsync($"App '{app.Name}' is not connected", requestId, cancellationToken);
                 return;
             }
 
-            // Generate correlation ID for tracking the request/response
-            var correlationId = Interlocked.Increment(ref _nextCorrelationId).ToString();
-
-            // Create TaskCompletionSource for awaiting the response
-            var tcs = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
-            if (!_pendingRequests.TryAdd(correlationId, tcs))
+            // Parse tool arguments - store as object to preserve JSON structure
+            object? arguments = null;
+            if (paramsEl.TryGetProperty("arguments", out var argsEl))
             {
-                await SendErrorToAgentAsync($"Correlation ID conflict: {correlationId}", requestId, cancellationToken);
-                return;
+                // Keep as JsonElement to preserve exact JSON structure without type conversion
+                arguments = JsonSerializer.Deserialize<JsonElement>(argsEl.GetRawText());
             }
+
+            // Generate correlation ID
+            var correlationId = Interlocked.Increment(ref _nextCorrelationId);
+
+            // Create TaskCompletionSource for this request
+            var tcs = new TaskCompletionSource<McpToolResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _pendingRequests[correlationId] = tcs;
 
             try
             {
-                // Build JSON-RPC 2.0 request for the app
-                var appRequest = new
+                // Build tool invocation message for the app
+                var invocationMessage = new
+                {
+                    type = "toolInvocation",
+                    correlationId = correlationId,
+                    tool = toolName,
+                    parameters = arguments
+                };
+
+                var messageJson = JsonSerializer.Serialize(invocationMessage) + "\n";
+                var messageBytes = Encoding.UTF8.GetBytes(messageJson);
+
+                // Send to app
+                await stream.WriteAsync(messageBytes, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+
+                _logger.LogInformation("Forwarded tool '{ToolName}' to app '{AppName}' with correlation ID {CorrelationId}",
+                    toolName, app.Name, correlationId);
+
+                // Wait for response with timeout
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), timeoutCts.Token);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                McpToolResult result;
+                if (completedTask == timeoutTask)
+                {
+                    // Timeout occurred (but verify that the request is still pending to avoid race conditions)
+                    if (_pendingRequests.TryRemove(correlationId, out _))
+                    {
+                        result = McpToolResult.Fail("Tool execution timed out after 30 seconds");
+                        _logger.LogWarning("Tool '{ToolName}' timed out (correlation ID: {CorrelationId})", toolName, correlationId);
+                    }
+                    else
+                    {
+                        // A response won the race against the timeout; use the actual tool result instead of reporting a timeout.
+                        result = await tcs.Task;
+                    }
+                }
+                else
+                {
+                    // Got response, cancel the timeout task to free resources
+                    timeoutCts.Cancel();
+                    result = await tcs.Task;
+                }
+
+                // Convert result to MCP protocol response
+                var response = new
                 {
                     jsonrpc = "2.0",
-                    id = correlationId,
-                    method = "tools/call",
-                    @params = new
+                    id = requestId ?? 0,
+                    result = new
                     {
-                        name = toolName,
-                        arguments = paramsEl.TryGetProperty("arguments", out var argsEl) ? argsEl : (object?)null
+                        content = new[]
+                        {
+                            new
+                            {
+                                type = "text",
+                                text = result.Success
+                                    ? JsonSerializer.Serialize(result.Data)
+                                    : $"Error: {result.Error}"
+                            }
+                        }
                     }
                 };
 
-                // Serialize and send the request with newline delimiter
-                var appRequestJson = JsonSerializer.Serialize(appRequest);
-                var messageBytes = Encoding.UTF8.GetBytes(appRequestJson + "\n");
-
-                var stream = tcpClient.GetStream();
-
-                // Register cancellation callback before sending to ensure cleanup
-                using var registration = cancellationToken.Register(() =>
-                {
-                    if (_pendingRequests.TryRemove(correlationId, out var cancelledTcs))
-                    {
-                        cancelledTcs.TrySetCanceled(cancellationToken);
-                    }
-                });
-
-                await stream.WriteAsync(messageBytes, cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                _logger.LogDebug("Forwarded tool call '{ToolName}' to app '{AppName}' with correlation ID: {CorrelationId}",
-                    toolName, app.Name, correlationId);
-
-                // Wait for the response from the app with timeout
-                var timeout = TimeSpan.FromMinutes(2);
-                using var timeoutCts = new CancellationTokenSource(timeout);
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-
-                var responseTask = tcs.Task;
-                try
-                {
-                    linkedCts.Token.Register(() =>
-                    {
-                        if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-                        {
-                            if (_pendingRequests.TryRemove(correlationId, out var timedOutTcs))
-                            {
-                                timedOutTcs.TrySetException(new TimeoutException($"Tool call '{toolName}' did not complete within {timeout.TotalSeconds} seconds."));
-                            }
-                        }
-                    });
-
-                    var appResponse = await responseTask.ConfigureAwait(false);
-
-                    // Forward the app's response to the agent
-                    // JSON-RPC 2.0: response must have either "result" OR "error", not both
-                    var hasError = appResponse.TryGetProperty("error", out var errorEl);
-                    var hasResult = appResponse.TryGetProperty("result", out var resultEl);
-
-                    if (!hasError && !hasResult)
-                    {
-                        // Malformed JSON-RPC response from app: missing both "result" and "error"
-                        _logger.LogWarning("Received malformed response from app '{AppName}' for correlation ID: {CorrelationId} (missing both 'result' and 'error')",
-                            app.Name, correlationId);
-                        // Use a short timeout to avoid hanging if stdout is blocked
-                        using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                        try
-                        {
-                            await SendErrorToAgentAsync("Malformed response from application: missing both 'result' and 'error'.", requestId, errorCts.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            _logger.LogWarning("Failed to send malformed response error to agent - stdout may be blocked");
-                        }
-                        return;
-                    }
-
-                    // Use ternary operator to create response based on whether error or result is present
-                    var agentResponse = hasError
-                        ? JsonSerializer.Serialize(new { jsonrpc = "2.0", id = requestId ?? 0, error = errorEl })
-                        : JsonSerializer.Serialize(new { jsonrpc = "2.0", id = requestId ?? 0, result = resultEl });
-
-                    await SendToAgentAsync(agentResponse, cancellationToken);
-
-                    _logger.LogDebug("Forwarded response from app '{AppName}' to agent for correlation ID: {CorrelationId}",
-                        app.Name, correlationId);
-                }
-                catch (OperationCanceledException) when (!responseTask.IsCompletedSuccessfully)
-                {
-                    // Only treat as canceled if the response task didn't complete successfully
-                    // If the task completed, the response was already forwarded above
-                    _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' was canceled", toolName, app.Name);
-                    _pendingRequests.TryRemove(correlationId, out _);
-                    // Use a short timeout to avoid hanging if stdout is blocked
-                    using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    try
-                    {
-                        await SendErrorToAgentAsync("Tool execution was canceled", requestId, errorCts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        _logger.LogWarning("Failed to send cancellation error to agent - stdout may be blocked");
-                    }
-                }
-                catch (TimeoutException)
-                {
-                    _logger.LogWarning("Tool call '{ToolName}' to app '{AppName}' timed out after {Timeout} seconds", toolName, app.Name, timeout.TotalSeconds);
-                    _pendingRequests.TryRemove(correlationId, out _);
-                    // Use a short timeout to avoid hanging if stdout is blocked
-                    using var errorCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    try
-                    {
-                        await SendErrorToAgentAsync($"Tool execution timed out after {timeout.TotalSeconds} seconds", requestId, errorCts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        _logger.LogWarning("Failed to send timeout error to agent - stdout may be blocked");
-                    }
-                }
+                await SendToAgentAsync(JsonSerializer.Serialize(response), cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error forwarding tool call '{ToolName}' to app '{AppName}'", toolName, app.Name);
+                // Clean up pending request on exception
                 _pendingRequests.TryRemove(correlationId, out _);
+                _logger.LogError(ex, "Error forwarding tool call to app");
                 throw;
             }
         }
@@ -537,7 +497,8 @@ public class ProxyServer : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         StopAsync().GetAwaiter().GetResult();
         _cts?.Dispose();

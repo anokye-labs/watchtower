@@ -1,8 +1,8 @@
-using Xunit;
 using WatchTower.Services;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System;
+using Xunit;
 
 namespace WatchTower.Tests.Services;
 

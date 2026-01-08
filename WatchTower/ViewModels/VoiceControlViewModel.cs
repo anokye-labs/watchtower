@@ -1,8 +1,8 @@
+using Avalonia.Threading;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using WatchTower.Models;
 using WatchTower.Services;
 using WatchTower.Utilities;

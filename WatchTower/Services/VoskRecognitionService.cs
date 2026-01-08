@@ -1,10 +1,10 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using NAudio.Wave;
 using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using NAudio.Wave;
 using Vosk;
 using WatchTower.Models;
 
@@ -55,7 +55,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
 {
     // Voice activity detection threshold - empirically chosen for typical microphone levels
     private const float VoiceActivityThreshold = 0.01f;
-    
+
     private readonly ILogger<VoskRecognitionService> _logger;
     private readonly IConfiguration _configuration;
     private Model? _model;
@@ -92,7 +92,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
             _logger.LogInformation("Initializing Vosk speech recognition service");
 
             // Get model path from configuration or use default
-            _modelPath = _configuration.GetValue<string>("Voice:Vosk:ModelPath") 
+            _modelPath = _configuration.GetValue<string>("Voice:Vosk:ModelPath")
                 ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models", "vosk-model-small-en-us-0.15");
 
             // Check if model exists
@@ -115,7 +115,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
 
             _logger.LogInformation("Vosk model loaded successfully");
             _isInitialized = true;
-            
+
             return await Task.FromResult(true);
         }
         catch (Exception ex)
@@ -221,7 +221,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
             // Simple voice activity detection based on audio level
             float level = CalculateAudioLevel(e.Buffer, e.BytesRecorded);
             bool isActive = level > VoiceActivityThreshold;
-            
+
             VoiceActivityDetected?.Invoke(this, new VoiceActivityEventArgs(isActive, level));
         }
         catch (Exception ex)
@@ -236,7 +236,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
         {
             // Parse Vosk JSON result using System.Text.Json
             var text = ExtractTextFromJson(jsonResult);
-            
+
             if (!string.IsNullOrWhiteSpace(text))
             {
                 var result = new VoiceRecognitionResult
@@ -251,7 +251,7 @@ public class VoskRecognitionService : IVoiceRecognitionService
                 };
 
                 SpeechRecognized?.Invoke(this, new VoiceRecognitionEventArgs(result));
-                
+
                 if (isFinal)
                 {
                     _logger.LogInformation("Recognized: {Text}", text);

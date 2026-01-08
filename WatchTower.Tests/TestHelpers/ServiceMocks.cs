@@ -1,10 +1,9 @@
-using Moq;
-using Microsoft.Extensions.Logging;
-using WatchTower.Services;
-using WatchTower.Models;
-using AdaptiveCards;
 using AdaptiveCards.Rendering;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System.Collections.Generic;
+using WatchTower.Models;
+using WatchTower.Services;
 
 namespace WatchTower.Tests.TestHelpers;
 

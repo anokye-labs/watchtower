@@ -1,6 +1,6 @@
 using System;
-using Xunit;
 using WatchTower.Utilities;
+using Xunit;
 
 namespace WatchTower.Tests.Utilities;
 
@@ -72,7 +72,7 @@ public class SubscriptionManagerTests
         var manager = new SubscriptionManager();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             manager.Subscribe(null!, () => { }));
     }
 
@@ -83,7 +83,7 @@ public class SubscriptionManagerTests
         var manager = new SubscriptionManager();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             manager.Subscribe(() => { }, null!));
     }
 
@@ -95,7 +95,7 @@ public class SubscriptionManagerTests
         manager.Dispose();
 
         // Act & Assert
-        Assert.Throws<ObjectDisposedException>(() => 
+        Assert.Throws<ObjectDisposedException>(() =>
             manager.Subscribe(() => { }, () => { }));
     }
 
@@ -248,7 +248,7 @@ public class SubscriptionManagerTests
         // Verify the exception was propagated
         Assert.Same(expectedException, exception);
         Assert.Equal(1, subscribeCallCount);
-        
+
         // Verify unsubscribe was called once during cleanup of failed subscription
         Assert.Equal(1, unsubscribeCallCount);
 

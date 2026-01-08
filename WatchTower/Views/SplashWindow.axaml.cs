@@ -14,10 +14,10 @@ public partial class SplashWindow : UserControl
     public SplashWindow()
     {
         InitializeComponent();
-        
+
         // Subscribe to keyboard events
         KeyDown += OnKeyDown;
-        
+
         // Cleanup when control is unloaded
         Unloaded += OnUnloaded;
 

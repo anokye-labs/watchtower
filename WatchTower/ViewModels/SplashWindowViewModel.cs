@@ -1,8 +1,8 @@
+using Avalonia.Threading;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
-using Avalonia.Threading;
 using WatchTower.Services;
 
 namespace WatchTower.ViewModels;
@@ -36,9 +36,9 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
 
         _hangThresholdSeconds = hangThresholdSeconds;
         _stopwatch = Stopwatch.StartNew();
-        
+
         DiagnosticMessages = new ObservableCollection<string>();
-        
+
         // Timer for elapsed time and hang detection
         _timer = new DispatcherTimer
         {
@@ -46,11 +46,11 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
         };
         _timer.Tick += OnTimerTick;
         _timer.Start();
-        
+
         // Commands
         ToggleDiagnosticsCommand = new RelayCommand(ToggleDiagnostics);
         ExitCommand = new RelayCommand(Exit);
-        
+
         Info("Application startup initiated");
     }
 
@@ -220,10 +220,10 @@ public class SplashWindowViewModel : ViewModelBase, IStartupLogger, IDisposable
     private void OnTimerTick(object? sender, EventArgs e)
     {
         var elapsed = _stopwatch.Elapsed;
-        
+
         // Update elapsed time display (24-hour format)
         ElapsedTime = elapsed.ToString(elapsed.TotalHours >= 1 ? @"HH\:mm\:ss" : @"mm\:ss");
-        
+
         // Check for slow startup
         if (!IsSlowStartup && elapsed.TotalSeconds >= _hangThresholdSeconds)
         {
