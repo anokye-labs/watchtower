@@ -1,5 +1,6 @@
 using Avalonia.Mcp.Core.Handlers;
 using Avalonia.Mcp.Core.Models;
+using Avalonia.Mcp.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Avalonia.Mcp.Core.Tools;
@@ -11,11 +12,13 @@ namespace Avalonia.Mcp.Core.Tools;
 public class StandardUiTools
 {
     private readonly IMcpHandler _handler;
+    private readonly IAvaloniaUiService _uiService;
     private readonly ILogger<StandardUiTools>? _logger;
 
-    public StandardUiTools(IMcpHandler handler, ILogger<StandardUiTools>? logger = null)
+    public StandardUiTools(IMcpHandler handler, IAvaloniaUiService uiService, ILogger<StandardUiTools>? logger = null)
     {
         _handler = handler;
+        _uiService = uiService;
         _logger = logger;
     }
 
@@ -65,10 +68,9 @@ public class StandardUiTools
 
                 _logger?.LogInformation("Clicking at ({X}, {Y})", x, y);
 
-                // TODO: Implement actual click logic using Avalonia input system
-                await Task.Delay(10); // Simulate click delay
+                var clicked = await _uiService.ClickAtAsync(x, y);
 
-                return McpToolResult.Ok(new { x, y, clicked = true });
+                return McpToolResult.Ok(new { x, y, clicked });
             }
             catch (Exception ex)
             {
@@ -105,10 +107,9 @@ public class StandardUiTools
                 var text = textObj.ToString() ?? "";
                 _logger?.LogInformation("Typing text: {Text}", text);
 
-                // TODO: Implement actual typing logic using Avalonia input system
-                await Task.Delay(10); // Simulate typing delay
+                var typed = await _uiService.TypeTextAsync(text);
 
-                return McpToolResult.Ok(new { text, typed = true });
+                return McpToolResult.Ok(new { text, typed });
             }
             catch (Exception ex)
             {
@@ -144,15 +145,16 @@ public class StandardUiTools
 
                 _logger?.LogInformation("Capturing screenshot in format: {Format}", format);
 
-                // TODO: Implement actual screenshot capture using Avalonia rendering
-                await Task.Delay(10); // Simulate capture delay
+                var base64Data = await _uiService.CaptureScreenshotAsync(format);
 
-                return McpToolResult.Ok(new
-                {
-                    format,
-                    base64Data = "placeholder_screenshot_data",
-                    timestamp = DateTime.UtcNow
-                });
+                return base64Data != null 
+                    ? McpToolResult.Ok(new
+                    {
+                        format,
+                        base64Data,
+                        timestamp = DateTime.UtcNow
+                    })
+                    : McpToolResult.Fail("Failed to capture screenshot");
             }
             catch (Exception ex)
             {
@@ -188,18 +190,11 @@ public class StandardUiTools
 
                 _logger?.LogInformation("Getting element tree with max depth: {MaxDepth}", maxDepth);
 
-                // TODO: Implement actual element tree traversal
-                await Task.Delay(10); // Simulate traversal delay
+                var tree = await _uiService.GetElementTreeAsync(maxDepth);
 
-                return McpToolResult.Ok(new
-                {
-                    root = new
-                    {
-                        type = "Window",
-                        name = "MainWindow",
-                        children = Array.Empty<object>()
-                    }
-                });
+                return tree != null 
+                    ? McpToolResult.Ok(new { root = tree })
+                    : McpToolResult.Fail("Failed to get element tree");
             }
             catch (Exception ex)
             {
@@ -236,15 +231,9 @@ public class StandardUiTools
                 var selector = selectorObj.ToString() ?? "";
                 _logger?.LogInformation("Finding element: {Selector}", selector);
 
-                // TODO: Implement actual element search
-                await Task.Delay(10); // Simulate search delay
+                var result = await _uiService.FindElementAsync(selector);
 
-                return McpToolResult.Ok(new
-                {
-                    selector,
-                    found = false,
-                    message = "Element search not yet implemented"
-                });
+                return McpToolResult.Ok(result);
             }
             catch (Exception ex)
             {
@@ -286,15 +275,14 @@ public class StandardUiTools
 
                 _logger?.LogInformation("Waiting for element: {Selector} (timeout: {TimeoutMs}ms)", selector, timeoutMs);
 
-                // TODO: Implement actual element waiting logic
-                await Task.Delay(Math.Min(timeoutMs, 100)); // Simulate wait
+                var found = await _uiService.WaitForElementAsync(selector, timeoutMs);
 
                 return McpToolResult.Ok(new
                 {
                     selector,
-                    found = false,
+                    found,
                     timeoutMs,
-                    message = "Wait for element not yet implemented"
+                    message = found ? "Element found" : "Element not found within timeout"
                 });
             }
             catch (Exception ex)
