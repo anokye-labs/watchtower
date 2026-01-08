@@ -34,10 +34,20 @@ jobs:
       - name: Run tests
         run: dotnet test WatchTower.slnx --no-build -c Release --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
       
+      - name: Publish Windows build
+        run: dotnet publish WatchTower/WatchTower.csproj -c Release -r win-x64 --self-contained true -o publish/win-x64
+      
       - name: Upload test results and coverage
         if: always()  # Upload even if tests fail
         uses: actions/upload-artifact@v4
         with:
           name: test-results-windows
           path: TestResults/**/*
+          retention-days: 7
+      
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchtower-win-x64-pr${{ github.event.pull_request.number }}
+          path: publish/win-x64/*
           retention-days: 7
