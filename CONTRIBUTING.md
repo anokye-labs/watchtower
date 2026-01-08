@@ -76,17 +76,84 @@ Use `dotnet add package` to add packages. Never hand-edit the `.csproj` file for
 
 ### Requirements
 
-Aim for 80% code coverage for ViewModels and Services. Write tests before implementation when possible. ViewModels should be testable without UI dependencies.
+All code changes must include appropriate tests. Aim for 80% code coverage for ViewModels and Services. Write tests before implementation when possible (TDD). ViewModels should be testable without UI dependencies.
+
+### Test Organization
+
+- Place ViewModel tests in `WatchTower.Tests/ViewModels/`
+- Place Service tests in `WatchTower.Tests/Services/`
+- Place integration tests in `WatchTower.Tests/Integration/`
+- Follow the naming pattern: `MethodName_Scenario_ExpectedBehavior`
 
 ### Frameworks
 
-Use xUnit or NUnit for unit testing. Use Avalonia.Headless for UI testing without browser dependencies.
+Use xUnit for unit testing. Use Moq for mocking dependencies. Use Avalonia.Headless for UI testing without browser dependencies. Use the test helpers in `WatchTower.Tests/TestHelpers/` for common patterns.
+
+### Writing Tests
+
+Follow the Arrange-Act-Assert (AAA) pattern:
+
+```csharp
+[Fact]
+public void Method_Scenario_ExpectedBehavior()
+{
+    // Arrange - Set up dependencies and inputs
+    var service = CreateService();
+    
+    // Act - Execute the method
+    var result = service.DoSomething();
+    
+    // Assert - Verify the outcome
+    Assert.NotNull(result);
+}
+```
+
+Use mock factories from ServiceMocks for common services:
+
+```csharp
+var mockLogger = ServiceMocks.CreateLogger<MyClass>();
+var mockGameController = ServiceMocks.CreateGameControllerService();
+```
+
+Use test utilities for common scenarios:
+
+```csharp
+// Test property changed events
+var wasRaised = TestUtilities.WasPropertyChangedRaised(
+    viewModel, 
+    nameof(ViewModel.Property), 
+    () => viewModel.Property = newValue);
+```
 
 ### Running Tests
 
 ```bash
+# Run all tests
 dotnet test
+
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test
+dotnet test --filter "FullyQualifiedName~MyTestClass"
 ```
+
+### Coverage Reports
+
+Tests automatically generate coverage reports in CI/CD. View the coverage report:
+
+```bash
+dotnet tool install -g dotnet-reportgenerator-globaltool
+dotnet test --collect:"XPlat Code Coverage"
+reportgenerator -reports:./TestResults/**/coverage.cobertura.xml \
+                -targetdir:./coveragereport \
+                -reporttypes:Html
+```
+
+### Testing Guide
+
+For comprehensive testing patterns and examples, see [docs/testing-guide.md](docs/testing-guide.md).
+
 
 ## Pull Request Process
 
