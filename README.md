@@ -39,6 +39,20 @@ See [docs/mcp-proxy-architecture.md](docs/mcp-proxy-architecture.md) for detaile
 
 ## Quick Start
 
+### Testing Pre-Built PR Builds
+
+Want to test a pull request without building from source? Every PR automatically creates Windows build artifacts:
+
+1. Navigate to the [Pull Requests](https://github.com/anokye-labs/watchtower/pulls) page
+2. Open the PR you want to test
+3. Scroll down to the "Checks" section and click "Show all checks"
+4. Click "Details" next to "PR Validation / Build and Test"
+5. In the workflow run page, scroll down to "Artifacts"
+6. Download `watchtower-win-x64-prXXX.zip` (where XXX is the PR number)
+7. Extract and run `WatchTower.exe`
+
+**Note:** PR builds are retained for 7 days and are Windows-only. For macOS/Linux or local development, follow the installation instructions below.
+
 ### Prerequisites
 
 Install the .NET 10 SDK from https://dotnet.microsoft.com/download before proceeding.

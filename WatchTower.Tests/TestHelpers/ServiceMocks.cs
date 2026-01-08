@@ -1,3 +1,4 @@
+using AdaptiveCards;
 using AdaptiveCards.Rendering;
 using Microsoft.Extensions.Logging;
 using Moq;
