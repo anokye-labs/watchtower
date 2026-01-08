@@ -52,19 +52,19 @@ public class McpToolResult
     /// <summary>
     /// Creates a successful result.
     /// </summary>
-    public static McpToolResult Ok(object? data = null) => new() 
-    { 
-        Success = true, 
-        Data = data 
+    public static McpToolResult Ok(object? data = null) => new()
+    {
+        Success = true,
+        Data = data
     };
 
     /// <summary>
     /// Creates a failed result.
     /// </summary>
-    public static McpToolResult Fail(string error) => new() 
-    { 
-        Success = false, 
-        Error = error 
+    public static McpToolResult Fail(string error) => new()
+    {
+        Success = false,
+        Error = error
     };
 }
 

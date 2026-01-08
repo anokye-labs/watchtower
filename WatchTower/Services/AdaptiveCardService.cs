@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using AdaptiveCards;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace WatchTower.Services;
 
@@ -69,13 +69,13 @@ public class AdaptiveCardService : IAdaptiveCardService
         {
             _logger.LogDebug("Attempting to parse Adaptive Card from JSON");
             var parseResult = AdaptiveCard.FromJson(cardJson);
-            
+
             if (parseResult.Card != null)
             {
                 _logger.LogInformation("Successfully parsed Adaptive Card");
                 return parseResult.Card;
             }
-            
+
             _logger.LogWarning("Failed to parse Adaptive Card: Card is null");
             return null;
         }
@@ -90,7 +90,7 @@ public class AdaptiveCardService : IAdaptiveCardService
     public AdaptiveCard CreateSampleCard()
     {
         _logger.LogDebug("Creating sample Adaptive Card");
-        
+
         var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 5))
         {
             Body = new System.Collections.Generic.List<AdaptiveElement>

@@ -14,37 +14,37 @@ public record FrameSliceDefinition
     /// X coordinate where the left corner column ends (column 0 to 1 boundary).
     /// </summary>
     public int Left { get; init; }
-    
+
     /// <summary>
     /// X coordinate where the left stretch section ends and center section begins (column 1 to 2 boundary).
     /// </summary>
     public int LeftInner { get; init; }
-    
+
     /// <summary>
     /// X coordinate where the center section ends and right stretch section begins (column 2 to 3 boundary).
     /// </summary>
     public int RightInner { get; init; }
-    
+
     /// <summary>
     /// X coordinate where the right stretch section ends and right corner begins (column 3 to 4 boundary).
     /// </summary>
     public int Right { get; init; }
-    
+
     /// <summary>
     /// Y coordinate where the top corner row ends (row 0 to 1 boundary).
     /// </summary>
     public int Top { get; init; }
-    
+
     /// <summary>
     /// Y coordinate where the top stretch section ends and center section begins (row 1 to 2 boundary).
     /// </summary>
     public int TopInner { get; init; }
-    
+
     /// <summary>
     /// Y coordinate where the center section ends and bottom stretch section begins (row 2 to 3 boundary).
     /// </summary>
     public int BottomInner { get; init; }
-    
+
     /// <summary>
     /// Y coordinate where the bottom stretch section ends and bottom corner begins (row 3 to 4 boundary).
     /// </summary>
@@ -70,29 +70,29 @@ public record FrameSlices
     public required Bitmap TopCenter { get; init; }
     public required Bitmap TopRightStretch { get; init; }
     public required Bitmap TopRight { get; init; }
-    
+
     // Column 0: Left edge (rows 1-3)
     public required Bitmap LeftTopStretch { get; init; }
     public required Bitmap LeftCenter { get; init; }
     public required Bitmap LeftBottomStretch { get; init; }
-    
+
     // Column 4: Right edge (rows 1-3)
     public required Bitmap RightTopStretch { get; init; }
     public required Bitmap RightCenter { get; init; }
     public required Bitmap RightBottomStretch { get; init; }
-    
+
     // Row 4: Bottom edge
     public required Bitmap BottomLeft { get; init; }
     public required Bitmap BottomLeftStretch { get; init; }
     public required Bitmap BottomCenter { get; init; }
     public required Bitmap BottomRightStretch { get; init; }
     public required Bitmap BottomRight { get; init; }
-    
+
     /// <summary>
     /// Original source image dimensions.
     /// </summary>
     public Size SourceSize { get; init; }
-    
+
     /// <summary>
     /// The slice definition used to create these slices.
     /// </summary>
@@ -111,7 +111,7 @@ public interface IFrameSliceService
     /// <param name="sliceDefinition">The slice coordinates defining the 5x5 grid boundaries.</param>
     /// <returns>The sliced frame bitmaps, or null if loading fails.</returns>
     FrameSlices? LoadAndSlice(string sourceUri, FrameSliceDefinition sliceDefinition);
-    
+
     /// <summary>
     /// Loads and resizes a source image to target dimensions, then slices it.
     /// Results are cached by resolution (LRU-5 cache).
@@ -122,7 +122,7 @@ public interface IFrameSliceService
     /// <param name="targetHeight">Target height to resize the image to before slicing.</param>
     /// <returns>The sliced frame bitmaps at the target resolution, or null if loading fails.</returns>
     FrameSlices? LoadResizeAndSlice(string sourceUri, FrameSliceDefinition sliceDefinition, int targetWidth, int targetHeight);
-    
+
     /// <summary>
     /// Clears the resolution cache.
     /// </summary>

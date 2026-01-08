@@ -54,10 +54,10 @@ public partial class App : Application
             {
                 DataContext = shellViewModel
             };
-            
+
             // Pass configuration to shell window for frame settings
             shellWindow.SetConfiguration(configuration);
-            
+
             // Pass user preferences service to shell window for position restoration
             shellWindow.SetUserPreferencesService(userPreferencesService);
 
@@ -109,7 +109,7 @@ public partial class App : Application
         IUserPreferencesService userPreferencesService)
     {
         var splashViewModel = shellViewModel.SplashViewModel;
-        
+
         try
         {
             // Execute startup workflow with shared configuration

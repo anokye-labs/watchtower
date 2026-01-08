@@ -1,11 +1,11 @@
+using Avalonia.Mcp.Core.Models;
+using Avalonia.McpProxy.Models;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using Avalonia.Mcp.Core.Models;
-using Avalonia.McpProxy.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Avalonia.McpProxy.Server;
 
@@ -236,11 +236,11 @@ public class ProxyServer : IDisposable
             _logger.LogInformation("Starting stdio handler for agent communication");
 
             using var reader = Console.In;
-            
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync(cancellationToken);
-                
+
                 if (line == null)
                 {
                     _logger.LogInformation("Stdin closed, shutting down");
@@ -298,7 +298,7 @@ public class ProxyServer : IDisposable
         try
         {
             var tools = _registry.GetAllTools();
-            
+
             var response = new
             {
                 jsonrpc = "2.0",
@@ -325,7 +325,7 @@ public class ProxyServer : IDisposable
     private async Task HandleCallToolAsync(JsonElement request, CancellationToken cancellationToken)
     {
         var requestId = request.TryGetProperty("id", out var idEl) ? (int?)idEl.GetInt32() : null;
-        
+
         try
         {
             if (!request.TryGetProperty("params", out var paramsEl) ||
@@ -497,7 +497,8 @@ public class ProxyServer : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         StopAsync().GetAwaiter().GetResult();
         _cts?.Dispose();

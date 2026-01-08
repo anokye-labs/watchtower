@@ -10,13 +10,13 @@ public enum VoiceMode
     /// No internet connection required.
     /// </summary>
     Offline,
-    
+
     /// <summary>
     /// Use only online models (Azure Speech Services).
     /// Requires internet connection and API keys.
     /// </summary>
     Online,
-    
+
     /// <summary>
     /// Prefer offline models, but fallback to online if offline fails or is unavailable.
     /// </summary>

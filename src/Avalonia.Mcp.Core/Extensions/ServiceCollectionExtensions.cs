@@ -22,8 +22,10 @@ public static class ServiceCollectionExtensions
         McpHandlerConfiguration configuration,
         bool registerStandardTools = true)
     {
-        if (services == null) throw new ArgumentNullException(nameof(services));
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+        if (configuration == null)
+            throw new ArgumentNullException(nameof(configuration));
 
         // Register configuration
         services.AddSingleton(configuration);

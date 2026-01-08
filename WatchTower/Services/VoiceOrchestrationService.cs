@@ -1,7 +1,7 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
@@ -70,9 +70,9 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
             _logger.LogInformation("Voice mode: {Mode}", _state.Mode);
 
             // Initialize recognition service
-            _logger.LogInformation("Initializing recognition service: {ServiceName}", 
+            _logger.LogInformation("Initializing recognition service: {ServiceName}",
                 _recognitionService.ServiceName);
-            
+
             if (!await _recognitionService.InitializeAsync())
             {
                 _logger.LogError("Failed to initialize recognition service");
@@ -80,9 +80,9 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
             }
 
             // Initialize TTS service
-            _logger.LogInformation("Initializing TTS service: {ServiceName}", 
+            _logger.LogInformation("Initializing TTS service: {ServiceName}",
                 _ttsService.ServiceName);
-            
+
             if (!await _ttsService.InitializeAsync())
             {
                 _logger.LogError("Failed to initialize TTS service");
@@ -91,10 +91,10 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
 
             _state.IsInitialized = true;
             _isInitialized = true;
-            
+
             RaiseStateChanged();
             _logger.LogInformation("Voice orchestration service initialized successfully");
-            
+
             return true;
         }
         catch (Exception ex)
@@ -113,13 +113,13 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
         }
 
         _logger.LogInformation("Starting full-duplex voice mode");
-        
+
         // Start listening
         await StartListeningAsync();
-        
+
         _state.IsFullDuplex = true;
         RaiseStateChanged();
-        
+
         _logger.LogInformation("Full-duplex voice mode started");
     }
 
@@ -131,14 +131,14 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
         }
 
         _logger.LogInformation("Stopping full-duplex voice mode");
-        
+
         // Stop all operations
         await StopListeningAsync();
         await StopSpeakingAsync();
-        
+
         _state.IsFullDuplex = false;
         RaiseStateChanged();
-        
+
         _logger.LogInformation("Full-duplex voice mode stopped");
     }
 
@@ -157,12 +157,12 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
         }
 
         _logger.LogInformation("Starting voice recognition");
-        
+
         await _recognitionService.StartListeningAsync();
-        
+
         _state.IsListening = true;
         RaiseStateChanged();
-        
+
         _logger.LogInformation("Voice recognition started");
     }
 
@@ -174,14 +174,14 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
         }
 
         _logger.LogInformation("Stopping voice recognition");
-        
+
         await _recognitionService.StopListeningAsync();
-        
+
         _state.IsListening = false;
         _state.VoiceActivityDetected = false;
         _state.InputLevel = 0;
         RaiseStateChanged();
-        
+
         _logger.LogInformation("Voice recognition stopped");
     }
 
@@ -254,7 +254,7 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
     {
         _state.IsSpeaking = true;
         RaiseStateChanged();
-        
+
         // Forward event to subscribers
         Speaking?.Invoke(this, e);
     }
@@ -271,7 +271,7 @@ public class VoiceOrchestrationService : IVoiceOrchestrationService
         _state.IsSpeaking = false;
         _state.OutputLevel = 0;
         RaiseStateChanged();
-        
+
         _logger.LogError("Speech synthesis error: {Error}", e.ErrorMessage);
     }
 

@@ -1,5 +1,5 @@
-using Xunit;
 using WatchTower.Services;
+using Xunit;
 
 namespace WatchTower.Tests.Services;
 

@@ -1,7 +1,7 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using WatchTower.Models;
 
 namespace WatchTower.Services;
@@ -50,7 +50,7 @@ public class UserPreferencesService : IUserPreferencesService
             // Create a copy to avoid mutating the caller's object
             var json = JsonSerializer.Serialize(preferences, JsonOptions);
             var preferencesCopy = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
-            
+
             if (preferencesCopy != null)
             {
                 // Preserve FirstRunDate - it should not be overwritten once set
@@ -58,16 +58,16 @@ public class UserPreferencesService : IUserPreferencesService
                 {
                     preferencesCopy.FirstRunDate = _preferences.FirstRunDate;
                 }
-                
+
                 _preferences = preferencesCopy;
                 PersistPreferences();
-                
+
                 // Create defensive copy for event notification
                 preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(
                     JsonSerializer.Serialize(_preferences, JsonOptions), JsonOptions);
             }
         }
-        
+
         if (preferencesToNotify != null)
         {
             PreferencesChanged?.Invoke(this, preferencesToNotify);
@@ -141,7 +141,7 @@ public class UserPreferencesService : IUserPreferencesService
 
             _preferences.HasSeenWelcomeScreen = hasSeenWelcomeScreen;
             PersistPreferences();
-            
+
             // Create defensive copy for event notification outside the lock
             var json = JsonSerializer.Serialize(_preferences, JsonOptions);
             preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);
@@ -171,7 +171,7 @@ public class UserPreferencesService : IUserPreferencesService
 
             _preferences.ShowWelcomeOnStartup = showWelcomeOnStartup;
             PersistPreferences();
-            
+
             // Create defensive copy for event notification outside the lock
             var json = JsonSerializer.Serialize(_preferences, JsonOptions);
             preferencesToNotify = JsonSerializer.Deserialize<UserPreferences>(json, JsonOptions);

@@ -1,11 +1,11 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using PiperSharp;
 using PiperSharp.Models;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace WatchTower.Services;
 
@@ -83,10 +83,10 @@ public class PiperTextToSpeechService : ITextToSpeechService
 
             // Initialize Piper model and provider
             _logger.LogInformation("Loading Piper model: {Voice}", voiceName);
-            
+
             // Try to load the model from the model path
             _model = await VoiceModel.LoadModel(onnxPath);
-            
+
             _piperProvider = new PiperProvider(new PiperConfiguration
             {
                 Model = _model,
@@ -195,7 +195,7 @@ public class PiperTextToSpeechService : ITextToSpeechService
     private async Task PlayAudioAsync(byte[] audioData)
     {
         WaveOutEvent? waveOut = null;
-        
+
         try
         {
             // Piper outputs raw PCM audio at 22050 Hz, 16-bit, mono
@@ -205,7 +205,7 @@ public class PiperTextToSpeechService : ITextToSpeechService
             // Create wave output for playback
             waveOut = new WaveOutEvent();
             _waveOut = waveOut; // Store reference for StopAsync to access
-            
+
             waveOut.Init(rawSource);
 
             // Set up completion handler

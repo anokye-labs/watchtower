@@ -1,10 +1,10 @@
-using Xunit;
+using AdaptiveCards;
 using Moq;
-using WatchTower.ViewModels;
+using WatchTower.Models;
 using WatchTower.Services;
 using WatchTower.Tests.TestHelpers;
-using WatchTower.Models;
-using AdaptiveCards;
+using WatchTower.ViewModels;
+using Xunit;
 
 namespace WatchTower.Tests.ViewModels;
 

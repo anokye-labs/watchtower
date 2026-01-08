@@ -21,20 +21,20 @@ public partial class MainWindow : UserControl
     private Border? _eventLogPanel;
     private TranslateTransform? _eventLogTransform;
     private MainWindowViewModel? _previousViewModel;
-    
+
     // Reusable transitions for better performance
     private Transitions? _overlayTransitions;
 
     public MainWindow()
     {
         InitializeComponent();
-        
+
         // Subscribe to DataContext changes to wire up property changed events
         DataContextChanged += OnDataContextChanged;
-        
+
         // Subscribe to keyboard events for overlay shortcuts
         KeyDown += OnKeyDown;
-        
+
         // Cleanup subscriptions when the control is unloaded
         Unloaded += OnUnloaded;
     }
@@ -76,7 +76,7 @@ public partial class MainWindow : UserControl
         _overlayTransform = _overlayPanel?.RenderTransform as TranslateTransform;
         _eventLogPanel = this.FindControl<Border>("EventLogPanel");
         _eventLogTransform = _eventLogPanel?.RenderTransform as TranslateTransform;
-        
+
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -99,10 +99,10 @@ public partial class MainWindow : UserControl
             if (_overlayPanel != null && _overlayTransform != null)
             {
                 // Calculate slide distance based on actual panel height or window height
-                var slideDistance = _overlayPanel.Bounds.Height > 0 
-                    ? _overlayPanel.Bounds.Height 
+                var slideDistance = _overlayPanel.Bounds.Height > 0
+                    ? _overlayPanel.Bounds.Height
                     : Math.Min(400, Bounds.Height * 0.6); // Fallback to max 400px or 60% of window height
-                
+
                 // Initialize transitions once if not already created
                 if (_overlayTransitions == null)
                 {
@@ -117,20 +117,20 @@ public partial class MainWindow : UserControl
                     };
                     _overlayPanel.Transitions = _overlayTransitions;
                 }
-                
+
                 if (vm.IsInputOverlayVisible)
                 {
                     // Start off-screen at the bottom
                     _overlayTransform.Y = slideDistance;
-                    
+
                     // Update easing for slide up
                     if (_overlayTransitions.Count > 0 && _overlayTransitions[0] is DoubleTransition transition)
                     {
                         transition.Easing = new CubicEaseOut();
                     }
-                    
+
                     _overlayTransform.Y = 0.0;
-                    
+
                     // Auto-focus the TextBox when rich text mode is shown
                     if (vm.IsRichTextMode)
                     {
@@ -145,7 +145,7 @@ public partial class MainWindow : UserControl
                     {
                         transition.Easing = new CubicEaseIn();
                     }
-                    
+
                     _overlayTransform.Y = slideDistance;
                 }
             }
@@ -165,7 +165,7 @@ public partial class MainWindow : UserControl
             {
                 // Use actual panel width (half window width) for slide distance
                 var slideDistance = _eventLogPanel.Bounds.Width > 0 ? _eventLogPanel.Bounds.Width : Bounds.Width / 2;
-                
+
                 // Ensure we have a reusable DoubleTransition for the X translate
                 if (_eventLogPanel.Transitions == null)
                 {
@@ -197,7 +197,7 @@ public partial class MainWindow : UserControl
                     };
                     transitions.Add(slideTransition);
                 }
-                
+
                 if (vm.IsEventLogVisible)
                 {
                     // Start off-screen to the left
