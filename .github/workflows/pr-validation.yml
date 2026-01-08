@@ -1,13 +1,22 @@
-name: PR Validation
+name: PR Build and Test Validation
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [main]
-  workflow_dispatch:  # Manual trigger for testing
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      coverage_threshold:
+        description: 'Minimum coverage percentage for Services/ViewModels'
+        required: false
+        type: number
+        default: 80
 
 permissions:
-  contents: read  # Checkout code only
+  contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
   build-and-test:
@@ -31,19 +40,32 @@ jobs:
       - name: Build solution
         run: dotnet build WatchTower.slnx --no-restore -c Release
       
-      - name: Run tests
-        run: dotnet test WatchTower.slnx --no-build -c Release --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
+      - name: Run tests with coverage
+        run: >
+          dotnet test WatchTower.slnx 
+          --no-build 
+          -c Release 
+          --collect:"XPlat Code Coverage" 
+          --results-directory ./coverage 
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
       
       - name: Publish Windows build
         run: dotnet publish WatchTower/WatchTower.csproj --no-build -c Release -r win-x64 --self-contained true -o publish/win-x64
       
-      - name: Upload test results and coverage
-        if: always()  # Upload even if tests fail
+      - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-windows
-          path: TestResults/**/*
-          retention-days: 7
+          name: coverage-results
+          path: coverage/**/coverage.cobertura.xml
+          retention-days: 30
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: coverage/**/*.trx
+          retention-days: 30
       
       - name: Upload Windows build artifact
         uses: actions/upload-artifact@v4
@@ -51,3 +73,296 @@ jobs:
           name: watchtower-win-x64-pr${{ github.event.pull_request.number || github.run_number }}
           path: publish/win-x64/*
           retention-days: 7
+
+  coverage-report:
+    name: Generate Coverage Report
+    needs: build-and-test
+    runs-on: windows-latest
+    if: always() && needs.build-and-test.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download coverage results
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-results
+          path: coverage
+      
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      
+      - name: Generate HTML coverage report
+        run: |
+          reportgenerator `
+            -reports:coverage/**/coverage.cobertura.xml `
+            -targetdir:coverage-report `
+            -reporttypes:"Html;Cobertura" `
+            -classfilters:"+WatchTower.Services.*;+WatchTower.ViewModels.*"
+      
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: coverage-report
+          retention-days: 30
+      
+      - name: Check if Services/ViewModels files changed
+        id: check-files
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            if (!context.payload.pull_request) {
+              console.log('Not a pull request, checking coverage');
+              return 'true';
+            }
+            
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            
+            const relevantFiles = files.filter(file => {
+              const normalizedPath = file.filename.replace(/\\/g, '/');
+              return normalizedPath.includes('WatchTower/Services/') || 
+                     normalizedPath.includes('WatchTower/ViewModels/');
+            });
+            
+            console.log(`Found ${relevantFiles.length} Services/ViewModels files changed`);
+            return relevantFiles.length > 0 ? 'true' : 'false';
+      
+      - name: Parse coverage and check threshold
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Configuration
+            const threshold = ${{ inputs.coverage_threshold || 80 }};
+            
+            // Find coverage file
+            const coverageDir = 'coverage';
+            function findCoverageFile(dir) {
+              try {
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                  const filePath = path.join(dir, file);
+                  const stat = fs.statSync(filePath);
+                  if (stat.isDirectory()) {
+                    const result = findCoverageFile(filePath);
+                    if (result) return result;
+                  } else if (file === 'coverage.cobertura.xml') {
+                    return filePath;
+                  }
+                }
+              } catch (e) {
+                console.log(`Error reading directory ${dir}: ${e.message}`);
+              }
+              return null;
+            }
+            
+            const coverageFile = findCoverageFile(coverageDir);
+            if (!coverageFile) {
+              core.setFailed('Coverage file not found');
+              return;
+            }
+            
+            console.log(`Reading coverage from: ${coverageFile}`);
+            const coverageXml = fs.readFileSync(coverageFile, 'utf8');
+            
+            // Validate XML structure
+            if (!coverageXml.includes('<coverage') || !coverageXml.includes('</coverage>')) {
+              core.setFailed('Invalid coverage XML format');
+              return;
+            }
+            
+            // Simple regex-based XML parsing for coverage
+            // Note: While not ideal, regex parsing is used here to avoid additional dependencies
+            // in GitHub Actions. The Cobertura XML format is stable and predictable.
+            const lineRegex = /<line number="\d+" hits="(\d+)"/g;
+            
+            let servicesLines = 0, servicesCovered = 0;
+            let viewModelsLines = 0, viewModelsCovered = 0;
+            let totalLines = 0, totalCovered = 0;
+            
+            // Split into class sections
+            const classSections = coverageXml.split('<class name=').slice(1);
+            
+            if (classSections.length === 0) {
+              console.warn('No classes found in coverage report');
+            }
+            
+            for (const section of classSections) {
+              const classMatch = section.match(/^"([^"]*)" filename="([^"]*)" line-rate="([^"]*)"/);
+              if (!classMatch) {
+                console.warn('Could not parse class section');
+                continue;
+              }
+              
+              const className = classMatch[1];
+              const filename = classMatch[2];
+              const lineRate = parseFloat(classMatch[3]);
+              
+              // Validate line rate
+              if (isNaN(lineRate) || lineRate < 0 || lineRate > 1) {
+                console.warn(`Invalid line rate for ${className}: ${lineRate}`);
+                continue;
+              }
+              
+              // Extract line hits from this class section
+              const classEnd = section.indexOf('</class>');
+              if (classEnd === -1) {
+                console.warn(`Could not find end of class section for ${className}`);
+                continue;
+              }
+              
+              const classContent = section.substring(0, classEnd);
+              const lineMatches = Array.from(classContent.matchAll(lineRegex));
+              const validLines = lineMatches.length;
+              const coveredLines = lineMatches.filter(m => {
+                const hits = parseInt(m[1]);
+                return !isNaN(hits) && hits > 0;
+              }).length;
+              
+              totalLines += validLines;
+              totalCovered += coveredLines;
+              
+              // Normalize path separators for consistent matching
+              const normalizedFilename = filename.replace(/\\/g, '/');
+              if (normalizedFilename.includes('/Services/')) {
+                servicesLines += validLines;
+                servicesCovered += coveredLines;
+              } else if (normalizedFilename.includes('/ViewModels/')) {
+                viewModelsLines += validLines;
+                viewModelsCovered += coveredLines;
+              }
+            }
+            
+            // Calculate percentages
+            const servicesPercent = servicesLines > 0 ? (servicesCovered / servicesLines * 100).toFixed(2) : '0.00';
+            const viewModelsPercent = viewModelsLines > 0 ? (viewModelsCovered / viewModelsLines * 100).toFixed(2) : '0.00';
+            const totalPercent = totalLines > 0 ? (totalCovered / totalLines * 100).toFixed(2) : '0.00';
+            const combinedPercent = (servicesLines + viewModelsLines) > 0 
+              ? ((servicesCovered + viewModelsCovered) / (servicesLines + viewModelsLines) * 100).toFixed(2) 
+              : '0.00';
+            
+            console.log(`Services: ${servicesCovered}/${servicesLines} (${servicesPercent}%)`);
+            console.log(`ViewModels: ${viewModelsCovered}/${viewModelsLines} (${viewModelsPercent}%)`);
+            console.log(`Combined: ${servicesCovered + viewModelsCovered}/${servicesLines + viewModelsLines} (${combinedPercent}%)`);
+            
+            // Check if Services/ViewModels files changed
+            const filesChanged = '${{ steps.check-files.outputs.result }}' === 'true';
+            const shouldEnforceThreshold = filesChanged || !context.payload.pull_request;
+            
+            // Create summary
+            const thresholdNote = !shouldEnforceThreshold 
+              ? '\n\n> ℹ️ **Note**: No Services or ViewModels files were modified in this PR, so the coverage threshold check is informational only.'
+              : '';
+            
+            const statusMessage = parseFloat(combinedPercent) >= threshold 
+              ? `Great job! The Services and ViewModels coverage meets the ${threshold}% threshold.` 
+              : shouldEnforceThreshold 
+                ? `⚠️ Coverage is below the ${threshold}% threshold. Please add tests to improve coverage for Services and ViewModels.`
+                : `Coverage is below the ${threshold}% threshold, but since no Services/ViewModels files were modified, this is informational only.`;
+            
+            const summary = [
+              '## Code Coverage Report',
+              '',
+              '### Coverage by Category',
+              '',
+              '| Category | Coverage | Lines Covered | Total Lines |',
+              '|----------|----------|---------------|-------------|',
+              `| **Services** | ${servicesPercent}% | ${servicesCovered} | ${servicesLines} |`,
+              `| **ViewModels** | ${viewModelsPercent}% | ${viewModelsCovered} | ${viewModelsLines} |`,
+              `| **Combined Services/ViewModels** | **${combinedPercent}%** | ${servicesCovered + viewModelsCovered} | ${servicesLines + viewModelsLines} |`,
+              `| Overall Project | ${totalPercent}% | ${totalCovered} | ${totalLines} |`,
+              '',
+              '### Threshold Status',
+              '',
+              `- **Required Coverage**: ${threshold}%`,
+              `- **Current Coverage**: ${combinedPercent}%`,
+              `- **Status**: ${parseFloat(combinedPercent) >= threshold ? '✅ PASSED' : shouldEnforceThreshold ? '❌ FAILED' : 'ℹ️ INFORMATIONAL'}`,
+              '',
+              statusMessage,
+              thresholdNote,
+              '',
+              '---',
+              `📊 [View detailed HTML coverage report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) in the workflow artifacts.`
+            ].join('\n');
+            
+            // Post comment on PR
+            if (context.payload.pull_request) {
+              // Find existing coverage report comment
+              const commentIdentifier = '<!-- coverage-report-comment -->';
+              const commentBody = `${commentIdentifier}\n${summary}`;
+              
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body && comment.body.includes(commentIdentifier)
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: commentBody
+                });
+              }
+            }
+            
+            // Output summary
+            core.summary.addRaw(summary);
+            await core.summary.write();
+            
+            // Check threshold and fail if needed (only if Services/ViewModels files changed)
+            const combinedValue = parseFloat(combinedPercent);
+            const noExecutableLines = servicesLines === 0 && viewModelsLines === 0;
+            
+            if (shouldEnforceThreshold) {
+              if (noExecutableLines) {
+                // Services/ViewModels files were modified but there are no executable lines
+                // in the coverage report for those directories. This likely indicates a
+                // configuration issue or that tests are not exercising those files.
+                core.setFailed(
+                  'Coverage data for Services/ViewModels is missing or reports 0 executable lines. ' +
+                  'Please verify that coverage collection is configured correctly and that tests are running against these files.'
+                );
+              } else if (Number.isNaN(combinedValue)) {
+                // Unable to parse coverage percentage; treat as a configuration error.
+                core.setFailed(
+                  'Unable to determine Services/ViewModels coverage percentage from the coverage report. ' +
+                  'Please verify that the coverage report was generated correctly.'
+                );
+              } else if (combinedValue < threshold) {
+                core.setFailed(`Coverage ${combinedPercent}% is below the required threshold of ${threshold}%`);
+              }
+            }
+            
+            // Output values for use in other steps
+            core.setOutput('services-coverage', servicesPercent);
+            core.setOutput('viewmodels-coverage', viewModelsPercent);
+            core.setOutput('combined-coverage', combinedPercent);
+            core.setOutput(
+              'threshold-met',
+              !noExecutableLines && !Number.isNaN(combinedValue) && combinedValue >= threshold
+            );
+            core.setOutput('threshold-enforced', shouldEnforceThreshold);
