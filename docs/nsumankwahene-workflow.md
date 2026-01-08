@@ -127,6 +127,61 @@ Backlog ──────► Ready ──────► In progress ───�
 
 ---
 
+## CI Integration & Automated Status Management
+
+The Nsumankwahene automation integrates with GitHub CI workflows to automatically manage issue and PR status based on check results.
+
+### Automatic Status Transitions
+
+When a PR with linked issues has CI checks:
+
+| CI Event | Automatic Actions |
+|----------|------------------|
+| **All checks pass** | • Removes `needs-fix` label from linked issues<br>• Removes consecutive failure tracking labels (`ci-fail:*`)<br>• Transitions linked issues to "In review" status<br>• Removes `ɔkyeame:dwuma` label |
+| **Any check fails (1st)** | • Adds `needs-fix` label to PR and linked issues<br>• Adds `ci-fail:1` label to track first failure<br>• Posts comment on PR with failure details |
+| **Checks fail (2nd consecutive)** | • Updates to `ci-fail:2` label<br>• **Transitions linked issues to "Blocked" status**<br>• Posts comment explaining status change<br>• Issue remains blocked until CI passes |
+| **Checks fail (3+ consecutive)** | • Updates to `ci-fail:3+` label<br>• Maintains "Blocked" status<br>• Tracks ongoing CI issues |
+
+### Consecutive Failure Tracking
+
+The system tracks consecutive CI failures using internal labels:
+
+- `ci-fail:1` - First CI failure (warning state)
+- `ci-fail:2` - Second consecutive failure (triggers "Blocked" status)
+- `ci-fail:3+` - Three or more consecutive failures
+
+These labels are automatically:
+- **Added** when CI fails
+- **Incremented** on each subsequent failure
+- **Removed** when CI passes
+
+### Integration Points
+
+The CI integration monitors `check_suite` events from GitHub Actions workflows:
+
+- Listens to: `check_suite` with `completed` status
+- Filters: Only processes check suites associated with pull requests
+- Scope: Applies to all GitHub Actions workflows (can be filtered to specific workflows like `pr-validation.yml`)
+
+### Edge Cases Handled
+
+| Scenario | Behavior |
+|----------|----------|
+| **Draft PR** | CI status tracked, but no status transition to "In review" until PR marked ready |
+| **PR without linked issues** | `needs-fix` label added to PR, but no project status changes |
+| **Manual workflow trigger** | Treated same as automatic trigger |
+| **Workflow skipped** | No action taken (only `completed` check suites processed) |
+
+### Example Flow
+
+1. Developer opens PR linking issue #123 with `Closes #123`
+2. CI runs and fails → `needs-fix` and `ci-fail:1` labels added
+3. Developer pushes fix, CI fails again → `ci-fail:2` added, issue #123 → "Blocked" status
+4. Developer pushes another fix, CI passes → all `ci-fail:*` and `needs-fix` labels removed, issue #123 → "In review"
+5. PR merged → issue #123 → "Done" and closed
+
+---
+
 ## Agent Decision Rules
 
 ### Work Selection
@@ -173,6 +228,15 @@ IF query "Adwuma Nhyehyɛe" (Work Queue) view:
 | `nnipa-gyinae-hia` | Requires human decision |
 | `stale` | No activity >5 days |
 | `needs-fix` | PR checks failed |
+
+### CI Status Tracking (Internal)
+| Label | Meaning |
+|-------|---------|
+| `ci-fail:1` | First consecutive CI failure |
+| `ci-fail:2` | Second consecutive CI failure (triggers Blocked status) |
+| `ci-fail:3+` | Three or more consecutive CI failures |
+
+**Note:** These labels are automatically managed by the CI integration and should not be manually added or removed.
 
 ### Requirement Signals
 | Label | Meaning |
