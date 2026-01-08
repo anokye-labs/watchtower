@@ -143,6 +143,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      # IMPORTANT: Each job in a multi-job workflow runs in a separate environment.
+      # Any job that uses .NET CLI tools (including global tools) must explicitly
+      # set up the .NET SDK to ensure the correct version is available.
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+      
       - name: Download coverage results
         uses: actions/download-artifact@v4
         with:
