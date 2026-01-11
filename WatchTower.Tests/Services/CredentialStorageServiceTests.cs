@@ -179,7 +179,7 @@ public class CredentialStorageServiceTests : IDisposable
     public async Task StoreToken_HandlesLongTokens()
     {
         // Arrange
-        var longToken = new string('X', 2048) + Guid.NewGuid().ToString();
+        var longToken = new string('X', 2048) + Guid.NewGuid();
 
         // Act
         await _service.StoreTokenAsync(TestKey, longToken);
