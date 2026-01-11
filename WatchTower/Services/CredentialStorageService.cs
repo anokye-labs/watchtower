@@ -55,6 +55,10 @@ public class CredentialStorageService : ICredentialStorageService
         {
             var targetName = FormatTargetName(key);
             
+            // Note: LocalMachine persistence is used per specification to ensure credentials
+            // survive system reboots. While "LocalMachine" may sound global, Windows Credential
+            // Manager still scopes these credentials to the current user account. The name refers
+            // to persistence behavior (survives logoff/reboot) not access scope.
             CredentialManager.WriteCredential(
                 applicationName: targetName,
                 userName: DefaultUserName,
