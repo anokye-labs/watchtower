@@ -33,7 +33,7 @@ WatchTower uses FAL.AI for AI-powered features. You must configure the FAL_KEY e
    FAL_KEY=your-fal-api-key-here
    ```
 
-2. **For GitHub Actions**: The FAL_KEY is configured as an encrypted environment secret in the repository settings.
+2. **For GitHub Actions**: The FAL_KEY is configured as a repository secret (or environment secret) in the repository settings.
 
 3. **Obtaining a FAL.AI Key**: Visit https://fal.ai to create an account and generate an API key.
 
@@ -98,7 +98,7 @@ Alternatively, follow steps 2-7 above to validate locally.
 
 ### Troubleshooting
 
-- **Missing .NET 10**: Ensure you've installed the preview version with `dotnet-quality: 'preview'`
+- **Missing .NET 10**: Ensure you've installed the latest .NET 10 preview SDK from https://dotnet.microsoft.com/download/dotnet/10.0
 - **FAL_KEY not found**: Verify `.env` file exists in project root and contains valid key
 - **Build failures**: Run `dotnet clean` then `dotnet restore` before building
 - **PowerShell version issues**: Update to PowerShell 7+ for best compatibility
