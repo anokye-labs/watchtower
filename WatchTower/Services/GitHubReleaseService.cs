@@ -96,6 +96,8 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
                 .Select(r =>
                 {
                     // Get the first asset (or primary asset)
+                    // TODO: Consider filtering by specific file extension or name pattern 
+                    // for more predictable asset selection (e.g., .exe, .zip, etc.)
                     var asset = r.Assets.FirstOrDefault();
                     return asset != null
                         ? new ReleaseInfo(
@@ -215,11 +217,12 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
 
     public async Task<Stream> DownloadAssetAsync(string downloadUrl, IProgress<double>? progress, CancellationToken ct = default)
     {
+        HttpResponseMessage? response = null;
         try
         {
             _logger.LogInformation("Downloading asset from {Url}", downloadUrl);
 
-            var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+            response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
@@ -252,6 +255,10 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
         {
             _logger.LogWarning(ex, "Error downloading asset from {Url}: {Message}", downloadUrl, ex.Message);
             throw;
+        }
+        finally
+        {
+            response?.Dispose();
         }
     }
 
