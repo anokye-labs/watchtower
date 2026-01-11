@@ -12,11 +12,16 @@ The PR validation workflow runs on every pull request to ensure code quality and
 
 ### Performance Optimizations
 
-The workflow implements several caching strategies to speed up builds and reduce runner minutes:
+The workflow implements a dual caching strategy to speed up builds and reduce runner minutes:
 
-1. **NuGet Package Caching**: Uses `actions/cache@v4` to cache the NuGet global packages folder (`~/.nuget/packages`). The cache key is based on the hash of all `.csproj` and `.slnx` files, ensuring the cache is invalidated when dependencies change.
+1. **NuGet Package Caching**: Uses `actions/cache@v4` to cache the NuGet global packages folder (`~/.nuget/packages`). The cache key is based on the hash of all `.csproj` and `.slnx` files, ensuring the cache is invalidated when dependencies change. This provides explicit control over cache keys and restore fallbacks.
 
-2. **setup-dotnet Built-in Caching**: Enables the `cache: true` parameter in `actions/setup-dotnet@v4` to cache NuGet packages based on `packages.lock.json` files. This provides an additional layer of caching specific to the .NET SDK tooling.
+2. **setup-dotnet Built-in Caching**: Enables the `cache: true` parameter in `actions/setup-dotnet@v4` to cache NuGet packages. The action automatically detects project files (`.csproj`, `.fsproj`, `.vbproj`) in the repository and uses them to generate cache keys. This provides an additional layer of caching optimized for .NET SDK tooling.
+
+**Why both?** The dual approach provides redundancy and complementary benefits:
+- Manual caching (`actions/cache@v4`) gives explicit control over cache paths and keys
+- setup-dotnet caching is optimized for .NET SDK operations and may cache additional SDK-related data
+- Having both ensures maximum cache hit rates across different scenarios
 
 These optimizations significantly reduce build times by:
 - Avoiding redundant package downloads on subsequent runs
@@ -161,18 +166,23 @@ Once all workflows are tested and stable, enable branch protection rules on `mai
 
 ### NuGet Package Caching
 
-All workflows use two complementary caching strategies:
+All workflows use a dual caching strategy for maximum effectiveness:
 
 1. **Manual Cache Step** (`actions/cache@v4`):
    - Caches `~/.nuget/packages` directory
    - Cache key: `${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}`
    - Restore key: `${{ runner.os }}-nuget-` (partial match fallback)
    - Invalidates when any project file changes
+   - Provides explicit control over cache behavior
 
 2. **setup-dotnet Built-in Caching**:
    - Enabled with `cache: true` parameter
-   - Uses `cache-dependency-path: '**/packages.lock.json'` for lock file-based caching
-   - Provides additional layer of caching specific to .NET tooling
+   - Automatically detects project files (`.csproj`, `.fsproj`, `.vbproj`) in the repository
+   - Generates cache keys based on detected project files
+   - Provides additional layer of caching optimized for .NET SDK operations
+   - May cache SDK-related data beyond just NuGet packages
+
+**Why Both?** The dual approach provides redundancy and complementary benefits. While there is some overlap, the manual cache gives explicit control and the setup-dotnet cache is optimized for SDK operations. Together they maximize cache hit rates and provide fallback options.
 
 ### Cache Performance
 
