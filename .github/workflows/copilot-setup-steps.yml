@@ -1,0 +1,114 @@
+name: Development Environment Setup
+
+# This workflow documents and validates the development environment setup for WatchTower.
+# It can be run manually to verify that all required tools and dependencies are properly configured.
+
+on:
+  workflow_dispatch:
+    inputs:
+      validate_only:
+        description: 'Only validate environment without building'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  setup-and-validate:
+    name: Setup Development Environment
+    runs-on: windows-latest
+    timeout-minutes: 20
+    
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      # Step 2: Setup .NET 10 SDK
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+          
+      # Step 3: Verify .NET installation
+      - name: Verify .NET installation
+        run: |
+          dotnet --version
+          dotnet --info
+          
+      # Step 4: Setup PowerShell (Already installed on windows-latest)
+      - name: Verify PowerShell installation
+        run: |
+          $PSVersionTable
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+        shell: pwsh
+        
+      # Step 5: Verify FAL_KEY environment variable
+      # Note: FAL_KEY must be configured as a repository or environment secret
+      # For local development, create a .env file in the project root with:
+      # FAL_KEY=your-fal-api-key
+      - name: Check FAL_KEY configuration
+        run: |
+          if ([string]::IsNullOrEmpty($env:FAL_KEY)) {
+            Write-Host "⚠️ FAL_KEY environment variable is not set"
+            Write-Host "For local development, create a .env file with your FAL.AI API key"
+            Write-Host "FAL_KEY is required for AI-powered features"
+          } else {
+            Write-Host "✅ FAL_KEY is configured"
+          }
+        shell: pwsh
+        env:
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+          
+      # Step 6: Restore NuGet dependencies
+      - name: Restore dependencies
+        run: dotnet restore WatchTower.slnx
+        
+      # Step 7: Build the solution (skip if validate_only is true)
+      - name: Build solution
+        if: ${{ !inputs.validate_only }}
+        run: dotnet build WatchTower.slnx --no-restore -c Debug
+        
+      # Step 8: Run tests (skip if validate_only is true)
+      - name: Run tests
+        if: ${{ !inputs.validate_only }}
+        run: dotnet test WatchTower.slnx --no-build -c Debug --verbosity normal
+        
+      # Step 9: Verify development build
+      - name: Verify development build
+        if: ${{ !inputs.validate_only }}
+        run: |
+          Write-Host "✅ Development environment is properly configured"
+          Write-Host "You can now run the application with:"
+          Write-Host "  dotnet run --project WatchTower/WatchTower.csproj"
+          Write-Host ""
+          Write-Host "Or use watch mode for hot reload:"
+          Write-Host "  dotnet watch run --project WatchTower/WatchTower.csproj --non-interactive"
+        shell: pwsh
+        
+      # Step 10: Display setup summary
+      - name: Setup summary
+        run: |
+          Write-Host "================================"
+          Write-Host "Development Environment Summary"
+          Write-Host "================================"
+          Write-Host ""
+          Write-Host "✅ .NET 10 SDK: $(dotnet --version)"
+          Write-Host "✅ PowerShell: $($PSVersionTable.PSVersion)"
+          Write-Host "✅ Dependencies: Restored"
+          if ('${{ inputs.validate_only }}' -eq 'false') {
+            Write-Host "✅ Build: Successful"
+            Write-Host "✅ Tests: Passed"
+          } else {
+            Write-Host "⏭️ Build: Skipped (validate only mode)"
+            Write-Host "⏭️ Tests: Skipped (validate only mode)"
+          }
+          Write-Host ""
+          Write-Host "📝 Next steps:"
+          Write-Host "  1. Ensure FAL_KEY is configured in your local .env file"
+          Write-Host "  2. Review AGENTS.md for coding guidelines"
+          Write-Host "  3. Run 'dotnet watch run --project WatchTower/WatchTower.csproj' to start development"
+        shell: pwsh
