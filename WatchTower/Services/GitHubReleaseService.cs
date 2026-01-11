@@ -15,7 +15,7 @@ namespace WatchTower.Services;
 /// <summary>
 /// Service implementation for accessing GitHub releases and pull request build artifacts.
 /// </summary>
-public class GitHubReleaseService : IGitHubReleaseService
+public class GitHubReleaseService : IGitHubReleaseService, IDisposable
 {
     private readonly ILogger<GitHubReleaseService> _logger;
     private readonly IConfiguration _configuration;
@@ -257,16 +257,29 @@ public class GitHubReleaseService : IGitHubReleaseService
 
     private void InvalidateCache()
     {
-        _cacheLock.Wait();
-        try
+        // Use a timeout to avoid potential deadlocks
+        if (_cacheLock.Wait(TimeSpan.FromSeconds(5)))
         {
-            _cachedReleases = null;
-            _cacheExpiration = null;
-            _logger.LogDebug("Release cache invalidated");
+            try
+            {
+                _cachedReleases = null;
+                _cacheExpiration = null;
+                _logger.LogDebug("Release cache invalidated");
+            }
+            finally
+            {
+                _cacheLock.Release();
+            }
         }
-        finally
+        else
         {
-            _cacheLock.Release();
+            _logger.LogWarning("Failed to acquire cache lock for invalidation within timeout");
         }
+    }
+
+    public void Dispose()
+    {
+        _httpClient?.Dispose();
+        _cacheLock?.Dispose();
     }
 }

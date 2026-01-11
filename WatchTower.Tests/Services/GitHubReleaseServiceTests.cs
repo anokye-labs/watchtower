@@ -22,13 +22,18 @@ public class GitHubReleaseServiceTests
         _loggerMock = new Mock<ILogger<GitHubReleaseService>>();
         _configurationMock = new Mock<IConfiguration>();
 
-        // Setup default configuration values
+        // Setup default configuration values using GetValue<string>() as used in production code
+        var mockOwnerSection = new Mock<IConfigurationSection>();
+        mockOwnerSection.Setup(s => s.Value).Returns("anokye-labs");
         _configurationMock
-            .Setup(c => c.GetSection("DevMenu:GitHubOwner").Value)
-            .Returns("anokye-labs");
+            .Setup(c => c.GetSection("DevMenu:GitHubOwner"))
+            .Returns(mockOwnerSection.Object);
+
+        var mockRepoSection = new Mock<IConfigurationSection>();
+        mockRepoSection.Setup(s => s.Value).Returns("watchtower");
         _configurationMock
-            .Setup(c => c.GetSection("DevMenu:GitHubRepo").Value)
-            .Returns("watchtower");
+            .Setup(c => c.GetSection("DevMenu:GitHubRepo"))
+            .Returns(mockRepoSection.Object);
     }
 
     [Fact]
