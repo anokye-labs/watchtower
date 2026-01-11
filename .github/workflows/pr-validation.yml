@@ -42,6 +42,7 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
       
       - name: Restore dependencies
         run: dotnet restore WatchTower.slnx

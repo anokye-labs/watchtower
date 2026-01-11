@@ -16,19 +16,21 @@ The workflow implements a dual caching strategy to speed up builds and reduce ru
 
 1. **NuGet Package Caching**: Uses `actions/cache@v4` to cache the NuGet global packages folder (`~/.nuget/packages`). The cache key is based on the hash of all `.csproj` and `.slnx` files, ensuring the cache is invalidated when dependencies change. This provides explicit control over cache keys and restore fallbacks.
 
-2. **setup-dotnet Built-in Caching**: Enables the `cache: true` parameter in `actions/setup-dotnet@v4` to cache NuGet packages. The action automatically detects project files (`.csproj`, `.fsproj`, `.vbproj`) in the repository and uses them to generate cache keys. This provides an additional layer of caching optimized for .NET SDK tooling.
+2. **setup-dotnet Built-in Caching**: Enables the `cache: true` parameter in `actions/setup-dotnet@v4` to cache NuGet packages based on `packages.lock.json` files. These lock files provide deterministic dependency resolution and are generated using `dotnet restore --use-lock-file`. This provides an additional layer of caching optimized for .NET SDK tooling with precise dependency tracking.
 
 **Why both?** The dual approach provides redundancy and complementary benefits:
 - Manual caching (`actions/cache@v4`) gives explicit control over cache paths and keys
-- setup-dotnet caching is optimized for .NET SDK operations and may cache additional SDK-related data
+- setup-dotnet caching with lock files provides deterministic caching and is optimized for .NET SDK operations
+- Lock files ensure consistent dependency versions across builds
 - Having both ensures maximum cache hit rates across different scenarios
 
 These optimizations significantly reduce build times by:
 - Avoiding redundant package downloads on subsequent runs
 - Reusing cached packages when dependencies haven't changed
 - Falling back to partial cache matches when exact matches aren't found
+- Ensuring deterministic builds with lock file-based dependency resolution
 
-**Cache Invalidation**: The cache is automatically invalidated when project files (`.csproj`, `.slnx`) change, ensuring fresh packages are downloaded when dependencies are updated.
+**Cache Invalidation**: The cache is automatically invalidated when project files (`.csproj`, `.slnx`) or lock files (`packages.lock.json`) change, ensuring fresh packages are downloaded when dependencies are updated.
 
 ### Triggers
 
@@ -177,12 +179,12 @@ All workflows use a dual caching strategy for maximum effectiveness:
 
 2. **setup-dotnet Built-in Caching**:
    - Enabled with `cache: true` parameter
-   - Automatically detects project files (`.csproj`, `.fsproj`, `.vbproj`) in the repository
-   - Generates cache keys based on detected project files
-   - Provides additional layer of caching optimized for .NET SDK operations
-   - May cache SDK-related data beyond just NuGet packages
+   - Uses `cache-dependency-path: '**/packages.lock.json'` for lock file-based caching
+   - Lock files generated with `dotnet restore --use-lock-file` for deterministic dependency resolution
+   - Provides precise dependency tracking and ensures consistent package versions
+   - Optimized for .NET SDK operations and may cache additional SDK-related data
 
-**Why Both?** The dual approach provides redundancy and complementary benefits. While there is some overlap, the manual cache gives explicit control and the setup-dotnet cache is optimized for SDK operations. Together they maximize cache hit rates and provide fallback options.
+**Why Both?** The dual approach provides redundancy and complementary benefits. While there is some overlap, the manual cache gives explicit control and the setup-dotnet cache with lock files provides deterministic dependency resolution. Together they maximize cache hit rates and ensure consistent builds across environments.
 
 ### Cache Performance
 
