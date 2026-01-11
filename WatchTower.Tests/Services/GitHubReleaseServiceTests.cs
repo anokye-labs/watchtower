@@ -22,18 +22,24 @@ public class GitHubReleaseServiceTests
         _loggerMock = new Mock<ILogger<GitHubReleaseService>>();
         _configurationMock = new Mock<IConfiguration>();
 
-        // Setup default configuration values using GetValue<string>() as used in production code
-        var mockOwnerSection = new Mock<IConfigurationSection>();
-        mockOwnerSection.Setup(s => s.Value).Returns("anokye-labs");
+        // Setup configuration sections for GetValue<string>() to work properly
+        // GetValue internally uses GetSection, so we need to mock both
+        var ownerSection = new Mock<IConfigurationSection>();
+        ownerSection.Setup(s => s.Value).Returns("anokye-labs");
+        ownerSection.Setup(s => s.Path).Returns("DevMenu:GitHubOwner");
+        ownerSection.Setup(s => s.Key).Returns("GitHubOwner");
+
+        var repoSection = new Mock<IConfigurationSection>();
+        repoSection.Setup(s => s.Value).Returns("watchtower");
+        repoSection.Setup(s => s.Path).Returns("DevMenu:GitHubRepo");
+        repoSection.Setup(s => s.Key).Returns("GitHubRepo");
+
         _configurationMock
             .Setup(c => c.GetSection("DevMenu:GitHubOwner"))
-            .Returns(mockOwnerSection.Object);
-
-        var mockRepoSection = new Mock<IConfigurationSection>();
-        mockRepoSection.Setup(s => s.Value).Returns("watchtower");
+            .Returns(ownerSection.Object);
         _configurationMock
             .Setup(c => c.GetSection("DevMenu:GitHubRepo"))
-            .Returns(mockRepoSection.Object);
+            .Returns(repoSection.Object);
     }
 
     [Fact]
