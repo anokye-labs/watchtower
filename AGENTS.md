@@ -6,6 +6,113 @@ This document provides guidelines for AI agents and developers working on the Wa
 
 NOTE: the FAL.AI Key is in the local .env file when creating scripts, create them to load it from there.
 
+## Development Environment Setup Steps
+
+This section outlines the required steps to set up a development environment for WatchTower. These steps are also documented in the [`.github/workflows/copilot-setup-steps.yml`](.github/workflows/copilot-setup-steps.yml) workflow, which can be run to validate your environment setup.
+
+### Prerequisites
+
+1. **Operating System**: Windows 10/11 (WatchTower is Windows-native)
+2. **.NET 10 SDK**: Install the latest .NET 10 preview SDK
+   - Download from: https://dotnet.microsoft.com/download/dotnet/10.0
+   - Verify installation: `dotnet --version`
+3. **PowerShell**: PowerShell 7+ recommended (comes with Windows but verify version)
+   - Verify installation: `$PSVersionTable` or `pwsh --version`
+   - Windows PowerShell 5.1+ is minimum requirement
+4. **Git**: For version control
+5. **IDE**: Visual Studio Code (recommended) or Visual Studio 2022+
+
+### Environment Configuration
+
+#### FAL.AI API Key Setup
+
+WatchTower uses FAL.AI for AI-powered features. You must configure the FAL_KEY environment variable:
+
+1. **Create a `.env` file** in the project root directory (ignored by git):
+   ```
+   FAL_KEY=your-fal-api-key-here
+   ```
+
+2. **For GitHub Actions**: The FAL_KEY is configured as an encrypted environment secret in the repository settings.
+
+3. **Obtaining a FAL.AI Key**: Visit https://fal.ai to create an account and generate an API key.
+
+### Setup Steps
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/anokye-labs/watchtower.git
+   cd watchtower
+   ```
+
+2. **Verify .NET installation**:
+   ```bash
+   dotnet --version
+   dotnet --info
+   ```
+
+3. **Verify PowerShell**:
+   ```powershell
+   $PSVersionTable
+   ```
+
+4. **Configure FAL_KEY**:
+   - Create `.env` file in project root with your FAL.AI API key
+   - The file should contain: `FAL_KEY=your-api-key`
+
+5. **Restore dependencies**:
+   ```bash
+   dotnet restore WatchTower.slnx
+   ```
+
+6. **Build the solution**:
+   ```bash
+   dotnet build WatchTower.slnx -c Debug
+   ```
+
+7. **Run tests**:
+   ```bash
+   dotnet test WatchTower.slnx -c Debug --verbosity normal
+   ```
+
+8. **Run the application**:
+   ```bash
+   dotnet run --project WatchTower/WatchTower.csproj
+   ```
+
+   Or use watch mode for hot reload during development:
+   ```bash
+   dotnet watch run --project WatchTower/WatchTower.csproj --non-interactive
+   ```
+
+### Validating Your Setup
+
+You can validate your development environment by running the setup workflow manually:
+
+1. Go to the repository's Actions tab on GitHub
+2. Select "Development Environment Setup" workflow
+3. Click "Run workflow"
+4. Choose "validate_only" option to skip build/test steps
+
+Alternatively, follow steps 2-7 above to validate locally.
+
+### Troubleshooting
+
+- **Missing .NET 10**: Ensure you've installed the preview version with `dotnet-quality: 'preview'`
+- **FAL_KEY not found**: Verify `.env` file exists in project root and contains valid key
+- **Build failures**: Run `dotnet clean` then `dotnet restore` before building
+- **PowerShell version issues**: Update to PowerShell 7+ for best compatibility
+
+### Additional Tools (Optional)
+
+- **Visual Studio Code Extensions**:
+  - C# Dev Kit
+  - .NET Runtime Install Tool
+  - Avalonia for VS Code
+- **Debugging Tools**: 
+  - VS Code debugging configured in `.vscode/launch.json`
+  - Press F5 to attach debugger
+
 ## Project Overview
 
 WatchTower is an Avalonia UI-based application with strict MVVM architecture and dependency injection on .NET 10. It is Windows-native, targeting win-x64 with self-contained single-file publish. The project uses only open source dependencies (MIT/Apache 2.0).
