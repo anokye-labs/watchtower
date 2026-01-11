@@ -31,6 +31,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="PiperSharp" Version="1.0.6" />
     <PackageReference Include="Silk.NET.SDL" Version="2.22.0" />
     <PackageReference Include="Vosk" Version="0.3.38" />
