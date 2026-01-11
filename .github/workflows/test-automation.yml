@@ -52,7 +52,7 @@ jobs:
       
       - name: Generate coverage report
         run: |
-          dotnet tool install -g dotnet-reportgenerator-globaltool
+          dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.1
           reportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./coveragereport -reporttypes:Html
       
       - name: Upload coverage report as artifact

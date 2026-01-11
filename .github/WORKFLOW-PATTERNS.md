@@ -34,6 +34,32 @@ GitHub Actions jobs are independent by design:
 - Before running tools that depend on .NET runtime
 - In **every job** that uses .NET, not just the first one
 
+### Security: Pin Global Tool Versions
+
+**IMPORTANT**: Always pin global tools to specific versions to reduce supply-chain risk.
+
+```yaml
+# ✅ Good - pinned to a specific version
+- name: Install ReportGenerator
+  run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.1
+
+# ❌ Bad - uses latest version (unpredictable and vulnerable to supply-chain attacks)
+- name: Install ReportGenerator
+  run: dotnet tool install -g dotnet-reportgenerator-globaltool
+```
+
+**Why this matters:**
+- Global tools are fetched from external registries (NuGet.org)
+- Tools execute with access to repository contents and potentially secrets
+- Without version pinning, a compromised package update could gain arbitrary code execution
+- Pinning ensures reproducible builds and gives time to vet updates before adoption
+
+**Best practices:**
+1. Always specify `--version X.Y.Z` when installing global tools
+2. Periodically review and update pinned versions as part of dependency maintenance
+3. Test tool updates in non-production workflows before updating production workflows
+4. Document why specific versions are chosen (e.g., stability, security patches)
+
 ### Performance Considerations
 
 The `setup-dotnet` action is optimized with caching:
@@ -78,7 +104,7 @@ jobs:
           dotnet-quality: 'preview'
       
       - name: Install ReportGenerator
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.1
       
       - name: Generate Report
         run: reportgenerator ...
@@ -154,6 +180,7 @@ When creating or modifying workflows:
 - [ ] Are all SDK version specifications consistent across jobs?
 - [ ] Is the dotnet-quality specified if using preview/rc versions?
 - [ ] Are global tool installations placed after SDK setup?
+- [ ] **Are all global tools pinned to specific versions (`--version X.Y.Z`)?**
 - [ ] Is the job structure (combined vs. separated) appropriate?
 - [ ] Are timeout values reasonable for the job's complexity?
 - [ ] Are artifacts properly uploaded/downloaded between dependent jobs?

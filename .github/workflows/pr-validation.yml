@@ -159,7 +159,7 @@ jobs:
           path: coverage
       
       - name: Install ReportGenerator
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.5.1
       
       - name: Generate HTML coverage report
         run: |
