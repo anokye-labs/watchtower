@@ -130,6 +130,7 @@ public class StartupOrchestrator : IStartupOrchestrator
             // Register ViewModels
             services.AddTransient<ViewModels.MainWindowViewModel>();
             services.AddTransient<ViewModels.VoiceControlViewModel>();
+            services.AddTransient<ViewModels.DevBuildMenuViewModel>();
             logger.Info("ViewModels registered");
 
             // Build service provider
