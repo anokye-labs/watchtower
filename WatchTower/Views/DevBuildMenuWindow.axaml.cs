@@ -86,7 +86,7 @@ public partial class DevBuildMenuWindow : Window
                 {
                     _tokenInputBox.Focus();
                     _tokenInputBox.SelectAll();
-                }, Avalonia.Threading.DispatcherPriority.Background);
+                }, DispatcherPriority.Background);
             }
         }
     }
@@ -98,11 +98,14 @@ public partial class DevBuildMenuWindow : Window
 
     private Task<string?> OnRequestTokenInput(string prompt)
     {
-        // This method is called by the ViewModel when it needs token input.
-        // In our implementation, we use an inline TextBox that appears in the UI,
-        // so we don't need to show a separate dialog here.
-        // The ViewModel manages the ShowTokenInput property and TokenInput binding.
-        // This handler exists for future extensibility or alternative input methods.
+        // This method is a placeholder for future extensibility.
+        // In this implementation, we use an inline TextBox (ShowTokenInput property)
+        // that appears directly in the window UI, eliminating the need for a separate dialog.
+        // The ViewModel manages token input through the TokenInput property and commands.
+        // 
+        // This event handler exists to support alternative input methods in the future,
+        // such as a separate modal dialog or integration with a credential manager.
+        // For now, it returns null as the inline TextBox handles all token input.
         return Task.FromResult<string?>(null);
     }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using WatchTower.Models;
@@ -12,9 +11,8 @@ namespace WatchTower.ViewModels;
 /// This is a minimal stub to allow the View to compile.
 /// The full implementation is tracked in issue #218.
 /// </summary>
-public class DevBuildMenuViewModel : INotifyPropertyChanged
+public class DevBuildMenuViewModel : ViewModelBase
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
     
     /// <summary>
     /// Event raised when the ViewModel requests the window to close.
@@ -50,9 +48,4 @@ public class DevBuildMenuViewModel : INotifyPropertyChanged
     public ICommand? RefreshCommand { get; }
     public ICommand? CancelCommand { get; }
     public ICommand? LaunchBuildCommand { get; }
-
-    protected virtual void OnPropertyChanged(string propertyName)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
 }

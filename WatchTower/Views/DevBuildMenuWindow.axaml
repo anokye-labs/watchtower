@@ -12,6 +12,8 @@
         CanResize="False"
         ShowInTaskbar="False"
         Background="#EE0A0A0A">
+    <!-- Note: Colors are hard-coded to match existing windows (MainWindow, SplashWindow).
+         Future improvement: Extract to theme resources for easier theme changes. -->
     
     <Border Background="#EE1A1A1A"
             CornerRadius="8"
