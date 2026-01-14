@@ -216,11 +216,12 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     
     private void LaunchBuild()
     {
-        if (SelectedBuild == null) return;
+        // Capture the selected build reference before Task.Run to ensure thread safety
+        var build = SelectedBuild;
+        if (build == null) return;
         
         Task.Run(async () =>
         {
-            var build = SelectedBuild;
             _downloadCts = new CancellationTokenSource();
             
             try
