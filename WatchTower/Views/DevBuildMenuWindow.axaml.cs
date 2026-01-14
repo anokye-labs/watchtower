@@ -1,0 +1,165 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using System;
+using System.Threading.Tasks;
+using WatchTower.ViewModels;
+
+namespace WatchTower.Views;
+
+/// <summary>
+/// Modal dialog window for the Developer Build Menu.
+/// Displays available builds, handles authentication, and manages download/launch operations.
+/// This is the first modal dialog in the WatchTower codebase.
+/// </summary>
+public partial class DevBuildMenuWindow : Window
+{
+    private DevBuildMenuViewModel? _viewModel;
+    private TextBox? _tokenInputBox;
+
+    public DevBuildMenuWindow()
+    {
+        InitializeComponent();
+
+        // Subscribe to events
+        DataContextChanged += OnDataContextChanged;
+        KeyDown += OnKeyDown;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        // Get reference to token input box for focus management
+        _tokenInputBox = this.FindControl<TextBox>("TokenInputBox");
+    }
+
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        // Cleanup subscriptions to avoid memory leaks
+        DataContextChanged -= OnDataContextChanged;
+        KeyDown -= OnKeyDown;
+        Loaded -= OnLoaded;
+        Unloaded -= OnUnloaded;
+
+        // Detach from ViewModel
+        if (_viewModel != null)
+        {
+            _viewModel.RequestClose -= OnRequestClose;
+            _viewModel.RequestTokenInput -= OnRequestTokenInput;
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel = null;
+        }
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        // Unsubscribe from previous ViewModel
+        if (_viewModel != null)
+        {
+            _viewModel.RequestClose -= OnRequestClose;
+            _viewModel.RequestTokenInput -= OnRequestTokenInput;
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        // Subscribe to new ViewModel
+        if (DataContext is DevBuildMenuViewModel viewModel)
+        {
+            _viewModel = viewModel;
+            _viewModel.RequestClose += OnRequestClose;
+            _viewModel.RequestTokenInput += OnRequestTokenInput;
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Auto-focus token input box when it becomes visible
+        if (e.PropertyName == nameof(DevBuildMenuViewModel.ShowTokenInput))
+        {
+            if (_viewModel?.ShowTokenInput == true && _tokenInputBox != null)
+            {
+                // Small delay to ensure UI has updated before focusing
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _tokenInputBox.Focus();
+                    _tokenInputBox.SelectAll();
+                }, Avalonia.Threading.DispatcherPriority.Background);
+            }
+        }
+    }
+
+    private void OnRequestClose()
+    {
+        Close();
+    }
+
+    private Task<string?> OnRequestTokenInput(string prompt)
+    {
+        // This method is called by the ViewModel when it needs token input.
+        // In our implementation, we use an inline TextBox that appears in the UI,
+        // so we don't need to show a separate dialog here.
+        // The ViewModel manages the ShowTokenInput property and TokenInput binding.
+        // This handler exists for future extensibility or alternative input methods.
+        return Task.FromResult<string?>(null);
+    }
+
+    private void OnBuildDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        // Code-behind is used here for simplicity to handle the DoubleTapped event.
+        // When a build is double-clicked, trigger the launch command if available.
+        if (_viewModel?.LaunchBuildCommand?.CanExecute(null) == true)
+        {
+            _viewModel.LaunchBuildCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_viewModel == null)
+        {
+            return;
+        }
+
+        // Escape key closes the dialog
+        if (e.Key == Key.Escape)
+        {
+            // If token input is showing, cancel it first
+            if (_viewModel.ShowTokenInput)
+            {
+                _viewModel.CancelTokenInputCommand?.Execute(null);
+            }
+            else
+            {
+                _viewModel.CancelCommand?.Execute(null);
+            }
+            e.Handled = true;
+            return;
+        }
+
+        // Enter key launches selected build (if not in token input mode)
+        if (e.Key == Key.Enter && !_viewModel.ShowTokenInput)
+        {
+            if (_viewModel.LaunchBuildCommand?.CanExecute(null) == true)
+            {
+                _viewModel.LaunchBuildCommand.Execute(null);
+                e.Handled = true;
+            }
+            return;
+        }
+
+        // Enter key in token input submits the token
+        if (e.Key == Key.Enter && _viewModel.ShowTokenInput && e.Source == _tokenInputBox)
+        {
+            if (_viewModel.SubmitTokenCommand?.CanExecute(null) == true)
+            {
+                _viewModel.SubmitTokenCommand.Execute(null);
+                e.Handled = true;
+            }
+            return;
+        }
+    }
+}
