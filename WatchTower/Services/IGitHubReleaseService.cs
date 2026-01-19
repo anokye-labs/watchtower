@@ -10,7 +10,7 @@ namespace WatchTower.Services;
 /// <summary>
 /// Service interface for accessing GitHub releases and pull request build artifacts.
 /// </summary>
-public interface IGitHubReleaseService
+public interface IGitHubReleaseService : IDisposable
 {
     /// <summary>
     /// Gets a list of releases from the configured repository.

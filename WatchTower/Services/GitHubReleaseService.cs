@@ -26,6 +26,7 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
     private IReadOnlyList<ReleaseInfo>? _cachedReleases;
     private DateTime? _cacheExpiration;
+    private string? _authToken;
     private const int CacheDurationMinutes = 5;
 
     public bool IsAuthenticated { get; private set; }
@@ -54,12 +55,14 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
         if (string.IsNullOrWhiteSpace(token))
         {
             _client.Credentials = Credentials.Anonymous;
+            _authToken = null;
             IsAuthenticated = false;
             _logger.LogInformation("GitHub authentication cleared");
         }
         else
         {
             _client.Credentials = new Credentials(token);
+            _authToken = token;
             IsAuthenticated = true;
             _logger.LogInformation("GitHub authentication token set");
         }
@@ -176,7 +179,7 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
                         });
 
                     // Get artifacts from successful runs
-                    foreach (var run in workflowRuns.WorkflowRuns.Where(r => r.Status == "completed" && r.Conclusion == "success"))
+                    foreach (var run in workflowRuns.WorkflowRuns.Where(r => r.Status.StringValue == "completed" && r.Conclusion?.StringValue == "success"))
                     {
                         var artifacts = await _client.Actions.Artifacts.ListWorkflowArtifacts(_owner, _repo, run.Id);
 
@@ -218,15 +221,25 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
     public async Task<Stream> DownloadAssetAsync(string downloadUrl, IProgress<double>? progress, CancellationToken ct = default)
     {
         HttpResponseMessage? response = null;
+        MemoryStream? memoryStream = null;
         try
         {
             _logger.LogInformation("Downloading asset from {Url}", downloadUrl);
 
-            response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var request = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
+            
+            // Add authorization header if authenticated (required for GitHub artifact downloads)
+            if (IsAuthenticated && !string.IsNullOrEmpty(_authToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _authToken);
+                request.Headers.Add("Accept", "application/octet-stream");
+            }
+
+            response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            var memoryStream = new MemoryStream();
+            memoryStream = new MemoryStream();
             
             await using var contentStream = await response.Content.ReadAsStreamAsync(ct);
             
@@ -253,6 +266,7 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
         }
         catch (Exception ex)
         {
+            memoryStream?.Dispose();
             _logger.LogWarning(ex, "Error downloading asset from {Url}: {Message}", downloadUrl, ex.Message);
             throw;
         }
@@ -280,7 +294,11 @@ public class GitHubReleaseService : IGitHubReleaseService, IDisposable
         }
         else
         {
-            _logger.LogWarning("Failed to acquire cache lock for invalidation within timeout");
+            // Force cache invalidation even if we couldn't get the lock
+            // This is not thread-safe but ensures cache is cleared to prevent stale data
+            _cachedReleases = null;
+            _cacheExpiration = null;
+            _logger.LogWarning("Failed to acquire cache lock for invalidation within timeout - forced cache invalidation");
         }
     }
 
