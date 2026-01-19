@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  setup-and-validate:
+  copilot-setup-steps:
     name: Setup Development Environment
     runs-on: windows-latest
     timeout-minutes: 20
