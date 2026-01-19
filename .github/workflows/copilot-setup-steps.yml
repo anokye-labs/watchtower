@@ -1,30 +1,33 @@
-name: Development Environment Setup
+name: "Copilot Setup Steps"
 
-# This workflow documents and validates the development environment setup for WatchTower.
-# It can be run manually to verify that all required tools and dependencies are properly configured.
+# This workflow configures the development environment for GitHub Copilot coding agent.
+# It runs automatically when the file changes for validation, and before Copilot starts working.
+# See: https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
 
 on:
   workflow_dispatch:
-    inputs:
-      validate_only:
-        description: 'Only validate environment without building'
-        required: false
-        type: boolean
-        default: false
-
-permissions:
-  contents: read
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
 
 jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:
-    name: Setup Development Environment
-    runs-on: windows-latest
-    timeout-minutes: 20
-    
+    runs-on: ubuntu-latest
+    timeout-minutes: 59
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      contents: read
+
     steps:
       # Step 1: Checkout repository
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         
       # Step 2: Setup .NET 10 SDK
       - name: Setup .NET 10 SDK
@@ -39,27 +42,31 @@ jobs:
           dotnet --version
           dotnet --info
           
-      # Step 4: Setup PowerShell (Already installed on windows-latest)
-      - name: Verify PowerShell installation
+      # Step 4: Install PowerShell on Ubuntu
+      - name: Install PowerShell
         run: |
-          $PSVersionTable
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-        shell: pwsh
+          # Install PowerShell on Ubuntu
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          source /etc/os-release
+          wget -q https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          rm packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
         
       # Step 5: Verify FAL_KEY environment variable
-      # Note: FAL_KEY must be configured as a repository or environment secret
-      # For local development, create a .env file in the project root with:
-      # FAL_KEY=your-fal-api-key
+      # Note: FAL_KEY must be configured in the 'copilot' environment as a secret
+      # See: https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment#setting-environment-variables-in-copilots-environment
       - name: Check FAL_KEY configuration
         run: |
-          if ([string]::IsNullOrEmpty($env:FAL_KEY)) {
-            Write-Host "⚠️ FAL_KEY environment variable is not set"
-            Write-Host "For local development, create a .env file with your FAL.AI API key"
-            Write-Host "FAL_KEY is required for AI-powered features"
-          } else {
-            Write-Host "✅ FAL_KEY is configured"
-          }
-        shell: pwsh
+          if [ -z "$FAL_KEY" ]; then
+            echo "⚠️ FAL_KEY environment variable is not set"
+            echo "Configure FAL_KEY as a secret in the 'copilot' environment"
+            echo "FAL_KEY is required for AI-powered features"
+          else
+            echo "✅ FAL_KEY is configured"
+          fi
         env:
           FAL_KEY: ${{ secrets.FAL_KEY }}
           
@@ -67,48 +74,27 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore WatchTower.slnx
         
-      # Step 7: Build the solution (skip if validate_only is true)
+      # Step 7: Build the solution
       - name: Build solution
-        if: ${{ !inputs.validate_only }}
         run: dotnet build WatchTower.slnx --no-restore -c Debug
         
-      # Step 8: Run tests (skip if validate_only is true)
+      # Step 8: Run tests
       - name: Run tests
-        if: ${{ !inputs.validate_only }}
         run: dotnet test WatchTower.slnx --no-build -c Debug --verbosity normal
         
-      # Step 9: Verify development build
-      - name: Verify development build
-        if: ${{ !inputs.validate_only }}
-        run: |
-          Write-Host "✅ Development environment is properly configured"
-          Write-Host "You can now run the application with:"
-          Write-Host "  dotnet run --project WatchTower/WatchTower.csproj"
-          Write-Host ""
-          Write-Host "Or use watch mode for hot reload:"
-          Write-Host "  dotnet watch run --project WatchTower/WatchTower.csproj --non-interactive"
-        shell: pwsh
-        
-      # Step 10: Display setup summary
+      # Step 9: Display setup summary
       - name: Setup summary
         run: |
-          Write-Host "================================"
-          Write-Host "Development Environment Summary"
-          Write-Host "================================"
-          Write-Host ""
-          Write-Host "✅ .NET 10 SDK: $(dotnet --version)"
-          Write-Host "✅ PowerShell: $($PSVersionTable.PSVersion)"
-          Write-Host "✅ Dependencies: Restored"
-          if ('${{ inputs.validate_only }}' -eq 'false') {
-            Write-Host "✅ Build: Successful"
-            Write-Host "✅ Tests: Passed"
-          } else {
-            Write-Host "⏭️ Build: Skipped (validate only mode)"
-            Write-Host "⏭️ Tests: Skipped (validate only mode)"
-          }
-          Write-Host ""
-          Write-Host "📝 Next steps:"
-          Write-Host "  1. Ensure FAL_KEY is configured in your local .env file"
-          Write-Host "  2. Review AGENTS.md for coding guidelines"
-          Write-Host "  3. Run 'dotnet watch run --project WatchTower/WatchTower.csproj' to start development"
-        shell: pwsh
+          echo "================================"
+          echo "Development Environment Summary"
+          echo "================================"
+          echo ""
+          echo "✅ .NET 10 SDK: $(dotnet --version)"
+          echo "✅ PowerShell: $(pwsh --version)"
+          echo "✅ Dependencies: Restored"
+          echo "✅ Build: Successful"
+          echo "✅ Tests: Passed"
+          echo ""
+          echo "📝 Copilot coding agent environment is ready"
+          echo "   - WatchTower is a Windows-native Avalonia application"
+          echo "   - Build and test run on Linux; runtime is win-x64"
