@@ -125,7 +125,7 @@ jobs:
               try {
                 // Get the project item ID for this issue
                 const itemQuery = `
-                  query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!, $projectNumber: Int!) {
+                  query GetIssueProjectItem($owner: String!, $repo: String!, $issueNumber: Int!) {
                     repository(owner: $owner, name: $repo) {
                       issue(number: $issueNumber) {
                         id
@@ -145,8 +145,7 @@ jobs:
                 const itemData = await github.graphql(itemQuery, {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issueNumber: issueNumber,
-                  projectNumber: project.number
+                  issueNumber: issueNumber
                 });
                 
                 const projectItem = itemData.repository.issue.projectItems.nodes.find(
