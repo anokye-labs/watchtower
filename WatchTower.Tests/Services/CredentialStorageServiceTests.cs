@@ -180,8 +180,10 @@ public class CredentialStorageServiceTests : IDisposable
     {
         // Arrange
         // Windows Credential Manager has a 2560 byte limit (CRED_MAX_CREDENTIAL_BLOB_SIZE).
-        // Use a token size that is long but safely under the limit.
-        var longToken = new string('X', 2000) + Guid.NewGuid();
+        // The limit is in bytes, and Windows uses UTF-16 encoding (2 bytes per character).
+        // Maximum characters = 2560 / 2 = 1280 characters.
+        // Use 1200 chars + GUID (36 chars) = 1236 chars, safely under the 1280 limit.
+        var longToken = new string('X', 1200) + Guid.NewGuid();
 
         // Act
         await _service.StoreTokenAsync(TestKey, longToken);
