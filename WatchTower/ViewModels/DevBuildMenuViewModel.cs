@@ -35,6 +35,11 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     private double _downloadProgress;
     private string _downloadSpeed = string.Empty;
     private string _statusMessage = string.Empty;
+    private bool _showTokenInput;
+    private string _tokenInput = string.Empty;
+    private string? _authenticatedUser;
+    private string _cacheSize = "0 MB";
+    private bool _hasCachedBuilds;
     
     /// <summary>
     /// Collection of available builds.
@@ -123,19 +128,71 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
         private set => SetProperty(ref _statusMessage, value);
     }
     
+    /// <summary>
+    /// Whether the token input UI should be visible.
+    /// </summary>
+    public bool ShowTokenInput
+    {
+        get => _showTokenInput;
+        private set => SetProperty(ref _showTokenInput, value);
+    }
+    
+    /// <summary>
+    /// The token input value from the user.
+    /// </summary>
+    public string TokenInput
+    {
+        get => _tokenInput;
+        set => SetProperty(ref _tokenInput, value);
+    }
+    
+    /// <summary>
+    /// The authenticated user's name or identifier.
+    /// </summary>
+    public string? AuthenticatedUser
+    {
+        get => _authenticatedUser;
+        private set => SetProperty(ref _authenticatedUser, value);
+    }
+    
+    /// <summary>
+    /// Formatted cache size string.
+    /// </summary>
+    public string CacheSize
+    {
+        get => _cacheSize;
+        private set => SetProperty(ref _cacheSize, value);
+    }
+    
+    /// <summary>
+    /// Whether there are any cached builds.
+    /// </summary>
+    public bool HasCachedBuilds
+    {
+        get => _hasCachedBuilds;
+        private set => SetProperty(ref _hasCachedBuilds, value);
+    }
+    
+    /// <summary>
+    /// Whether a build can be launched (selected and not downloading).
+    /// </summary>
+    public bool CanLaunchBuild => SelectedBuild != null && !IsDownloading;
+    
     // Commands
     public RelayCommand AuthenticateCommand { get; }
     public RelayCommand LaunchBuildCommand { get; }
     public RelayCommand RefreshCommand { get; }
     public RelayCommand ClearCacheCommand { get; }
     public RelayCommand CancelCommand { get; }
+    public RelayCommand CancelTokenInputCommand { get; }
+    public RelayCommand SubmitTokenCommand { get; }
     
     // Events
     /// <summary>Request to close the menu window.</summary>
     public event Action? RequestClose;
     
     /// <summary>Request token input from the View layer.</summary>
-    public event Func<Task<string?>>? RequestTokenInput;
+    public event Func<string, Task<string?>>? RequestTokenInput;
     
     public DevBuildMenuViewModel(
         IGitHubReleaseService gitHubService,
@@ -154,6 +211,8 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
         RefreshCommand = new RelayCommand(Refresh, () => !IsLoading);
         ClearCacheCommand = new RelayCommand(ClearCache, () => !IsDownloading);
         CancelCommand = new RelayCommand(Cancel);
+        CancelTokenInputCommand = new RelayCommand(CancelTokenInput);
+        SubmitTokenCommand = new RelayCommand(SubmitToken, () => !string.IsNullOrWhiteSpace(TokenInput));
     }
     
     /// <summary>
@@ -175,44 +234,10 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     
     private void Authenticate()
     {
-        Task.Run(async () =>
-        {
-            try
-            {
-                // 1. Request token from View
-                var token = RequestTokenInput != null 
-                    ? await RequestTokenInput.Invoke() 
-                    : null;
-                
-                if (string.IsNullOrWhiteSpace(token)) return;
-                
-                // 2. Validate token against GitHub API
-                StatusMessage = "Validating token...";
-                var isValid = await _gitHubService.ValidateTokenAsync(token);
-                
-                if (!isValid)
-                {
-                    StatusMessage = "Invalid token. Please try again.";
-                    return;
-                }
-                
-                // 3. Store in credential storage
-                await _credentialService.StoreTokenAsync("github", token);
-                _gitHubService.SetAuthToken(token);
-                
-                // 4. Update state
-                IsAuthenticated = true;
-                StatusMessage = "Authenticated successfully!";
-                
-                // 5. Refresh to show PR builds
-                await RefreshBuildsAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Authentication failed");
-                StatusMessage = "Authentication failed. Please try again.";
-            }
-        });
+        // Show the inline token input UI
+        // The actual authentication happens in SubmitToken when the user submits
+        ShowTokenInput = true;
+        TokenInput = string.Empty;
     }
     
     private void LaunchBuild()
@@ -394,6 +419,53 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     {
         _downloadCts?.Cancel();
         RequestClose?.Invoke();
+    }
+    
+    private void CancelTokenInput()
+    {
+        ShowTokenInput = false;
+        TokenInput = string.Empty;
+    }
+    
+    private void SubmitToken()
+    {
+        if (string.IsNullOrWhiteSpace(TokenInput)) return;
+        
+        var token = TokenInput;
+        ShowTokenInput = false;
+        TokenInput = string.Empty;
+        
+        Task.Run(async () =>
+        {
+            try
+            {
+                // Validate token against GitHub API
+                StatusMessage = "Validating token...";
+                var isValid = await _gitHubService.ValidateTokenAsync(token);
+                
+                if (!isValid)
+                {
+                    StatusMessage = "Invalid token. Please try again.";
+                    return;
+                }
+                
+                // Store in credential storage
+                await _credentialService.StoreTokenAsync("github", token);
+                _gitHubService.SetAuthToken(token);
+                
+                // Update state
+                IsAuthenticated = true;
+                StatusMessage = "Authenticated successfully!";
+                
+                // Refresh to show PR builds
+                await RefreshBuildsAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Authentication failed");
+                StatusMessage = "Authentication failed. Please try again.";
+            }
+        });
     }
     
     private static string FormatSpeed(double bytesPerSecond)

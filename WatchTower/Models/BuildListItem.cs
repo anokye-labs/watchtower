@@ -30,6 +30,7 @@ public class BuildListItem : INotifyPropertyChanged
     
     public string Status => IsCached ? "Cached" : "Available";
     public string TypeIcon => Type == BuildType.Release ? "📦" : "🔧";
+    public string StatusColor => IsCached ? "#4AFF4A" : "#AAFFFFFF";
     
     public event PropertyChangedEventHandler? PropertyChanged;
 }

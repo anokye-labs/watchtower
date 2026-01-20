@@ -3,23 +3,34 @@ using System.Threading.Tasks;
 namespace WatchTower.Services;
 
 /// <summary>
-/// Service for securely storing and retrieving credentials.
+/// Service for secure credential storage using Windows Credential Manager.
+/// Credentials are stored in the current user's credential vault and persist across sessions.
 /// </summary>
 public interface ICredentialStorageService
 {
     /// <summary>
-    /// Stores a token securely for the specified service.
+    /// Retrieves a stored credential value.
     /// </summary>
-    Task StoreTokenAsync(string serviceName, string token);
-    
+    /// <param name="key">Unique identifier (e.g., "github").</param>
+    /// <returns>The credential value, or null if not found.</returns>
+    Task<string?> GetTokenAsync(string key);
+
     /// <summary>
-    /// Retrieves a stored token for the specified service.
+    /// Stores a credential securely in Windows Credential Manager.
     /// </summary>
-    /// <returns>The token if found, or null if not found.</returns>
-    Task<string?> GetTokenAsync(string serviceName);
-    
+    /// <param name="key">Unique identifier for the credential.</param>
+    /// <param name="token">The secret value to store. Never logged.</param>
+    Task StoreTokenAsync(string key, string token);
+
     /// <summary>
-    /// Deletes a stored token for the specified service.
+    /// Deletes a stored credential.
     /// </summary>
-    Task DeleteTokenAsync(string serviceName);
+    /// <param name="key">The credential key.</param>
+    Task DeleteTokenAsync(string key);
+
+    /// <summary>
+    /// Checks if a credential exists without retrieving its value.
+    /// </summary>
+    /// <param name="key">The credential key.</param>
+    Task<bool> HasTokenAsync(string key);
 }

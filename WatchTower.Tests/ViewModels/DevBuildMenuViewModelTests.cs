@@ -288,20 +288,17 @@ public class DevBuildMenuViewModelTests
             .ReturnsAsync(true);
 
         var viewModel = CreateViewModel();
-        var tokenProvided = false;
 
-        viewModel.RequestTokenInput += () =>
-        {
-            tokenProvided = true;
-            return Task.FromResult<string?>("valid-token");
-        };
-
-        // Act
+        // Act - New flow: AuthenticateCommand shows token input, then SubmitToken validates
         viewModel.AuthenticateCommand.Execute(null);
+        Assert.True(viewModel.ShowTokenInput); // Token input UI should be visible
+        
+        viewModel.TokenInput = "valid-token";
+        viewModel.SubmitTokenCommand.Execute(null);
         await Task.Delay(200); // Wait for async operation
 
         // Assert
-        Assert.True(tokenProvided);
+        Assert.False(viewModel.ShowTokenInput); // Token input UI should be hidden
         Assert.True(viewModel.IsAuthenticated);
         _credentialServiceMock.Verify(s => s.StoreTokenAsync("github", "valid-token"), Times.Once);
         _gitHubServiceMock.Verify(s => s.SetAuthToken("valid-token"), Times.Once);
@@ -316,10 +313,11 @@ public class DevBuildMenuViewModelTests
             .ReturnsAsync(false);
 
         var viewModel = CreateViewModel();
-        viewModel.RequestTokenInput += () => Task.FromResult<string?>("invalid-token");
 
-        // Act
+        // Act - New flow: AuthenticateCommand shows token input, then SubmitToken validates
         viewModel.AuthenticateCommand.Execute(null);
+        viewModel.TokenInput = "invalid-token";
+        viewModel.SubmitTokenCommand.Execute(null);
         await Task.Delay(200); // Wait for async operation
 
         // Assert
