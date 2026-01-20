@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -220,10 +221,13 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
         var build = SelectedBuild;
         if (build == null) return;
         
+        // Set IsDownloading synchronously to prevent race conditions from rapid clicks
+        // This ensures the CanExecute guard blocks subsequent calls immediately
+        IsDownloading = true;
+        _downloadCts = new CancellationTokenSource();
+        
         Task.Run(async () =>
         {
-            _downloadCts = new CancellationTokenSource();
-            
             try
             {
                 string exePath;
@@ -238,7 +242,6 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                 else
                 {
                     // Download with progress
-                    IsDownloading = true;
                     StatusMessage = $"Downloading {build.DisplayName}...";
                     
                     var progress = new Progress<DownloadProgress>(p =>
@@ -303,12 +306,14 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
         
         try
         {
-            Builds.Clear();
+            // Clear builds on UI thread to avoid cross-thread collection modification
+            await Dispatcher.UIThread.InvokeAsync(() => Builds.Clear());
             
             // Get releases (always available)
             var releases = await _gitHubService.GetReleasesAsync();
             foreach (var release in releases)
             {
+                var isCached = await _cacheService.IsBuildCachedAsync($"release-{release.TagName}");
                 var item = new BuildListItem
                 {
                     Id = $"release-{release.TagName}",
@@ -317,9 +322,10 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                     CreatedAt = release.CreatedAt,
                     Author = "Release",
                     DownloadUrl = release.AssetDownloadUrl,
-                    IsCached = await _cacheService.IsBuildCachedAsync($"release-{release.TagName}")
+                    IsCached = isCached
                 };
-                Builds.Add(item);
+                // Add to collection on UI thread
+                await Dispatcher.UIThread.InvokeAsync(() => Builds.Add(item));
             }
             
             // Get PR builds (only if authenticated)
@@ -328,6 +334,7 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                 var prBuilds = await _gitHubService.GetPullRequestBuildsAsync();
                 foreach (var pr in prBuilds)
                 {
+                    var isCached = await _cacheService.IsBuildCachedAsync($"pr-{pr.PullRequestNumber}");
                     var item = new BuildListItem
                     {
                         Id = $"pr-{pr.PullRequestNumber}",
@@ -336,9 +343,10 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                         CreatedAt = pr.CreatedAt,
                         Author = pr.Author,
                         DownloadUrl = pr.ArtifactDownloadUrl,
-                        IsCached = await _cacheService.IsBuildCachedAsync($"pr-{pr.PullRequestNumber}")
+                        IsCached = isCached
                     };
-                    Builds.Add(item);
+                    // Add to collection on UI thread
+                    await Dispatcher.UIThread.InvokeAsync(() => Builds.Add(item));
                 }
             }
             
