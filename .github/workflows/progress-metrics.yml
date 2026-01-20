@@ -240,34 +240,34 @@ jobs:
             
             // Format report
             const report = `
-            ## Progress Metrics (Progress Metrics)
+            ## Progress Metrics
             *Generated: ${new Date().toISOString()}*
             
-            ### Status Distribution (Status)
+            ### Status Distribution
             | Status | Count |
             |--------|-------|
             | Backlog | ${statusCounts['Backlog']} |
             | Ready | ${statusCounts['Ready']} |
             | In Progress | ${statusCounts['In Progress']} |
-            | Review | ${statusCounts['In Review']} |
+            | In Review | ${statusCounts['In Review']} |
             | Blocked | ${statusCounts['Blocked']} |
             | Done | ${statusCounts['Done']} |
             
-            ### Blocked Items (Blocked Items)
+            ### Blocked Items
             ${blockedItems.length > 0 ? blockedItems.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'No blocked items 🎉'}
             
-            ### Average Complexity by Component (Complexity by Component)
+            ### Average Complexity by Component
             | Component | Average Complexity |
             |-----------|-------------------|
             ${complexityTable}
             
-            ### Agent Type Utilization (Agent Type Distribution)
+            ### Agent Type Utilization
             | Agent Type | Count | Percentage |
             |------------|-------|------------|
             ${agentTypeTable}
             
             ### Completed This Week
-            ${completedThisWeek} items moved to Wie
+            ${completedThisWeek} items moved to Done
             
             ### Velocity Trend (Last 4 Weeks)
             \`\`\`
