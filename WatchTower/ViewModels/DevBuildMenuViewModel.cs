@@ -296,12 +296,14 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     
     private void Refresh()
     {
+        // Set IsLoading synchronously to prevent race conditions from rapid clicks
+        // This ensures the CanExecute guard blocks subsequent calls immediately
+        IsLoading = true;
         Task.Run(RefreshBuildsAsync);
     }
     
     private async Task RefreshBuildsAsync()
     {
-        IsLoading = true;
         StatusMessage = "Loading builds...";
         
         try
