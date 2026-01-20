@@ -78,7 +78,7 @@ jobs:
               console.log('Error:', error.message);
               // Create a minimal report for now
               const minimalReport = `
-            ## Progress Metrics (Progress Metrics)
+            ## Progress Metrics
             *Generated: ${new Date().toISOString()}*
             
             ⚠️ Unable to fetch project metrics. This may be because:
