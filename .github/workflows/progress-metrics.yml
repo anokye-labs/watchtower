@@ -1,4 +1,4 @@
-name: Nkɔsoɔ Metrics (Progress Dashboard)
+name: Progress Metrics Dashboard
 
 on:
   pull_request:
@@ -78,7 +78,7 @@ jobs:
               console.log('Error:', error.message);
               // Create a minimal report for now
               const minimalReport = `
-            ## Nkɔsoɔ Akontaabu (Progress Metrics)
+            ## Progress Metrics (Progress Metrics)
             *Generated: ${new Date().toISOString()}*
             
             ⚠️ Unable to fetch project metrics. This may be because:
@@ -91,8 +91,8 @@ jobs:
             - Issue #71: Export field IDs
             
             Once the project is properly configured, this workflow will generate:
-            - Nsoromma Distribution (Status counts)
-            - Asiw Amanneɛ (Blocked items)
+            - Status Distribution (Status counts)
+            - Blocked Items (Blocked items)
             - Completed items this week
             - Velocity trends
               `;
@@ -123,15 +123,15 @@ jobs:
             
             // 1. Nsoromma distribution (count per status)
             const statusCounts = {
-              'Afiase': 0,    // Backlog
-              'Siesie': 0,    // Ready
-              'Dwuma': 0,     // In Progress
-              'Hwehwɛ': 0,    // Review
-              'Asiw': 0,      // Blocked
-              'Wie': 0        // Done
+              'Backlog': 0,    // Backlog
+              'Ready': 0,    // Ready
+              'In Progress': 0,     // In Progress
+              'In Review': 0,    // Review
+              'Blocked': 0,      // Blocked
+              'Done': 0        // Done
             };
             
-            // 2. Average Mu by Fapem (Complexity by Component)
+            // 2. Average Complexity by Component (Complexity by Component)
             const complexityByComponent = {};
             
             // 3. Asiw (Blocked) count with issue links
@@ -159,14 +159,14 @@ jobs:
               fieldValues.forEach(fieldValue => {
                 const fieldName = fieldValue.field?.name;
                 
-                if (fieldName === 'Status' || fieldName === 'Nsoromma') {
+                if (fieldName === 'Status' || fieldName === 'Status') {
                   status = fieldValue.name;
                   if (statusCounts.hasOwnProperty(status)) {
                     statusCounts[status]++;
                   }
                   
                   // Track blocked items
-                  if (status === 'Asiw' && item.content) {
+                  if (status === 'Blocked' && item.content) {
                     blockedItems.push({
                       number: item.content.number,
                       title: item.content.title
@@ -174,15 +174,15 @@ jobs:
                   }
                 }
                 
-                if (fieldName === 'Complexity' || fieldName === 'Mu') {
+                if (fieldName === 'Complexity' || fieldName === 'Complexity') {
                   complexity = fieldValue.number;
                 }
                 
-                if (fieldName === 'Component' || fieldName === 'Fapem') {
+                if (fieldName === 'Component' || fieldName === 'Component') {
                   component = fieldValue.name;
                 }
                 
-                if (fieldName === 'Agent Type' || fieldName === 'Ɔkyeame') {
+                if (fieldName === 'Agent Type' || fieldName === 'Agent Type') {
                   agentType = fieldValue.name;
                   agentTypeCounts[agentType] = (agentTypeCounts[agentType] || 0) + 1;
                 }
@@ -198,7 +198,7 @@ jobs:
               }
               
               // Track completed this week
-              if (status === 'Wie' && item.content?.closedAt) {
+              if (status === 'Done' && item.content?.closedAt) {
                 const closedDate = new Date(item.content.closedAt);
                 if (closedDate >= oneWeekAgo) {
                   completedThisWeek++;
@@ -240,28 +240,28 @@ jobs:
             
             // Format report
             const report = `
-            ## Nkɔsoɔ Akontaabu (Progress Metrics)
+            ## Progress Metrics (Progress Metrics)
             *Generated: ${new Date().toISOString()}*
             
-            ### Nsoromma Distribution (Status)
+            ### Status Distribution (Status)
             | Status | Count |
             |--------|-------|
-            | Afiase (Backlog) | ${statusCounts['Afiase']} |
-            | Siesie (Ready) | ${statusCounts['Siesie']} |
-            | Dwuma (In Progress) | ${statusCounts['Dwuma']} |
-            | Hwehwɛ (Review) | ${statusCounts['Hwehwɛ']} |
-            | Asiw (Blocked) | ${statusCounts['Asiw']} |
-            | Wie (Done) | ${statusCounts['Wie']} |
+            | Afiase (Backlog) | ${statusCounts['Backlog']} |
+            | Siesie (Ready) | ${statusCounts['Ready']} |
+            | Dwuma (In Progress) | ${statusCounts['In Progress']} |
+            | Hwehwɛ (Review) | ${statusCounts['In Review']} |
+            | Asiw (Blocked) | ${statusCounts['Blocked']} |
+            | Wie (Done) | ${statusCounts['Done']} |
             
-            ### Asiw Amanneɛ (Blocked Items)
+            ### Blocked Items (Blocked Items)
             ${blockedItems.length > 0 ? blockedItems.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'No blocked items 🎉'}
             
-            ### Average Mu by Fapem (Complexity by Component)
+            ### Average Complexity by Component (Complexity by Component)
             | Component | Average Complexity |
             |-----------|-------------------|
             ${complexityTable}
             
-            ### Ɔkyeame Utilization (Agent Type Distribution)
+            ### Agent Type Utilization (Agent Type Distribution)
             | Agent Type | Count | Percentage |
             |------------|-------|------------|
             ${agentTypeTable}
