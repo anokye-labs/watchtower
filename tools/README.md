@@ -6,7 +6,7 @@ This directory contains utility scripts and tools for repository management and 
 
 ### create-labels.sh
 
-Creates semantic labels with Akan names for the Nsumankwahene Flow System (agent-driven development).
+Creates semantic labels for the Agent Flow System (agent-driven development).
 
 **Prerequisites:**
 - `gh` CLI installed ([installation guide](https://cli.github.com/manual/installation))
@@ -29,14 +29,14 @@ The script creates 8 agent signal labels:
 
 | Label | Description | Color |
 |-------|-------------|-------|
-| `ɔkyeame:siesie` | Agent ready - prepared for autonomous work | Green |
-| `ɔkyeame:dwuma` | Agent in progress - actively being worked | Blue |
-| `nnipa-gyinae-hia` | Requires human decision | Red-orange |
+| `agent:ready` | Agent ready - prepared for autonomous work | Green |
+| `agent:in-progress` | Agent in progress - actively being worked | Blue |
+| `requires:human-decision` | Requires human decision | Red-orange |
 | `stale` | No activity >5 days | Yellow |
 | `needs-fix` | PR checks failed | Light yellow |
-| `asiw:external` | Blocked by third-party dependency | Red |
-| `nsakrae:api` | Breaking API change | Orange |
-| `nhwɛsoɔ-hia` | Requires testing - Complexity ≥5 | Purple |
+| `blocked:external` | Blocked by third-party dependency | Red |
+| `breaking:api-change` | Breaking API change | Orange |
+| `requires:testing` | Requires testing - Complexity ≥5 | Purple |
 
 **Features:**
 - Idempotent: Safe to run multiple times
@@ -50,7 +50,6 @@ See [docs/label-system.md](../docs/label-system.md) for complete label system do
 - Label semantics and usage guidelines
 - Existing priority and component labels
 - Color coding conventions
-- Akan name pronunciations
 - Automation behavior
 
 ## MCP Server

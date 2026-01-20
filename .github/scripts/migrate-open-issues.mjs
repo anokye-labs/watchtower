@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Nsumankwahene Migration Script
+ * Agent Flow Migration Script
  * Migrates all open issues to the new field system
  * 
  * Usage: 
@@ -139,7 +139,7 @@ async function migrateIssue(issue) {
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('  Nsumankwahene Migration Script');
+  console.log('  Agent Flow Migration Script');
   console.log('  Migrating open issues to new field system');
   console.log('═══════════════════════════════════════════════════════════');
   
@@ -190,10 +190,10 @@ async function main() {
   if (isDryRun) console.log(`  Dry run previews: ${dryRun.length}`);
   
   console.log(`\n📈 By Priority:`);
-  console.log(`  P0 (Critical): ${results.filter(r => r.priority === 'p0_hene').length}`);
-  console.log(`  P1 (High): ${results.filter(r => r.priority === 'p1_abusuapanyin').length}`);
-  console.log(`  P2 (Medium): ${results.filter(r => r.priority === 'p2_obi').length}`);
-  console.log(`  P3 (Low): ${results.filter(r => r.priority === 'p3_akwadaa').length}`);
+  console.log(`  P0 (Critical): ${results.filter(r => r.priority === 'p0').length}`);
+  console.log(`  P1 (High): ${results.filter(r => r.priority === 'p1').length}`);
+  console.log(`  P2 (Medium): ${results.filter(r => r.priority === 'p2').length}`);
+  console.log(`  P3 (Low): ${results.filter(r => r.priority === 'p3').length}`);
   
   console.log(`\n📂 By Component:`);
   const components = ['services', 'infrastructure', 'testing', 'views', 'docs', 'viewmodels', 'models', 'build', 'unclassified'];
@@ -203,7 +203,7 @@ async function main() {
   }
   
   console.log(`\n🤖 By Agent Type:`);
-  const agentTypes = ['copilot', 'claude_opus', 'nnipa_hia', 'biara', 'task_maestro'];
+  const agentTypes = ['copilot', 'copilot_thinking', 'human_required', 'any_agent', 'task_maestro'];
   for (const agent of agentTypes) {
     const count = results.filter(r => r.agent_type === agent).length;
     if (count > 0) console.log(`  ${agent}: ${count}`);
