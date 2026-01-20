@@ -218,51 +218,51 @@ export class ProjectGraphQLClient {
       console.warn(`  ⚠️  Skipping ${fieldName}: ${reason}`);
     };
     
-    // Nsoromma (Status) - single-select
-    const nsorommaField = config.fields.nsoromma;
-    if (nsorommaField?.options?.[fields.status]) {
+    // Status - single-select
+    const statusField = config.fields.status;
+    if (statusField?.options?.[fields.status]) {
       updates.push({
         name: 'Status',
         promise: this.updateSingleSelect(
           itemId,
-          nsorommaField.id,
-          nsorommaField.options[fields.status]
+          statusField.id,
+          statusField.options[fields.status]
         )
       });
     } else if (fields.status) {
-      if (!nsorommaField?.options) {
+      if (!statusField?.options) {
         logFieldSkip('Status', 'config missing or no options defined');
       } else {
         logFieldSkip('Status', `no option found for value "${fields.status}"`);
       }
     }
     
-    // Tumi (Priority) - single-select
-    const tumiField = config.fields.tumi;
-    if (tumiField?.options?.[fields.priority]) {
+    // Priority - single-select
+    const priorityField = config.fields.priority;
+    if (priorityField?.options?.[fields.priority]) {
       updates.push({
         name: 'Priority',
         promise: this.updateSingleSelect(
           itemId,
-          tumiField.id,
-          tumiField.options[fields.priority]
+          priorityField.id,
+          priorityField.options[fields.priority]
         )
       });
     } else if (fields.priority) {
-      if (!tumiField?.options) {
+      if (!priorityField?.options) {
         logFieldSkip('Priority', 'config missing or no options defined');
       } else {
         logFieldSkip('Priority', `no option found for value "${fields.priority}"`);
       }
     }
     
-    // Mu (Complexity) - number
-    if (config.fields.mu?.id) {
+    // Complexity - number
+    if (config.fields.complexity?.id) {
       updates.push({
         name: 'Complexity',
         promise: this.updateNumber(
           itemId,
-          config.fields.mu.id,
+          config.fields.complexity.id,
           fields.complexity
         )
       });
@@ -270,51 +270,51 @@ export class ProjectGraphQLClient {
       logFieldSkip('Complexity', 'field ID not configured');
     }
     
-    // Fapem (Component) - single-select
-    const fapemField = config.fields.fapem;
-    if (fapemField?.options?.[fields.component]) {
+    // Component - single-select
+    const componentField = config.fields.component;
+    if (componentField?.options?.[fields.component]) {
       updates.push({
         name: 'Component',
         promise: this.updateSingleSelect(
           itemId,
-          fapemField.id,
-          fapemField.options[fields.component]
+          componentField.id,
+          componentField.options[fields.component]
         )
       });
     } else if (fields.component) {
-      if (!fapemField?.options) {
+      if (!componentField?.options) {
         logFieldSkip('Component', 'config missing or no options defined');
       } else {
         logFieldSkip('Component', `no option found for value "${fields.component}"`);
       }
     }
     
-    // Ɔkyeame (Agent Type) - single-select
-    const okyeameField = config.fields.okyeame;
-    if (okyeameField?.options?.[fields.agent_type]) {
+    // Agent Type - single-select
+    const agentTypeField = config.fields.agent_type;
+    if (agentTypeField?.options?.[fields.agent_type]) {
       updates.push({
         name: 'Agent Type',
         promise: this.updateSingleSelect(
           itemId,
-          okyeameField.id,
-          okyeameField.options[fields.agent_type]
+          agentTypeField.id,
+          agentTypeField.options[fields.agent_type]
         )
       });
     } else if (fields.agent_type) {
-      if (!okyeameField?.options) {
+      if (!agentTypeField?.options) {
         logFieldSkip('Agent Type', 'config missing or no options defined');
       } else {
         logFieldSkip('Agent Type', `no option found for value "${fields.agent_type}"`);
       }
     }
     
-    // Nkabom (Dependencies) - text
-    if (config.fields.nkabom?.id) {
+    // Dependencies - text
+    if (config.fields.dependencies?.id) {
       updates.push({
         name: 'Dependencies',
         promise: this.updateText(
           itemId,
-          config.fields.nkabom.id,
+          config.fields.dependencies.id,
           fields.dependencies
         )
       });
@@ -322,13 +322,13 @@ export class ProjectGraphQLClient {
       logFieldSkip('Dependencies', 'field ID not configured');
     }
     
-    // Da-Akyire (Last Activity) - date
-    if (config.fields.da_akyire?.id) {
+    // Last Activity - date
+    if (config.fields.last_activity?.id) {
       updates.push({
         name: 'Last Activity',
         promise: this.updateDate(
           itemId,
-          config.fields.da_akyire.id,
+          config.fields.last_activity.id,
           fields.last_activity
         )
       });
@@ -336,13 +336,13 @@ export class ProjectGraphQLClient {
       logFieldSkip('Last Activity', 'field ID not configured');
     }
     
-    // PR Nkitahodi (PR Link) - text - skip if empty
-    if (config.fields.pr_nkitahodi?.id && fields.pr_link) {
+    // PR Link - text - skip if empty
+    if (config.fields.pr_link?.id && fields.pr_link) {
       updates.push({
         name: 'PR Link',
         promise: this.updateText(
           itemId,
-          config.fields.pr_nkitahodi.id,
+          config.fields.pr_link.id,
           fields.pr_link
         )
       });
