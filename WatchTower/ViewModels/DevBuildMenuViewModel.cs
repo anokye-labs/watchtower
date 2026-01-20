@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
@@ -236,6 +237,9 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
             IsAuthenticated = true;
         }
         
+        // Set IsLoading before calling RefreshBuildsAsync to prevent concurrent refresh calls
+        IsLoading = true;
+        
         // Load initial build list
         await RefreshBuildsAsync();
     }
@@ -293,11 +297,18 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                 }
                 
                 // Launch in parallel process
-                Process.Start(new ProcessStartInfo
+                var process = Process.Start(new ProcessStartInfo
                 {
                     FileName = exePath,
                     UseShellExecute = true
                 });
+                
+                if (process == null)
+                {
+                    _logger.LogWarning("Process.Start returned null for build {BuildId} at path {ExePath}", build.Id, exePath);
+                    StatusMessage = "Failed to launch build executable.";
+                    return;
+                }
                 
                 StatusMessage = "Build launched!";
                 RequestClose?.Invoke();
@@ -407,10 +418,14 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                 StatusMessage = "Clearing cache...";
                 await _cacheService.ClearAllCacheAsync();
                 
-                // Update cached status for all builds
-                foreach (var build in Builds)
+                // Create a snapshot of the builds collection to avoid cross-thread modification
+                // when iterating from a background thread
+                var buildsSnapshot = Builds.ToList();
+                
+                // Update cached status for all builds on the UI thread
+                foreach (var build in buildsSnapshot)
                 {
-                    build.IsCached = false;
+                    await Dispatcher.UIThread.InvokeAsync(() => build.IsCached = false);
                 }
                 
                 StatusMessage = "Cache cleared successfully.";
@@ -464,6 +479,9 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
                 // Update state
                 IsAuthenticated = true;
                 StatusMessage = "Authenticated successfully!";
+                
+                // Set IsLoading before calling RefreshBuildsAsync to prevent concurrent refresh calls
+                IsLoading = true;
                 
                 // Refresh to show PR builds
                 await RefreshBuildsAsync();
