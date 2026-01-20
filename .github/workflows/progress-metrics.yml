@@ -246,12 +246,12 @@ jobs:
             ### Status Distribution (Status)
             | Status | Count |
             |--------|-------|
-            | Afiase (Backlog) | ${statusCounts['Backlog']} |
-            | Siesie (Ready) | ${statusCounts['Ready']} |
-            | Dwuma (In Progress) | ${statusCounts['In Progress']} |
-            | Hwehwɛ (Review) | ${statusCounts['In Review']} |
-            | Asiw (Blocked) | ${statusCounts['Blocked']} |
-            | Wie (Done) | ${statusCounts['Done']} |
+            | Backlog | ${statusCounts['Backlog']} |
+            | Ready | ${statusCounts['Ready']} |
+            | In Progress | ${statusCounts['In Progress']} |
+            | Review | ${statusCounts['In Review']} |
+            | Blocked | ${statusCounts['Blocked']} |
+            | Done | ${statusCounts['Done']} |
             
             ### Blocked Items (Blocked Items)
             ${blockedItems.length > 0 ? blockedItems.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'No blocked items 🎉'}
