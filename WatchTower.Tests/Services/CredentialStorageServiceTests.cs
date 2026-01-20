@@ -179,7 +179,9 @@ public class CredentialStorageServiceTests : IDisposable
     public async Task StoreToken_HandlesLongTokens()
     {
         // Arrange
-        var longToken = new string('X', 2048) + Guid.NewGuid();
+        // Windows Credential Manager has a 2560 byte limit (CRED_MAX_CREDENTIAL_BLOB_SIZE).
+        // Use a token size that is long but safely under the limit.
+        var longToken = new string('X', 2000) + Guid.NewGuid();
 
         // Act
         await _service.StoreTokenAsync(TestKey, longToken);

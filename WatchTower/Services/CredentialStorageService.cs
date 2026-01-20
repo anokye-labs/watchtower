@@ -85,13 +85,34 @@ public class CredentialStorageService : ICredentialStorageService
             CredentialManager.DeleteCredential(targetName);
             _logger.LogInformation("Deleted credential for key {Key}", key);
         }
+        catch (Exception ex) when (IsCredentialNotFoundError(ex))
+        {
+            // Treat "not found" as success - credential is already gone
+            _logger.LogDebug(ex, "Credential not found or already deleted for key {Key}", key);
+        }
         catch (Exception ex)
         {
-            // Treat "not found" as success
-            _logger.LogDebug(ex, "Credential not found or already deleted for key {Key}", key);
+            // Rethrow other errors (access denied, corrupted store, OS errors)
+            // so callers know the credential may still exist
+            _logger.LogError(ex, "Failed to delete credential for key {Key}", key);
+            throw new InvalidOperationException($"Failed to delete credential: {ex.Message}", ex);
         }
         
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Determines if the exception indicates the credential was not found.
+    /// </summary>
+    private static bool IsCredentialNotFoundError(Exception ex)
+    {
+        // Windows Credential Manager throws exceptions with specific messages/HResults
+        // when a credential is not found. Check for common patterns.
+        var message = ex.Message?.ToLowerInvariant() ?? string.Empty;
+        return message.Contains("not found") || 
+               message.Contains("element not found") ||
+               message.Contains("does not exist") ||
+               (ex is System.ComponentModel.Win32Exception win32Ex && win32Ex.NativeErrorCode == 1168); // ERROR_NOT_FOUND
     }
 
     public Task<bool> HasTokenAsync(string key)
