@@ -25,6 +25,7 @@ public class BuildListItem : INotifyPropertyChanged
             _isCached = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCached)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Status)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StatusColor)));
         }
     }
     

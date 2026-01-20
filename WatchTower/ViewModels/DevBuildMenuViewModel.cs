@@ -55,7 +55,10 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
         set
         {
             if (SetProperty(ref _selectedBuild, value))
+            {
                 LaunchBuildCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanLaunchBuild));
+            }
         }
     }
     
@@ -97,6 +100,7 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
             {
                 LaunchBuildCommand.RaiseCanExecuteChanged();
                 ClearCacheCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanLaunchBuild));
             }
         }
     }
