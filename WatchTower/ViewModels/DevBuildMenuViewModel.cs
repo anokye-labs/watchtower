@@ -143,7 +143,11 @@ public class DevBuildMenuViewModel : ViewModelBase, IDisposable
     public string TokenInput
     {
         get => _tokenInput;
-        set => SetProperty(ref _tokenInput, value);
+        set
+        {
+            if (SetProperty(ref _tokenInput, value))
+                SubmitTokenCommand.RaiseCanExecuteChanged();
+        }
     }
     
     /// <summary>
