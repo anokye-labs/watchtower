@@ -1,12 +1,12 @@
-name: "🏗️ Tech Design - Nhyehyɛe (Planning)"
+name: "🏗️ Tech Design - Planning"
 description: "Document architectural decisions before implementation"
-labels: ["Tech Design Needed", "nnipa-gyinae-hia"]
+labels: ["Tech Design Needed", "requires:human-decision"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Nhyehyɛe (Technical Design)
-        *English: Document design decisions before implementation*
+        ## Technical Design
+        Document design decisions before implementation.
         
         This template is for complex work requiring architectural planning.
         The issue will be marked as requiring human review before agent work begins.

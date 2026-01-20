@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script to create semantic labels for agent signals in the WatchTower repository
-# Part of anokye-labs/watchtower#69 - Nsumankwahene Flow System
+# Part of anokye-labs/watchtower#69 - Agent Flow System
 #
 # Prerequisites:
 # - gh CLI installed and authenticated
@@ -65,15 +65,15 @@ create_label() {
 echo "=== Agent Signal Labels ==="
 echo ""
 
-create_label "ɔkyeame:siesie" \
+create_label "agent:ready" \
     "Agent ready - prepared for autonomous work" \
     "0E8A16"
 
-create_label "ɔkyeame:dwuma" \
+create_label "agent:in-progress" \
     "Agent in progress - actively being worked" \
     "1D76DB"
 
-create_label "nnipa-gyinae-hia" \
+create_label "requires:human-decision" \
     "Requires human decision - agent cannot proceed" \
     "D93F0B"
 
@@ -85,15 +85,15 @@ create_label "needs-fix" \
     "PR checks failed" \
     "E4E669"
 
-create_label "asiw:external" \
+create_label "blocked:external" \
     "Blocked by third-party dependency" \
     "B60205"
 
-create_label "nsakrae:api" \
+create_label "breaking:api-change" \
     "Breaking API change - major version bump" \
     "D93F0B"
 
-create_label "nhwɛsoɔ-hia" \
+create_label "requires:testing" \
     "Requires testing - Complexity ≥5" \
     "5319E7"
 

@@ -1,4 +1,4 @@
-# Nsumankwahene Project Configuration
+# Agent Flow Project Configuration
 # Generated from GraphQL GetProjectFields query
 # DO NOT EDIT MANUALLY - regenerate from GraphQL if fields change
 
@@ -9,38 +9,38 @@ project:
   number: 2      # Project number
 
 fields:
-  nsoromma:  # Status
+  status:  # Status
     id: "PVTSSF_lADODbLOnM4BLchYzg7BHPM"
     options:
-      Backlog: "f75ad846"      # Afiase
-      Ready: "e18bf179"        # Siesie
-      "In progress": "47fc9ee4"       # Dwuma
-      "In review": "aba860b9"      # Hwehwɛ
-      Blocked: "f0511bc2"        # Asiw
-      Done: "98236657"         # Wie
-      Abandoned: "9bd32825"        # Gyaw
+      Backlog: "f75ad846"
+      Ready: "e18bf179"
+      "In progress": "47fc9ee4"
+      "In review": "aba860b9"
+      Blocked: "f0511bc2"
+      Done: "98236657"
+      Abandoned: "9bd32825"
   
-  tumi:  # Priority
+  priority:  # Priority
     id: "PVTSSF_lADODbLOnM4BLchYzg7BHUU"
     options:
-      P0: "79628723"            # P0-Hene
-      P1: "0a877460"            # P1-Abusuapanyin
-      P2: "da944a9c"            # P2-Obi
-      P3: "ff01dc29"            # P3-Akwadaa
+      P0: "79628723"
+      P1: "0a877460"
+      P2: "da944a9c"
+      P3: "ff01dc29"
   
-  mu:  # Complexity (number field)
+  complexity:  # Complexity (number field)
     id: "PVTF_lADODbLOnM4BLchYzg7BHUc"
   
-  okyeame:  # Agent Type
+  agent_type:  # Agent Type
     id: "PVTSSF_lADODbLOnM4BLchYzg7DI1s"
     options:
       Copilot: "807e206b"
       "Copilot + Thinking": "c36f2b25"
       Task-Maestro: "1463e4d8"
-      "Human Required": "115f1b81"  # Nnipa-Hia
-      "Any Agent": "cc729823"       # Biara
+      "Human Required": "115f1b81"
+      "Any Agent": "cc729823"
   
-  fapem:  # Component
+  component:  # Component
     id: "PVTSSF_lADODbLOnM4BLchYzg7DI6Y"
     options:
       Services: "e564590b"
@@ -52,13 +52,13 @@ fields:
       Docs: "fe624e7f"
       Build: "910a429f"
   
-  nkabom:  # Dependencies (text)
+  dependencies:  # Dependencies (text)
     id: "PVTF_lADODbLOnM4BLchYzg7DI88"
   
-  da_akyire:  # Last Activity (date)
+  last_activity:  # Last Activity (date)
     id: "PVTF_lADODbLOnM4BLchYzg7DJR8"
   
-  pr_nkitahodi:  # PR Link (text)
+  pr_link:  # PR Link (text)
     id: "PVTF_lADODbLOnM4BLchYzg7DJHo"
 
 # Automation settings

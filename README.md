@@ -180,11 +180,11 @@ A unified shell window that hosts both splash and main content with smooth anima
 
 ## Project Management
 
-Work is tracked via the **Nsumankwahene** (Spiritual Guardian) continuous flow system:
+Work is tracked via the **Agent Flow** continuous flow system:
 - [GitHub Project Board](https://github.com/orgs/anokye-labs/projects/2)
-- [Workflow Documentation](docs/nsumankwahene-workflow.md)
+- [Workflow Documentation](docs/agent-workflow.md)
 
-The system uses Akan terminology with English descriptions, honoring WatchTower's "Ancestral Futurism" design language while enabling agent-optimized collaboration.
+The system enables agent-optimized collaboration while honoring WatchTower's "Ancestral Futurism" design language.
 
 ## Configuration
 
