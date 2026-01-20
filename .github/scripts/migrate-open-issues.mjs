@@ -190,20 +190,20 @@ async function main() {
   if (isDryRun) console.log(`  Dry run previews: ${dryRun.length}`);
   
   console.log(`\n📈 By Priority:`);
-  console.log(`  P0 (Critical): ${results.filter(r => r.priority === 'p0').length}`);
-  console.log(`  P1 (High): ${results.filter(r => r.priority === 'p1').length}`);
-  console.log(`  P2 (Medium): ${results.filter(r => r.priority === 'p2').length}`);
-  console.log(`  P3 (Low): ${results.filter(r => r.priority === 'p3').length}`);
+  console.log(`  P0 (Critical): ${results.filter(r => r.priority === 'P0').length}`);
+  console.log(`  P1 (High): ${results.filter(r => r.priority === 'P1').length}`);
+  console.log(`  P2 (Medium): ${results.filter(r => r.priority === 'P2').length}`);
+  console.log(`  P3 (Low): ${results.filter(r => r.priority === 'P3').length}`);
   
   console.log(`\n📂 By Component:`);
-  const components = ['services', 'infrastructure', 'testing', 'views', 'docs', 'viewmodels', 'models', 'build', 'unclassified'];
+  const components = ['Services', 'Infrastructure', 'Testing', 'Views', 'Docs', 'View Model', 'Models', 'Build', 'unclassified'];
   for (const comp of components) {
     const count = results.filter(r => r.component === comp).length;
     if (count > 0) console.log(`  ${comp}: ${count}`);
   }
   
   console.log(`\n🤖 By Agent Type:`);
-  const agentTypes = ['copilot', 'copilot_thinking', 'human_required', 'any_agent', 'task_maestro'];
+  const agentTypes = ['Copilot', 'Copilot + Thinking', 'Human Required', 'Any Agent', 'Task-Maestro'];
   for (const agent of agentTypes) {
     const count = results.filter(r => r.agent_type === agent).length;
     if (count > 0) console.log(`  ${agent}: ${count}`);
