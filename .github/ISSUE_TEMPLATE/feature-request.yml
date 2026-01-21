@@ -1,12 +1,12 @@
-name: "✨ Feature - Adwuma (Work)"
+name: "✨ Feature Request"
 description: "Propose new functionality for WatchTower"
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
-        ## Adwuma (Feature Work)
-        *English: Propose a new feature or enhancement*
+        ## Feature Request
+        Propose a new feature or enhancement.
         
         Please provide enough detail for agents or developers to implement.
 

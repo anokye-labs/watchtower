@@ -1,11 +1,11 @@
-# Ɔkyeame Config (Agent Configuration)
-# English: How agents interact with Nsumankwahene flow system
+# Agent Configuration
+# How agents interact with the continuous flow system
 # 
 # This file is read by agents (Claude, Copilot) to understand
 # how to select work, when to request human input, and how to
 # transition issue states.
 
-nsumankwahene:
+agent_flow:
   project:
     owner: "anokye-labs"
     repo: "watchtower"
@@ -13,21 +13,21 @@ nsumankwahene:
     
   work_selection:
     # Agents should query this view to find work
-    primary_view: "Adwuma Nhyehyɛe"  # Work Queue
+    primary_view: "Work Queue"
     
     # Only pick items matching ALL these criteria
     filters:
-      nsoromma: ["Siesie"]  # Only Ready items
-      okyeame:  # Agent types this agent can work on
+      status: ["Ready"]  # Only Ready items
+      agent_type:  # Agent types this agent can work on
         - "Copilot"
         - "Claude-Opus"
-        - "Biara"
-      nkabom: ["None"]  # No blocking dependencies (or all deps in Wie)
+        - "Any Agent"
+      dependencies: ["None"]  # No blocking dependencies (or all deps in Done)
     
     # Pick in this order: highest priority first, then lowest complexity
     sort:
-      - "tumi DESC"   # P0-Hene first
-      - "mu ASC"      # Then lowest complexity
+      - "priority DESC"   # P0 first
+      - "complexity ASC"  # Then lowest complexity
     
     # Maximum items to work on simultaneously
     max_concurrent: 1
@@ -36,28 +36,28 @@ nsumankwahene:
     # Rules that trigger additional requirements
     
     # Complexity ≥5 requires tests
-    - name: "nhwɛsoɔ_hia"
-      condition: "mu >= 5"
-      require_label: "nhwɛsoɔ-hia"
+    - name: "requires_testing"
+      condition: "complexity >= 5"
+      require_label: "requires:testing"
       action: "warn_on_pr_if_no_tests"
-      message: "This item has Mu ≥5. Tests are required."
+      message: "This item has Complexity ≥5. Tests are required."
     
     # Services/ViewModels require cross-platform validation
     - name: "cross_platform"
-      condition: "fapem in ['Services', 'ViewModels']"
+      condition: "component in ['Services', 'ViewModels']"
       action: "ci_matrix"
       platforms: ["win-x64", "osx-x64", "linux-x64"]
     
     # Tech Design Needed requires human review
-    - name: "nnipa_hwehwɛ"
+    - name: "human_review"
       condition: "has_label('Tech Design Needed')"
       action: "request_review"
       reviewer: "@hoopsomuah"
       message: "This item has Tech Design Needed label. Human review required before work begins."
     
-    # nnipa-gyinae-hia means STOP and assign to human
+    # requires:human-decision means STOP and assign to human
     - name: "human_decision_required"
-      condition: "has_label('nnipa-gyinae-hia')"
+      condition: "has_label('requires:human-decision')"
       action: "stop_and_assign"
       assignee: "@hoopsomuah"
       message: "This item requires a human decision. Do NOT proceed."
@@ -66,15 +66,15 @@ nsumankwahene:
     # How automation moves items through the flow
     
     on_pr_opened:
-      set_nsoromma: "Dwuma"  # In Progress
-      add_label: "ɔkyeame:dwuma"
-      update_da_akyire: true
-      populate_pr_nkitahodi: true
-      remove_label: "ɔkyeame:siesie"
+      set_status: "In progress"
+      add_label: "agent:in-progress"
+      update_last_activity: true
+      populate_pr_link: true
+      remove_label: "agent:ready"
       
     on_checks_passed_and_ready_for_review:
-      set_nsoromma: "Hwehwɛ"  # Review
-      remove_label: "ɔkyeame:dwuma"
+      set_status: "In review"
+      remove_label: "agent:in-progress"
       remove_label: "needs-fix"
       
     on_checks_failed:
@@ -82,8 +82,8 @@ nsumankwahene:
       comment: "Checks failed. Please review the CI output and fix the issues."
       
     on_pr_merged:
-      set_nsoromma: "Wie"  # Done
-      remove_label: "ɔkyeame:dwuma"
+      set_status: "Done"
+      remove_label: "agent:in-progress"
       close_issue: true
       
   blocked_handling:
@@ -93,16 +93,16 @@ nsumankwahene:
     stale_threshold_days: 5
     
     on_stale:
-      set_nsoromma: "Asiw"  # Blocked
+      set_status: "Blocked"
       add_label: "stale"
       assign_to: "hoopsomuah"
       comment: |
-        ⚠️ **Asiw (Blocked): No activity for 5 days**
+        ⚠️ **Blocked: No activity for 5 days**
         
-        This issue has been in Dwuma (In Progress) for more than 5 days without activity.
+        This issue has been in "In Progress" for more than 5 days without activity.
         
         Please:
-        1. Check the Nkabom (Dependencies) field for blockers
+        1. Check the Dependencies field for blockers
         2. Update status if blocked externally
         3. Or continue work if still active
         
@@ -113,14 +113,14 @@ nsumankwahene:
     
     # Before starting any task, verify:
     pre_work_checks:
-      - "Verify Nkabom (Dependencies) field - all listed issues must be in Wie (Done)"
-      - "Check for nnipa-gyinae-hia label - if present, do NOT proceed"
+      - "Verify Dependencies field - all listed issues must be in Done"
+      - "Check for requires:human-decision label - if present, do NOT proceed"
       - "Check for Tech Design Needed label - if present, verify design is approved"
       
     # When encountering blockers:
     on_blocker:
-      - "Set Nsoromma to Asiw (Blocked)"
-      - "Update Nkabom field with blocker issue numbers"
+      - "Set Status to Blocked"
+      - "Update Dependencies field with blocker issue numbers"
       - "Add comment explaining the blocker"
       - "Assign to @hoopsomuah"
       
@@ -129,4 +129,4 @@ nsumankwahene:
       - "Ensure all acceptance criteria are met"
       - "Run dotnet build and dotnet test"
       - "Create PR with 'Closes #issue-number' in body"
-      - "Request review if Mu >= 5"
+      - "Request review if Complexity >= 5"

@@ -112,7 +112,7 @@ export function inferComponent(labels) {
  * Test cases:
  * - inferAgentType(['Tech Design Needed'], '', 8) → 'Human Required'
  * - inferAgentType(['tech-design-needed'], '', 8) → 'Human Required'
- * - inferAgentType(['nnipa-gyinae-hia'], '', 5) → 'Human Required'
+ * - inferAgentType(['requires:human-decision'], '', 5) → 'Human Required'
  * - inferAgentType(['testing'], '', 3) → 'Any Agent'
  * - inferAgentType([], 'Copilot should do this', 3) → 'Copilot'
  * - inferAgentType([], 'Claude-Opus preferred', 5) → 'Copilot + Thinking'
@@ -121,10 +121,10 @@ export function inferComponent(labels) {
  * - inferAgentType([], '', 5) → 'Copilot + Thinking' (high complexity)
  */
 export function inferAgentType(labels, body, complexity) {
-  // Tech Design Needed or nnipa-gyinae-hia = Human Required
+  // Tech Design Needed or requires:human-decision = Human Required
   if (labels.includes('Tech Design Needed') || 
       labels.includes('tech-design-needed') ||
-      labels.includes('nnipa-gyinae-hia')) {
+      labels.includes('requires:human-decision')) {
     return 'Human Required';
   }
   

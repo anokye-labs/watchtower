@@ -1,8 +1,8 @@
 {
-  "name": "nsumankwahene-migration",
+  "name": "agent-flow-migration",
   "version": "1.0.0",
   "type": "module",
-  "description": "Migration script for Nsumankwahene flow system",
+  "description": "Migration script for Agent Flow system",
   "private": true,
   "scripts": {
     "migrate": "node migrate-open-issues.mjs",
