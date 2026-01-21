@@ -20,11 +20,20 @@ namespace WatchTower.Services;
 public class BuildCacheService : IBuildCacheService
 {
     private readonly ILogger<BuildCacheService> _logger;
-    private readonly HttpClient _httpClient;
     private readonly string _cacheRootPath;
     private readonly string _manifestPath;
     private readonly object _lock = new();
-    private BuildManifest _manifest;
+    private readonly object _downloadLock = new();
+    private readonly Dictionary<string, SemaphoreSlim> _downloadSemaphores = new();
+    private readonly BuildManifest _manifest;
+
+    // Static HttpClient to avoid socket exhaustion
+    private static readonly HttpClient _httpClient = new()
+    {
+        // Use infinite timeout for potentially large/long-running build downloads.
+        // Cancellation should be controlled via the provided CancellationToken.
+        Timeout = Timeout.InfiniteTimeSpan
+    };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -37,7 +46,6 @@ public class BuildCacheService : IBuildCacheService
     public BuildCacheService(ILogger<BuildCacheService> logger)
     {
         _logger = logger;
-        _httpClient = new HttpClient();
         _cacheRootPath = GetCacheRootPath();
         _manifestPath = Path.Combine(_cacheRootPath, "manifest.json");
         
@@ -56,6 +64,8 @@ public class BuildCacheService : IBuildCacheService
 
     public Task<string?> GetCachedBuildPathAsync(string buildId)
     {
+        string? exePath = null;
+        
         lock (_lock)
         {
             var build = _manifest.Builds.FirstOrDefault(b => b.BuildId == buildId);
@@ -65,19 +75,27 @@ public class BuildCacheService : IBuildCacheService
             }
 
             var fullPath = Path.Combine(_cacheRootPath, build.LocalPath);
-            if (Directory.Exists(fullPath))
+            if (!Directory.Exists(fullPath))
             {
-                // Find the executable in the build folder
-                var exe = FindExecutable(fullPath);
-                return Task.FromResult<string?>(exe);
+                // Build is in manifest but directory doesn't exist - remove from manifest
+                _logger.LogWarning("Build {BuildId} is in manifest but directory doesn't exist. Removing from manifest.", buildId);
+                _manifest.Builds.Remove(build);
+                SaveManifest();
+                return Task.FromResult<string?>(null);
             }
-
-            // Build is in manifest but directory doesn't exist - remove from manifest
-            _logger.LogWarning("Build {BuildId} is in manifest but directory doesn't exist. Removing from manifest.", buildId);
-            _manifest.Builds.Remove(build);
-            SaveManifest();
-            return Task.FromResult<string?>(null);
+            
+            // Store the path to find executable outside the lock
+            exePath = fullPath;
         }
+        
+        // Find the executable outside the lock to avoid I/O operations inside the lock
+        if (exePath != null)
+        {
+            var exe = FindExecutable(exePath);
+            return Task.FromResult<string?>(exe);
+        }
+        
+        return Task.FromResult<string?>(null);
     }
 
     public Task<bool> IsBuildCachedAsync(string buildId)
@@ -101,76 +119,146 @@ public class BuildCacheService : IBuildCacheService
         IProgress<DownloadProgress>? progress = null,
         CancellationToken ct = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(buildId))
+        {
+            throw new ArgumentException("Build ID must be a non-empty, non-whitespace string.", nameof(buildId));
+        }
+
+        if (string.IsNullOrWhiteSpace(downloadUrl))
+        {
+            throw new ArgumentException("Download URL must be a non-empty, non-whitespace string.", nameof(downloadUrl));
+        }
+
+        if (!Uri.TryCreate(downloadUrl, UriKind.Absolute, out var parsedUri) ||
+            (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException("Download URL must be a valid absolute HTTP or HTTPS URL.", nameof(downloadUrl));
+        }
+        
         _logger.LogInformation("Starting download for build {BuildId} from {Url}", buildId, downloadUrl);
 
-        // Create temp file for download
-        var tempFile = Path.Combine(Path.GetTempPath(), $"watchtower-build-{Guid.NewGuid()}.zip");
-        
+        // Use a semaphore to ensure only one download per buildId at a time
+        SemaphoreSlim semaphore;
+        lock (_downloadLock)
+        {
+            if (!_downloadSemaphores.TryGetValue(buildId, out semaphore!))
+            {
+                semaphore = new SemaphoreSlim(1, 1);
+                _downloadSemaphores[buildId] = semaphore;
+            }
+        }
+
+        await semaphore.WaitAsync(ct);
         try
         {
-            // Download with progress reporting
-            await DownloadFileAsync(downloadUrl, tempFile, progress, ct);
+            // Create temp file for download
+            var tempFile = Path.Combine(Path.GetTempPath(), $"watchtower-build-{Guid.NewGuid()}.zip");
             
-            // Determine build type and display name from buildId
-            var (buildType, displayName, relativePath) = ParseBuildId(buildId);
-            
-            // Extract ZIP to cache folder
-            var extractPath = Path.Combine(_cacheRootPath, relativePath);
-            Directory.CreateDirectory(extractPath);
-            
-            _logger.LogInformation("Extracting build to {Path}", extractPath);
-            ZipFile.ExtractToDirectory(tempFile, extractPath, overwriteFiles: true);
-            
-            // Find executable in extracted files
-            var exePath = FindExecutable(extractPath);
-            if (exePath == null)
+            try
             {
-                throw new InvalidOperationException($"No executable found in build {buildId} after extraction");
-            }
-            
-            // Calculate build size
-            var sizeBytes = CalculateDirectorySize(extractPath);
-            
-            // Update manifest
-            lock (_lock)
-            {
-                // Remove existing entry if present
-                var existing = _manifest.Builds.FirstOrDefault(b => b.BuildId == buildId);
-                if (existing != null)
+                // Download with progress reporting
+                await DownloadFileAsync(downloadUrl, tempFile, progress, ct);
+                
+                // Determine build type and display name from buildId
+                var (buildType, displayName, relativePath) = ParseBuildId(buildId);
+                
+                // Extract ZIP to cache folder
+                var extractPath = Path.Combine(_cacheRootPath, relativePath);
+                Directory.CreateDirectory(extractPath);
+                
+                _logger.LogInformation("Extracting build to {Path}", extractPath);
+                
+                // Extract with zip slip protection
+                ExtractZipSafely(tempFile, extractPath);
+                
+                // Find executable in extracted files
+                var exePath = FindExecutable(extractPath);
+                if (exePath == null)
                 {
-                    _manifest.Builds.Remove(existing);
+                    var sampleFiles = Directory.EnumerateFiles(extractPath, "*", SearchOption.AllDirectories)
+                        .Select(Path.GetFileName)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Take(10)
+                        .ToList();
+
+                    var fileSummary = sampleFiles.Count == 0
+                        ? "No files were found in the extraction directory."
+                        : $"Sample files in extraction directory: {string.Join(", ", sampleFiles)}";
+
+                    var message =
+                        $"No executable was found in extracted build content. " +
+                        $"BuildId: {buildId}, ExtractionPath: {extractPath}, SearchPattern: \"*.exe\". " +
+                        fileSummary;
+
+                    _logger.LogWarning(message);
+                    throw new InvalidOperationException(message);
                 }
                 
-                // Add new entry
-                var buildInfo = new BuildInfo(
-                    buildId,
-                    displayName,
-                    relativePath,
-                    DateTimeOffset.UtcNow,
-                    sizeBytes,
-                    buildType);
+                // Calculate build size
+                var sizeBytes = CalculateDirectorySize(extractPath);
+                
+                // Update manifest
+                lock (_lock)
+                {
+                    // Remove existing entry if present
+                    var existing = _manifest.Builds.FirstOrDefault(b => b.BuildId == buildId);
+                    if (existing != null)
+                    {
+                        _manifest.Builds.Remove(existing);
+                    }
                     
-                _manifest.Builds.Add(buildInfo);
-                SaveManifest();
+                    // Add new entry
+                    var buildInfo = new BuildInfo(
+                        buildId,
+                        displayName,
+                        relativePath,
+                        DateTimeOffset.UtcNow,
+                        sizeBytes,
+                        buildType);
+                        
+                    _manifest.Builds.Add(buildInfo);
+                    SaveManifest();
+                }
+                
+                _logger.LogInformation("Successfully cached build {BuildId} at {Path}", buildId, exePath);
+                return exePath;
             }
-            
-            _logger.LogInformation("Successfully cached build {BuildId} at {Path}", buildId, exePath);
-            return exePath;
+            catch (OperationCanceledException)
+            {
+                // Clean up partial temp file on cancellation
+                if (File.Exists(tempFile))
+                {
+                    try
+                    {
+                        File.Delete(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete temp file {TempFile} after cancellation", tempFile);
+                    }
+                }
+                throw;
+            }
+            finally
+            {
+                // Delete temp file
+                if (File.Exists(tempFile))
+                {
+                    try
+                    {
+                        File.Delete(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete temp file {TempFile}", tempFile);
+                    }
+                }
+            }
         }
         finally
         {
-            // Delete temp file
-            if (File.Exists(tempFile))
-            {
-                try
-                {
-                    File.Delete(tempFile);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete temp file {TempFile}", tempFile);
-                }
-            }
+            semaphore.Release();
         }
     }
 
@@ -178,27 +266,36 @@ public class BuildCacheService : IBuildCacheService
     {
         _logger.LogInformation("Clearing all cached builds");
         
+        List<(string BuildId, string FullPath)> buildsToDelete;
+        
         lock (_lock)
         {
-            // Delete all build directories
-            foreach (var build in _manifest.Builds.ToList())
+            // Collect paths to delete while holding the lock
+            buildsToDelete = _manifest.Builds
+                .Select(b => (b.BuildId, FullPath: Path.Combine(_cacheRootPath, b.LocalPath)))
+                .ToList();
+        }
+        
+        // Delete directories outside the lock
+        foreach (var (buildId, fullPath) in buildsToDelete)
+        {
+            if (Directory.Exists(fullPath))
             {
-                var fullPath = Path.Combine(_cacheRootPath, build.LocalPath);
-                if (Directory.Exists(fullPath))
+                try
                 {
-                    try
-                    {
-                        Directory.Delete(fullPath, recursive: true);
-                        _logger.LogDebug("Deleted build directory {Path}", fullPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete build directory {Path}", fullPath);
-                    }
+                    Directory.Delete(fullPath, recursive: true);
+                    _logger.LogDebug("Deleted build directory {Path}", fullPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete build directory {Path}", fullPath);
                 }
             }
-            
-            // Clear manifest
+        }
+        
+        // Clear manifest with lock
+        lock (_lock)
+        {
             _manifest.Builds.Clear();
             SaveManifest();
         }
@@ -211,31 +308,43 @@ public class BuildCacheService : IBuildCacheService
         var cutoff = DateTimeOffset.UtcNow - maxAge;
         _logger.LogInformation("Cleaning builds older than {Cutoff} (maxAge: {MaxAge})", cutoff, maxAge);
         
+        List<(BuildInfo Build, string FullPath)> oldBuildsToDelete;
+        
         lock (_lock)
         {
-            var oldBuilds = _manifest.Builds.Where(b => b.DownloadedAt < cutoff).ToList();
-            
-            foreach (var build in oldBuilds)
+            // Collect old builds to delete while holding the lock
+            oldBuildsToDelete = _manifest.Builds
+                .Where(b => b.DownloadedAt < cutoff)
+                .Select(b => (Build: b, FullPath: Path.Combine(_cacheRootPath, b.LocalPath)))
+                .ToList();
+        }
+        
+        // Delete directories outside the lock
+        foreach (var (build, fullPath) in oldBuildsToDelete)
+        {
+            if (Directory.Exists(fullPath))
             {
-                var fullPath = Path.Combine(_cacheRootPath, build.LocalPath);
-                if (Directory.Exists(fullPath))
+                try
                 {
-                    try
-                    {
-                        Directory.Delete(fullPath, recursive: true);
-                        _logger.LogInformation("Deleted old build {BuildId} from {Date}", build.BuildId, build.DownloadedAt);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete old build directory {Path}", fullPath);
-                    }
+                    Directory.Delete(fullPath, recursive: true);
+                    _logger.LogInformation("Deleted old build {BuildId} from {Date}", build.BuildId, build.DownloadedAt);
                 }
-                
-                _manifest.Builds.Remove(build);
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete old build directory {Path}", fullPath);
+                }
             }
-            
-            if (oldBuilds.Count > 0)
+        }
+        
+        // Remove from manifest with lock
+        if (oldBuildsToDelete.Count > 0)
+        {
+            lock (_lock)
             {
+                foreach (var (build, _) in oldBuildsToDelete)
+                {
+                    _manifest.Builds.Remove(build);
+                }
                 SaveManifest();
             }
         }
@@ -301,6 +410,7 @@ public class BuildCacheService : IBuildCacheService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save manifest to {Path}", _manifestPath);
+            throw;
         }
     }
 
@@ -384,18 +494,56 @@ public class BuildCacheService : IBuildCacheService
         // Parse buildId format: "release-v1.0.0" or "pr-123"
         if (buildId.StartsWith("release-", StringComparison.OrdinalIgnoreCase))
         {
-            var version = buildId.Substring("release-".Length);
+            var version = buildId["release-".Length..];
             return (BuildType.Release, version, Path.Combine("releases", version));
         }
         else if (buildId.StartsWith("pr-", StringComparison.OrdinalIgnoreCase))
         {
-            var prNumber = buildId.Substring("pr-".Length);
+            var prNumber = buildId["pr-".Length..];
             return (BuildType.PullRequest, $"PR #{prNumber}", Path.Combine("pull-requests", $"pr-{prNumber}"));
         }
         else
         {
             // Fallback: treat as release
             return (BuildType.Release, buildId, Path.Combine("releases", buildId));
+        }
+    }
+
+    private void ExtractZipSafely(string zipPath, string extractPath)
+    {
+        var extractRootFullPath = Path.GetFullPath(extractPath);
+        
+        using var archive = ZipFile.OpenRead(zipPath);
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.FullName))
+            {
+                continue;
+            }
+
+            var destinationPath = Path.Combine(extractPath, entry.FullName);
+            var fullDestinationPath = Path.GetFullPath(destinationPath);
+
+            // Prevent zip slip by ensuring the destination path is within the extract root
+            if (!fullDestinationPath.StartsWith(extractRootFullPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(fullDestinationPath, extractRootFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"ZIP entry '{entry.FullName}' is trying to extract outside of the target directory.");
+            }
+
+            if (entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal))
+            {
+                Directory.CreateDirectory(fullDestinationPath);
+                continue;
+            }
+
+            var directoryName = Path.GetDirectoryName(fullDestinationPath);
+            if (!string.IsNullOrEmpty(directoryName))
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
+            entry.ExtractToFile(fullDestinationPath, overwrite: true);
         }
     }
 

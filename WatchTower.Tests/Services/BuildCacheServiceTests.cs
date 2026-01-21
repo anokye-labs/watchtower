@@ -14,7 +14,9 @@ namespace WatchTower.Tests.Services;
 public class BuildCacheServiceTests : IDisposable
 {
     private readonly Mock<ILogger<BuildCacheService>> _loggerMock;
+    private readonly string _originalHome;
     private readonly string _originalLocalAppData;
+    private readonly string _tempDir;
     private readonly string _testCacheRoot;
 
     public BuildCacheServiceTests()
@@ -22,16 +24,18 @@ public class BuildCacheServiceTests : IDisposable
         _loggerMock = new Mock<ILogger<BuildCacheService>>();
         
         // Create a temporary directory for test cache
-        var tempDir = Path.Combine(Path.GetTempPath(), $"WatchTowerTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(tempDir);
+        _tempDir = Path.Combine(Path.GetTempPath(), $"WatchTowerTests_{Guid.NewGuid()}");
+        Directory.CreateDirectory(_tempDir);
         
-        // Override HOME for Linux/Mac or LOCALAPPDATA for Windows
-        _originalLocalAppData = Environment.GetEnvironmentVariable("HOME") ?? "";
-        Environment.SetEnvironmentVariable("HOME", tempDir);
+        // Override HOME for Linux/Mac and LOCALAPPDATA for Windows
+        _originalHome = Environment.GetEnvironmentVariable("HOME") ?? "";
+        _originalLocalAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? "";
+        Environment.SetEnvironmentVariable("HOME", _tempDir);
+        Environment.SetEnvironmentVariable("LOCALAPPDATA", _tempDir);
         
         // On Linux, LocalApplicationData = $HOME/.local/share
         // We need to ensure .local/share exists for Environment.GetFolderPath to work
-        var localSharePath = Path.Combine(tempDir, ".local", "share");
+        var localSharePath = Path.Combine(_tempDir, ".local", "share");
         Directory.CreateDirectory(localSharePath);
         
         _testCacheRoot = Path.Combine(
@@ -42,20 +46,18 @@ public class BuildCacheServiceTests : IDisposable
 
     public void Dispose()
     {
-        // Restore original environment variable
-        Environment.SetEnvironmentVariable("HOME", _originalLocalAppData);
+        // Restore original environment variables
+        Environment.SetEnvironmentVariable("HOME", _originalHome);
+        Environment.SetEnvironmentVariable("LOCALAPPDATA", _originalLocalAppData);
         
         // Clean up test directories
         try
         {
-            var tempDir = _originalLocalAppData;
-            if (!string.IsNullOrEmpty(tempDir) && tempDir.Contains("WatchTowerTests_"))
+            if (!string.IsNullOrEmpty(_tempDir) && 
+                _tempDir.Contains("WatchTowerTests_") && 
+                Directory.Exists(_tempDir))
             {
-                // Clean up from the temp directory root
-                if (Directory.Exists(tempDir))
-                {
-                    Directory.Delete(tempDir, true);
-                }
+                Directory.Delete(_tempDir, true);
             }
         }
         catch
@@ -68,7 +70,7 @@ public class BuildCacheServiceTests : IDisposable
     public void Constructor_CreatesBaseCacheDirectory()
     {
         // Arrange & Act
-        var service = new BuildCacheService(_loggerMock.Object);
+        _ = new BuildCacheService(_loggerMock.Object);
 
         // Assert
         Assert.True(Directory.Exists(_testCacheRoot));
@@ -78,7 +80,7 @@ public class BuildCacheServiceTests : IDisposable
     public void Constructor_CreatesManifestFile()
     {
         // Arrange & Act
-        var service = new BuildCacheService(_loggerMock.Object);
+        _ = new BuildCacheService(_loggerMock.Object);
 
         // Assert
         var manifestPath = Path.Combine(_testCacheRoot, "manifest.json");

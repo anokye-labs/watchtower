@@ -33,6 +33,11 @@ public interface IBuildCacheService
     /// <param name="progress">Optional progress reporter for download updates.</param>
     /// <param name="ct">Cancellation token for the download operation.</param>
     /// <returns>Path to the downloaded executable.</returns>
+    /// <exception cref="ArgumentException">Thrown when buildId or downloadUrl is invalid.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when no executable is found in the extracted build.</exception>
+    /// <exception cref="HttpRequestException">Thrown when the download fails due to network errors.</exception>
+    /// <exception cref="IOException">Thrown when file system operations fail.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
     Task<string> DownloadAndCacheBuildAsync(
         string buildId,
         string downloadUrl,
