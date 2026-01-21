@@ -1,12 +1,12 @@
-name: "🐛 Bug - Mfomso (Defect)"
+name: "🐛 Bug Report"
 description: "Report a bug or unexpected behavior"
 labels: ["P1"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Mfomso (Bug Report)
-        *English: Report a defect or unexpected behavior*
+        ## Bug Report
+        Report a defect or unexpected behavior.
 
   - type: textarea
     id: description

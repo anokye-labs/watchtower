@@ -1,0 +1,227 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:WatchTower.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+        x:Class="WatchTower.Views.DevBuildMenuWindow"
+        x:DataType="vm:DevBuildMenuViewModel"
+        Title="Developer Build Menu"
+        Width="600" Height="450"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Background="#EE0A0A0A">
+    <!-- Note: Colors are hard-coded to match existing windows (MainWindow, SplashWindow).
+         Future improvement: Extract to theme resources for easier theme changes. -->
+    
+    <Border Background="#EE1A1A1A"
+            CornerRadius="8"
+            BorderBrush="#4AFFFFFF"
+            BorderThickness="1"
+            Padding="16"
+            Margin="8">
+        <DockPanel>
+            <!-- Header -->
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                <TextBlock Text="Developer Build Menu" 
+                           FontSize="20" 
+                           FontWeight="Bold"
+                           Foreground="White"
+                           VerticalAlignment="Center"/>
+                <Button Content="✕"
+                        Command="{Binding CancelCommand}"
+                        HorizontalAlignment="Right"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="#CCFFFFFF"
+                        FontSize="20"
+                        Padding="8,0"
+                        ToolTip.Tip="Close (Esc)"/>
+            </Grid>
+            
+            <!-- Build List -->
+            <Border DockPanel.Dock="Top" 
+                    Background="#1AFFFFFF"
+                    CornerRadius="6"
+                    Padding="8"
+                    Margin="0,0,0,12">
+                <ListBox x:Name="BuildsListBox"
+                         ItemsSource="{Binding Builds}"
+                         SelectedItem="{Binding SelectedBuild}"
+                         Height="180"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         DoubleTapped="OnBuildDoubleTapped"
+                         AutomationProperties.Name="Available builds list">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="4">
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding TypeIcon}" 
+                                           FontSize="16"
+                                           Margin="0,0,12,0"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" 
+                                           Text="{Binding DisplayName}" 
+                                           FontSize="14"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="2" 
+                                           Text="{Binding CreatedAt, StringFormat='{}{0:MMM d, yyyy}'}" 
+                                           FontSize="12"
+                                           Foreground="#AAFFFFFF"
+                                           Margin="12,0"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" 
+                                           Text="{Binding Status}" 
+                                           FontSize="12"
+                                           Foreground="{Binding StatusColor}"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+            
+            <!-- Auth Section -->
+            <StackPanel DockPanel.Dock="Top" 
+                        Orientation="Vertical" 
+                        Margin="0,0,0,12"
+                        Spacing="8">
+                <!-- Auth Button/Status Row -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button Content="Authenticate" 
+                            Command="{Binding AuthenticateCommand}"
+                            IsVisible="{Binding !IsAuthenticated}"
+                            Padding="12,6"
+                            MinWidth="120"
+                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                            CornerRadius="4"
+                            ToolTip.Tip="Authenticate to access PR builds"/>
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="8"
+                                IsVisible="{Binding IsAuthenticated}">
+                        <TextBlock Text="✓" 
+                                   Foreground="#4AFF4A"
+                                   FontSize="16"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding AuthenticatedUser, StringFormat='Authenticated as {0}'}" 
+                                   Foreground="#4AFF4A"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <!-- Inline Token Input (collapsible) -->
+                <Border IsVisible="{Binding ShowTokenInput}"
+                        Background="#1AFFFFFF"
+                        CornerRadius="6"
+                        Padding="12">
+                    <Grid RowDefinitions="Auto,8,Auto">
+                        <TextBlock Grid.Row="0"
+                                   Text="Enter GitHub Personal Access Token:"
+                                   FontSize="12"
+                                   Foreground="#CCFFFFFF"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,8,Auto,8,Auto">
+                            <TextBox Grid.Column="0"
+                                     x:Name="TokenInputBox"
+                                     Text="{Binding TokenInput}"
+                                     PasswordChar="●"
+                                     Watermark="ghp_..."
+                                     Background="#2AFFFFFF"
+                                     BorderBrush="#4AFFFFFF"
+                                     BorderThickness="1"
+                                     CornerRadius="4"
+                                     Padding="8"
+                                     AutomationProperties.Name="GitHub token input"/>
+                            <Button Grid.Column="2"
+                                    Content="Cancel"
+                                    Command="{Binding CancelTokenInputCommand}"
+                                    Padding="12,6"
+                                    MinWidth="80"
+                                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                    CornerRadius="4"/>
+                            <Button Grid.Column="4"
+                                    Content="Submit"
+                                    Command="{Binding SubmitTokenCommand}"
+                                    Padding="12,6"
+                                    MinWidth="80"
+                                    Background="{DynamicResource SystemAccentColor}"
+                                    CornerRadius="4"
+                                    Classes="accent"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </StackPanel>
+            
+            <!-- Progress Section -->
+            <StackPanel DockPanel.Dock="Top" 
+                        Margin="0,0,0,12" 
+                        Spacing="8"
+                        IsVisible="{Binding IsDownloading}">
+                <ProgressBar Value="{Binding DownloadProgress}" 
+                             Maximum="100"
+                             Height="8"
+                             Background="#2AFFFFFF"
+                             Foreground="#00F0FF"/>
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="{Binding DownloadProgress, StringFormat='{}{0:F0}%'}"
+                               FontSize="12"
+                               Foreground="#AAFFFFFF"/>
+                    <TextBlock Text="{Binding DownloadSpeed}"
+                               FontSize="12"
+                               Foreground="#AAFFFFFF"/>
+                </StackPanel>
+            </StackPanel>
+            
+            <!-- Status Message -->
+            <TextBlock DockPanel.Dock="Top" 
+                       Text="{Binding StatusMessage}" 
+                       Margin="0,0,0,12"
+                       FontSize="14"
+                       Foreground="White"
+                       TextWrapping="Wrap"
+                       MinHeight="20"/>
+            
+            <!-- Action Buttons -->
+            <StackPanel DockPanel.Dock="Bottom" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right" 
+                        Spacing="8">
+                <Button Content="{Binding CacheSize, StringFormat='Clear Cache ({0})'}" 
+                        Command="{Binding ClearCacheCommand}"
+                        IsEnabled="{Binding HasCachedBuilds}"
+                        Padding="12,6"
+                        MinWidth="120"
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="4"
+                        ToolTip.Tip="Clear all cached build files"/>
+                <Button Content="Refresh" 
+                        Command="{Binding RefreshCommand}"
+                        Padding="12,6"
+                        MinWidth="80"
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="4"
+                        ToolTip.Tip="Refresh build list"/>
+                <Button Content="Cancel" 
+                        Command="{Binding CancelCommand}"
+                        Padding="12,6"
+                        MinWidth="80"
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="4"
+                        ToolTip.Tip="Close without launching (Esc)"/>
+                <Button Content="Launch" 
+                        Command="{Binding LaunchBuildCommand}"
+                        IsEnabled="{Binding CanLaunchBuild}"
+                        Padding="12,6"
+                        MinWidth="80"
+                        Background="{DynamicResource SystemAccentColor}"
+                        CornerRadius="4"
+                        Classes="accent"
+                        ToolTip.Tip="Download and launch selected build (Enter)"/>
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</Window>

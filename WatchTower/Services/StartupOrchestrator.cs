@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace WatchTower.Services;
@@ -11,6 +12,7 @@ namespace WatchTower.Services;
 /// Orchestrates the application startup workflow with clear phases.
 /// Reports progress to the splash screen via IStartupLogger.
 /// </summary>
+[SupportedOSPlatform("windows5.1.2600")]
 public class StartupOrchestrator : IStartupOrchestrator
 {
     public Task<ServiceProvider?> ExecuteStartupAsync(IStartupLogger logger, IConfiguration configuration)
@@ -70,12 +72,14 @@ public class StartupOrchestrator : IStartupOrchestrator
             {
                 services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
             }
+            services.AddSingleton<ICredentialStorageService, CredentialStorageService>();
             services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
             services.AddSingleton<IBuildCacheService, BuildCacheService>();
 
             logger.Info("UserPreferencesService registered");
+            logger.Info("CredentialStorageService registered");
             logger.Info("AdaptiveCardThemeService registered");
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");

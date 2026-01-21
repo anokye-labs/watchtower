@@ -1,7 +1,7 @@
-# Nsumankwahene Migration Execution Checklist
+# Agent Flow Migration Execution Checklist
 
 ## 🎯 Goal
-Complete #69 - Nsumankwahene Flow System by executing migration and validation.
+Complete #69 - Agent Flow System by executing migration and validation.
 
 ## ✅ Already Complete (75%)
 - [x] Custom fields created
@@ -12,7 +12,7 @@ Complete #69 - Nsumankwahene Flow System by executing migration and validation.
 - [x] Issue templates created
 - [x] Agent configuration created
 - [x] Migration tooling built
-- [x] Documentation written (nsumankwahene-workflow.md)
+- [x] Documentation written (agent-workflow.md)
 
 ## 🚀 Remaining Tasks (25%)
 
@@ -42,7 +42,7 @@ Complete #69 - Nsumankwahene Flow System by executing migration and validation.
 
 4. **Verify in UI**:
    - Open [Project Board](https://github.com/orgs/anokye-labs/projects/2)
-   - Check "Adwuma Nhyehyɛe" (Work Queue) view
+   - Check "Work Queue" view
    - Verify all issues have fields populated
    - Spot-check a few issues for accuracy
 
@@ -53,7 +53,7 @@ Follow the validation checklist in issue #81:
 
 1. **Create Test Issue**:
    ```bash
-   gh issue create --title "Test: Nsumankwahene Validation" \
+   gh issue create --title "Test: Agent Flow Validation" \
      --body "Testing automation cycle" \
      --label "P3,docs" \
      --assignee @me
@@ -65,12 +65,12 @@ Follow the validation checklist in issue #81:
 
 3. **Create PR**:
    ```bash
-   git checkout -b test/nsumankwahene-validation
+   git checkout -b test/agent-flow-validation
    echo "# Test" >> test-file.md
    git add test-file.md
-   git commit -m "test: nsumankwahene validation"
-   git push origin test/nsumankwahene-validation
-   gh pr create --title "Test: Validate Nsumankwahene" \
+   git commit -m "test: agent flow validation"
+   git push origin test/agent-flow-validation
+   gh pr create --title "Test: Validate Agent Flow" \
      --body "Fixes #<test-issue-number>" \
      --draft
    ```
@@ -79,7 +79,7 @@ Follow the validation checklist in issue #81:
    - Check Actions tab for workflow run
    - Verify Status changed to "In progress"
    - Verify PR Link populated
-   - Verify `ɔkyeame:dwuma` label added
+   - Verify `agent:in-progress` label added
 
 5. **Mark Ready for Review**:
    ```bash
@@ -93,7 +93,7 @@ Follow the validation checklist in issue #81:
    ```
    - Verify Status changed to "Done"
    - Verify issue closed
-   - Verify `ɔkyeame:dwuma` label removed
+   - Verify `agent:in-progress` label removed
 
 7. **Test Stale Detection** (optional - can wait for weekly cron):
    - Manually trigger workflow or wait for weekly run
@@ -103,23 +103,23 @@ Follow the validation checklist in issue #81:
    ```bash
    git checkout main
    git pull
-   git branch -D test/nsumankwahene-validation
+   git branch -D test/agent-flow-validation
    ```
 
 ### Step 3: Final Verification
 **Estimated Time: 15 minutes**
 
 1. **Views Check**:
-   - Adwuma Nhyehyɛe (Work Queue) - Has Ready items
-   - Asiw Amanneɛ (Blocked Items) - Empty or shows known blockers
-   - Hwehwɛ Ahyɛnsoɔ (Review Tracking) - Shows PRs in review
-   - Nkɔsoɔ Akontaabu (Throughput) - Shows completed items
-   - Nkabom Mepɔ (Dependency Map) - Shows dependency chains
+   - Work Queue - Has Ready items
+   - Blocked Items - Empty or shows known blockers
+   - Review Tracking - Shows PRs in review
+   - Throughput - Shows completed items
+   - Dependency Map - Shows dependency chains
 
 2. **Documentation Check**:
-   - [x] docs/nsumankwahene-workflow.md exists
+   - [x] docs/agent-workflow.md exists
    - [x] README.md links to project board
-   - [x] AGENTS.md references Nsumankwahene
+   - [x] AGENTS.md references Agent Flow
 
 3. **Update Issue #69**:
    - Mark all checkboxes complete
@@ -145,7 +145,7 @@ All items from #69 must be true:
 - Check API rate limits: `gh api rate_limit`
 
 ### Automation Not Triggering
-- Check workflow file syntax: `.github/workflows/nsumankwahene-automation.yml`
+- Check workflow file syntax: `.github/workflows/agent-automation.yml`
 - Verify PR body contains `Closes #X` or `Fixes #X`
 - Check Actions tab for errors
 
@@ -160,7 +160,7 @@ All items from #69 must be true:
 - Issue #76: https://github.com/anokye-labs/watchtower/issues/76
 - Issue #81: https://github.com/anokye-labs/watchtower/issues/81
 - Project Board: https://github.com/orgs/anokye-labs/projects/2
-- Workflow Docs: docs/nsumankwahene-workflow.md
+- Workflow Docs: docs/agent-workflow.md
 
 ---
 

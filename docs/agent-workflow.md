@@ -1,10 +1,10 @@
-# Nsumankwahene Workflow (Spiritual Guardian Flow)
+# Agent Workflow (Continuous Flow)
 
-*English: Agent-Optimized Continuous Flow Project Management*
+*Agent-Optimized Continuous Flow Project Management*
 
 ## Overview
 
-The Nsumankwahene system replaces time-based sprint iterations with a state-driven continuous flow optimized for AI agent collaboration. Named after the Akan concept of a spiritual guardian, it provides structure and protection for the development process.
+The Agent Flow system replaces time-based sprint iterations with a state-driven continuous flow optimized for AI agent collaboration. It provides structure and protection for the development process.
 
 ### Why Continuous Flow?
 
@@ -16,14 +16,13 @@ AI agents work asynchronously, in parallel, and with different context needs tha
 
 ### Design Philosophy
 
-This system honors WatchTower's "Ancestral Futurism" design language by using Akan terminology with English descriptions. This is not merely decorative—it reinforces the cultural foundation of the project while maintaining accessibility.
+This system provides clear, accessible terminology for both human developers and AI agents to collaborate effectively.
 
 ---
 
 ## Field Glossary
 
 ### Status
-*Akan: Nsoromma ("Star progression through the night sky")*
 
 | Value | When to Use |
 |-------|-------------|
@@ -36,7 +35,6 @@ This system honors WatchTower's "Ancestral Futurism" design language by using Ak
 | Abandoned | Will not be implemented |
 
 ### Priority
-*Akan: Tumi ("Power/Authority level")*
 
 | Value | Response Time |
 |-------|---------------|
@@ -46,7 +44,6 @@ This system honors WatchTower's "Ancestral Futurism" design language by using Ak
 | P3 | Low - when convenient |
 
 ### Complexity
-*Akan: Mu ("Depth/Difficulty")*
 
 Uses Fibonacci scale (1, 2, 3, 5, 8, 13):
 - **1-2**: Simple, Copilot-eligible
@@ -54,7 +51,6 @@ Uses Fibonacci scale (1, 2, 3, 5, 8, 13):
 - **8-13**: Complex, requires Tech Design Needed
 
 ### Agent Type
-*Akan: Ɔkyeame ("Linguist/Interpreter")*
 
 | Value | When to Assign |
 |-------|----------------|
@@ -65,7 +61,6 @@ Uses Fibonacci scale (1, 2, 3, 5, 8, 13):
 | Any Agent | Any agent can work on this |
 
 ### Component
-*Akan: Fapem ("Foundation section")*
 
 Matches codebase structure:
 - Services
@@ -78,19 +73,16 @@ Matches codebase structure:
 - Build
 
 ### Dependencies
-*Akan: Nkabom ("Unity/Connection")*
 
 Format: `#42, anokye-labs/watchtower#53` or `None`
 
 All listed issues must be in Done before work can begin.
 
 ### Last Activity
-*Akan: Da-Akyire ("Most recent day")*
 
 Auto-updated on issue/PR activity. Used for stale detection.
 
 ### PR Link
-*Akan: PR Nkitahodi ("Pull request connection")*
 
 Auto-populated when PR references issue.
 
@@ -129,7 +121,7 @@ Backlog ──────► Ready ──────► In progress ───�
 
 ## CI Integration & Automated Status Management
 
-The Nsumankwahene automation integrates with GitHub CI workflows to automatically manage issue and PR status based on check results.
+The Agent Flow automation integrates with GitHub CI workflows to automatically manage issue and PR status based on check results.
 
 ### Automatic Status Transitions
 
@@ -137,7 +129,7 @@ When a PR with linked issues has CI checks:
 
 | CI Event | Automatic Actions |
 |----------|------------------|
-| **All checks pass** | • Removes `needs-fix` label from linked issues<br>• Removes consecutive failure tracking labels (`ci-fail:*`)<br>• Transitions linked issues to "In review" status<br>• Removes `ɔkyeame:dwuma` label |
+| **All checks pass** | • Removes `needs-fix` label from linked issues<br>• Removes consecutive failure tracking labels (`ci-fail:*`)<br>• Transitions linked issues to "In review" status<br>• Removes `agent:in-progress` label |
 | **Any check fails (1st)** | • Adds `needs-fix` label to PR and linked issues<br>• Adds `ci-fail:1` label to track first failure<br>• Posts comment on PR with failure details |
 | **Checks fail (2nd consecutive)** | • Updates to `ci-fail:2` label<br>• **Transitions linked issues to "Blocked" status**<br>• Posts comment explaining status change<br>• Issue remains blocked until CI passes |
 | **Checks fail (3+ consecutive)** | • Updates to `ci-fail:3+` label<br>• Maintains "Blocked" status<br>• Tracks ongoing CI issues |
@@ -187,7 +179,7 @@ The CI integration monitors `check_suite` events from GitHub Actions workflows:
 ### Work Selection
 
 ```
-IF query "Adwuma Nhyehyɛe" (Work Queue) view:
+IF query "Work Queue" view:
   FOR each item ordered by Priority DESC, Complexity ASC:
     IF Status = "Ready" 
        AND Dependencies = "None" or all deps in Done
@@ -197,10 +189,10 @@ IF query "Adwuma Nhyehyɛe" (Work Queue) view:
 
 ### Before Starting Work
 
-1. ✅ Verify Dependencies - all dependencies in Done
-2. ✅ Check for `nnipa-gyinae-hia` label - if present, STOP
-3. ✅ Check for `Tech Design Needed` - if present, verify design approved
-4. ✅ Read acceptance criteria carefully
+1. Verify Dependencies - all dependencies in Done
+2. Check for `requires:human-decision` label - if present, STOP
+3. Check for `Tech Design Needed` - if present, verify design approved
+4. Read acceptance criteria carefully
 
 ### When Encountering Blockers
 
@@ -223,9 +215,9 @@ IF query "Adwuma Nhyehyɛe" (Work Queue) view:
 ### Agent Signals
 | Label | Meaning |
 |-------|---------|
-| `ɔkyeame:siesie` | Ready for agent work |
-| `ɔkyeame:dwuma` | Agent actively working |
-| `nnipa-gyinae-hia` | Requires human decision |
+| `agent:ready` | Ready for agent work |
+| `agent:in-progress` | Agent actively working |
+| `requires:human-decision` | Requires human decision |
 | `stale` | No activity >5 days |
 | `needs-fix` | PR checks failed |
 
@@ -241,9 +233,9 @@ IF query "Adwuma Nhyehyɛe" (Work Queue) view:
 ### Requirement Signals
 | Label | Meaning |
 |-------|---------|
-| `nhwɛsoɔ-hia` | Must include tests |
-| `nsakrae:api` | Breaking API change |
-| `asiw:external` | Blocked by third-party |
+| `requires:testing` | Must include tests |
+| `breaking:api-change` | Breaking API change |
+| `blocked:external` | Blocked by third-party |
 | `Tech Design Needed` | Requires architecture review |
 
 ---
@@ -259,7 +251,7 @@ IF query "Adwuma Nhyehyɛe" (Work Queue) view:
 
 ### Automation not triggering
 
-1. Verify `.github/workflows/nsumankwahene-automation.yml` exists
+1. Verify `.github/workflows/agent-automation.yml` exists
 2. Check workflow runs in Actions tab
 3. Ensure PR body contains `Closes #X` or `Fixes #X`
 4. Verify field IDs in `.github/project-config.yml` are current
@@ -335,8 +327,7 @@ mutation {
 ## Related Documentation
 
 - [AGENTS.md](../AGENTS.md) - Agent development guidelines
-- [Design Language](../concept-art/design-language.md) - Akan cultural design system
-- [.github/ɔkyeame-config.yml](../.github/ɔkyeame-config.yml) - Agent configuration
+- [.github/agent-config.yml](../.github/agent-config.yml) - Agent configuration
 - [.github/project-config.yml](../.github/project-config.yml) - Field IDs and project configuration
 
 ---
@@ -345,17 +336,17 @@ mutation {
 
 Quick reference for developers and agents working with the GitHub API:
 
-| English Field | Akan Term | Field ID | Type |
-|---------------|-----------|----------|------|
-| Status | Nsoromma | PVTSSF_lADODbLOnM4BLchYzg7BHPM | SingleSelect |
-| Priority | Tumi | PVTSSF_lADODbLOnM4BLchYzg7BHUU | SingleSelect |
-| Complexity | Mu | PVTF_lADODbLOnM4BLchYzg7BHUc | Number |
-| Agent Type | Ɔkyeame | PVTSSF_lADODbLOnM4BLchYzg7DI1s | SingleSelect |
-| Component | Fapem | PVTSSF_lADODbLOnM4BLchYzg7DI6Y | SingleSelect |
-| Dependencies | Nkabom | PVTF_lADODbLOnM4BLchYzg7DI88 | Text |
-| Last Activity | Da-Akyire | PVTF_lADODbLOnM4BLchYzg7DJR8 | Date |
-| PR Link | PR Nkitahodi | PVTF_lADODbLOnM4BLchYzg7DJHo | Text |
+| Field | Field ID | Type |
+|-------|----------|------|
+| Status | PVTSSF_lADODbLOnM4BLchYzg7BHPM | SingleSelect |
+| Priority | PVTSSF_lADODbLOnM4BLchYzg7BHUU | SingleSelect |
+| Complexity | PVTF_lADODbLOnM4BLchYzg7BHUc | Number |
+| Agent Type | PVTSSF_lADODbLOnM4BLchYzg7DI1s | SingleSelect |
+| Component | PVTSSF_lADODbLOnM4BLchYzg7DI6Y | SingleSelect |
+| Dependencies | PVTF_lADODbLOnM4BLchYzg7DI88 | Text |
+| Last Activity | PVTF_lADODbLOnM4BLchYzg7DJR8 | Date |
+| PR Link | PVTF_lADODbLOnM4BLchYzg7DJHo | Text |
 
 ---
 
-*Last Updated: 2025-12-29*
+*Last Updated: 2026-01-20*

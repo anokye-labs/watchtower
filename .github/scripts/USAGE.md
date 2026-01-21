@@ -30,29 +30,29 @@ if (!itemId) {
 // Define config first (typically loaded from project-config.yml)
 const config = {
   fields: {
-    nsoromma: { id: 'PVTF_...', options: { afiase: 'PVTSSOO_...' } },
-    tumi: { id: 'PVTF_...', options: { p1_abusuapanyin: 'PVTSSOO_...' } },
-    mu: { id: 'PVTF_...' },
-    fapem: { id: 'PVTF_...', options: { services: 'PVTSSOO_...' } },
-    okyeame: { id: 'PVTF_...', options: { copilot: 'PVTSSOO_...' } },
-    nkabom: { id: 'PVTF_...' },
-    da_akyire: { id: 'PVTF_...' },
-    pr_nkitahodi: { id: 'PVTF_...' }
+    status: { id: 'PVTF_...', options: { backlog: 'PVTSSOO_...' } },
+    priority: { id: 'PVTF_...', options: { p1: 'PVTSSOO_...' } },
+    complexity: { id: 'PVTF_...' },
+    component: { id: 'PVTF_...', options: { services: 'PVTSSOO_...' } },
+    agent_type: { id: 'PVTF_...', options: { copilot: 'PVTSSOO_...' } },
+    dependencies: { id: 'PVTF_...' },
+    last_activity: { id: 'PVTF_...' },
+    pr_link: { id: 'PVTF_...' }
   }
 };
 
 // Update individual fields (using values from config)
-const fieldId = config.fields.nsoromma.id;
-const optionId = config.fields.nsoromma.options.afiase;
+const fieldId = config.fields.status.id;
+const optionId = config.fields.status.options.backlog;
 await client.updateSingleSelect(itemId, fieldId, optionId);
-await client.updateNumber(itemId, config.fields.mu.id, 5);
-await client.updateText(itemId, config.fields.nkabom.id, 'Some text');
-await client.updateDate(itemId, config.fields.da_akyire.id, '2025-01-15');
+await client.updateNumber(itemId, config.fields.complexity.id, 5);
+await client.updateText(itemId, config.fields.dependencies.id, 'Some text');
+await client.updateDate(itemId, config.fields.last_activity.id, '2025-01-15');
 
 // Batch update all fields
 const fields = {
-  status: 'afiase',
-  priority: 'p1_abusuapanyin',
+  status: 'backlog',
+  priority: 'p1',
   complexity: 3,
   component: 'services',
   agent_type: 'copilot',
@@ -138,12 +138,12 @@ Tests cover:
 
 See `.github/project-config.yml` for field IDs and option IDs.
 
-Akan field names:
-- `nsoromma` - Status
-- `tumi` - Priority
-- `mu` - Complexity
-- `okyeame` - Agent Type
-- `fapem` - Component
-- `nkabom` - Dependencies
-- `da_akyire` - Last Activity
-- `pr_nkitahodi` - PR Link
+Field names:
+- `status` - Status
+- `priority` - Priority
+- `complexity` - Complexity
+- `agent_type` - Agent Type
+- `component` - Component
+- `dependencies` - Dependencies
+- `last_activity` - Last Activity
+- `pr_link` - PR Link

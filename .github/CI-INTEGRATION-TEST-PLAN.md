@@ -1,6 +1,6 @@
 # CI Integration Testing Plan
 
-This document outlines the test plan for validating the CI integration with Nsumankwahene project automation.
+This document outlines the test plan for validating the CI integration with Agent Automation project automation.
 
 ## Prerequisites
 
@@ -94,7 +94,7 @@ gh api graphql -f query='
 - [ ] `needs-fix` label removed from issue
 - [ ] All `ci-fail:*` labels removed from issue
 - [ ] Issue status transitions to "In review"
-- [ ] `ɔkyeame:dwuma` label removed from issue
+- [ ] `agent:in-progress` label removed from issue
 
 **Verification Commands:**
 ```bash
@@ -127,7 +127,7 @@ gh pr view <PR-NUMBER> --json labels
 ### Scenario 7: Workflow Filtering (When Enabled)
 
 **Setup:**
-1. Uncomment workflow filter in nsumankwahene-automation.yml
+1. Uncomment workflow filter in agent-automation.yml
 2. Trigger check_suite from non-pr-validation workflow
 
 **Expected Behavior:**
