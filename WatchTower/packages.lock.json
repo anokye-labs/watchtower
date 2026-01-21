@@ -82,6 +82,12 @@
           "SkiaSharp.Svg": "1.60.0"
         }
       },
+      "Meziantou.Framework.Win32.CredentialManager": {
+        "type": "Direct",
+        "requested": "[1.7.15, )",
+        "resolved": "1.7.15",
+        "contentHash": "sB3ZhG4/64PJ6SMeksQixFQ+e+FF5L+CrnQ/eKemaqquVK/tWdrmoLLoWGHVZThbMUShN9W+Ou0VXvkeUDHnfQ=="
+      },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
         "requested": "[1.47.0, )",
