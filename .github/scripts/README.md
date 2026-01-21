@@ -1,6 +1,6 @@
-# Nsumankwahene Migration Scripts
+# Agent Flow Migration Scripts
 
-This directory contains scripts for migrating open issues to the Nsumankwahene (Spiritual Guardian) continuous flow system.
+This directory contains scripts for migrating open issues to the Agent Flow continuous flow system.
 
 ## Prerequisites
 
@@ -58,48 +58,48 @@ The migration script:
 
 1. **Fetches all open issues** from the repository (excluding pull requests)
 2. **Infers field values** from existing issue data:
-   - **Priority (Tumi)**: Inferred from P0/P1/P2 labels (defaults to P3)
-   - **Complexity (Mu)**: Calculated from "Tech Design Needed" label and body length (1-13 scale)
-   - **Component (Fapem)**: Inferred from labels (services, infrastructure, testing, views, docs, etc.)
-   - **Agent Type (Ɔkyeame)**: Based on complexity, labels, and body content
-   - **Dependencies (Nkabom)**: Parsed from "Depends on" or "Blocked by" patterns in issue body
-   - **Last Activity (Da-Akyire)**: Set from issue's updated_at date
-   - **Status (Nsoromma)**: All issues start in "Afiase" (Backlog)
+   - **Priority**: Inferred from P0/P1/P2 labels (defaults to P3)
+   - **Complexity**: Calculated from "Tech Design Needed" label and body length (1-13 scale)
+   - **Component**: Inferred from labels (services, infrastructure, testing, views, docs, etc.)
+   - **Agent Type**: Based on complexity, labels, and body content
+   - **Dependencies**: Parsed from "Depends on" or "Blocked by" patterns in issue body
+   - **Last Activity**: Set from issue's updated_at date
+   - **Status**: All issues start in "Backlog"
 3. **Adds issues to the project** if not already present
 4. **Updates all custom fields** for each issue
 5. **Provides a summary report** showing counts by priority, component, and agent type
 
 ## Configuration
 
-The script uses `project-config.yml` which is a copy of the root `.github/project-config.yml`. This file maps to the Akan field names in the GitHub Project:
+The script uses `project-config.yml` which is a copy of the root `.github/project-config.yml`. This file maps to the field names in the GitHub Project:
 
 **Note**: This is a local copy for the migration script. If the root config changes, you may need to update this copy or use the root config directly by modifying the script's config path.
 
-- **nsoromma** - Status (Nsoromma)
-- **tumi** - Priority (Tumi)  
-- **mu** - Complexity (Mu)
-- **okyeame** - Agent Type (Ɔkyeame)
-- **fapem** - Component (Fapem)
-- **nkabom** - Dependencies (Nkabom)
-- **da_akyire** - Last Activity (Da-Akyire)
-- **pr_nkitahodi** - PR Link (PR Nkitahodi)
+- **status** - Status
+- **priority** - Priority
+- **complexity** - Complexity
+- **agent_type** - Agent Type
+- **component** - Component
+- **dependencies** - Dependencies
+- **last_activity** - Last Activity
+- **pr_link** - PR Link
 
 ## Field Inference Logic
 
-### Priority (Tumi)
-- `P0` label → `p0_hene` (Critical)
-- `P1` label → `p1_abusuapanyin` (High)
-- `P2` label → `p2_obi` (Medium)
-- No label → `p3_akwadaa` (Low) - default
+### Priority
+- `P0` label → P0 (Critical)
+- `P1` label → P1 (High)
+- `P2` label → P2 (Medium)
+- No label → P3 (Low) - default
 
-### Complexity (Mu)
+### Complexity
 - Has "Tech Design Needed" label → 8
 - Body length > 3000 chars → 5
 - Body length > 1500 chars → 3
 - Body length > 500 chars → 2
 - Otherwise → 1
 
-### Component (Fapem)
+### Component
 Maps labels to components:
 - `services`, `voice` → services
 - `mcp-proxy`, `architecture`, `infrastructure` → infrastructure
@@ -109,16 +109,16 @@ Maps labels to components:
 - No labels → unclassified
 - Labels exist but don't match above → services
 
-### Agent Type (Ɔkyeame)
-- Has "Tech Design Needed" or "nnipa-gyinae-hia" label → `nnipa_hia` (Human Required)
-- Has "testing" label → `biara` (Any Agent)
-- Body mentions "Copilot" → `copilot`
-- Body mentions "Claude" → `claude_opus`
-- Body mentions "Task-Maestro" → `task_maestro`
-- Complexity ≤ 3 → `copilot`
-- Otherwise → `claude_opus`
+### Agent Type
+- Has "Tech Design Needed" or "requires:human-decision" label → Human Required
+- Has "testing" label → Any Agent
+- Body mentions "Copilot" → Copilot
+- Body mentions "Claude" → Copilot + Thinking
+- Body mentions "Task-Maestro" → Task-Maestro
+- Complexity ≤ 3 → Copilot
+- Otherwise → Copilot + Thinking
 
-### Dependencies (Nkabom)
+### Dependencies
 Searches issue body for patterns:
 - "Depends on: #123"
 - "Blocked by: #456"
@@ -185,4 +185,4 @@ The `graphql-client.mjs` module provides:
 - #76 - Parent issue: Migration script and migrate all 32 open issues
 
 ## Validation Test
-This line validates Nsumankwahene automation.
+This line validates Agent Flow automation.

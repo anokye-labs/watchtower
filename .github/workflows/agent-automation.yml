@@ -1,4 +1,4 @@
-name: Nsumankwahene Automation (Spiritual Guardian Flow)
+name: Agent Automation (Continuous Flow)
 
 on:
   pull_request:
@@ -233,21 +233,21 @@ jobs:
                   console.log(`✓ Updated last activity for issue #${issueNumber}`);
                 }
                 
-                // Add ɔkyeame:dwuma label to issue
+                // Add agent:in-progress label to issue
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
-                  labels: ['ɔkyeame:dwuma']
+                  labels: ['agent:in-progress']
                 });
                 
-                // Remove ɔkyeame:siesie label if present
+                // Remove agent:ready label if present
                 try {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    name: 'ɔkyeame:siesie'
+                    name: 'agent:ready'
                   });
                 } catch (e) {
                   // Label might not exist, ignore
@@ -419,7 +419,7 @@ jobs:
                 
                 console.log(`✓ Updated issue #${issueNumber} to "In review"`);
                 
-                // Remove needs-fix and ɔkyeame:dwuma labels
+                // Remove needs-fix and agent:in-progress labels
                 try {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner,
@@ -434,7 +434,7 @@ jobs:
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    name: 'ɔkyeame:dwuma'
+                    name: 'agent:in-progress'
                   });
                 } catch (e) {}
                 
@@ -878,13 +878,13 @@ jobs:
                 
                 console.log(`✓ Updated issue #${issueNumber} to "Done"`);
                 
-                // Remove ɔkyeame:dwuma label
+                // Remove agent:in-progress label
                 try {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    name: 'ɔkyeame:dwuma'
+                    name: 'agent:in-progress'
                   });
                 } catch (e) {}
                 

@@ -313,16 +313,16 @@ Keep MVVM separation strict. Stay on latest stable Avalonia (currently 11.3.9, s
 
 For game controller features, see [docs/game-controller-support.md](docs/game-controller-support.md). For voice features, see [docs/voice-setup-guide.md](docs/voice-setup-guide.md). For adaptive card theming, see [docs/ADAPTIVE-CARD-THEME-PLAN.md](docs/ADAPTIVE-CARD-THEME-PLAN.md). For startup flow, see [docs/splash-screen-startup.md](docs/splash-screen-startup.md).
 
-## Nsumankwahene Project Management
+## Agent Flow Project Management
 
-Work is tracked via the [Nsumankwahene Flow System](docs/nsumankwahene-workflow.md).
+Work is tracked via the [Agent Flow System](docs/agent-workflow.md).
 
 **Key Rules:**
 - Check Dependencies field before starting any Ready task
 - [P] prerequisite markers → Priority field: [P0]=P0, [P1]=P1, etc.
 - Set Status=Blocked if blocked; always populate Dependencies with blocker issue numbers
-- When encountering `nnipa-gyinae-hia` label, do NOT proceed - set Blocked and assign to @hoopsomuah
-- Read `.github/ɔkyeame-config.yml` for full agent behavior rules
+- When encountering `requires:human-decision` label, do NOT proceed - set Blocked and assign to @hoopsomuah
+- Read `.github/agent-config.yml` for full agent behavior rules
 
 ## Important Notes
 
