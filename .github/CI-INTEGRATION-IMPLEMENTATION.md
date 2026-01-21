@@ -2,11 +2,11 @@
 
 ## Overview
 
-This document summarizes the implementation of CI status integration with the Nsumankwahene project automation system.
+This document summarizes the implementation of CI status integration with the Agent Automation project automation system.
 
 ## Issue Reference
 
-- **Issue**: #162 (main) - Integrate CI Status with Nsumankwahene Project Automation
+- **Issue**: #162 (main) - Integrate CI Status with Agent Automation Project Automation
 - **Dependencies**: 
   - #164 - PR validation workflow (pending)
   - #165 - Coverage reporting (pending)
@@ -20,7 +20,7 @@ January 2, 2026
 
 ### 1. Workflow Enhancements
 
-**File**: `.github/workflows/nsumankwahene-automation.yml`
+**File**: `.github/workflows/agent-automation.yml`
 
 #### pr-checks-passed Job
 - **Location**: Lines ~261-468
@@ -28,7 +28,7 @@ January 2, 2026
   - Added workflow filtering placeholder (commented, ready for pr-validation.yml)
   - Implemented cleanup of consecutive failure tracking labels
   - Removes: `ci-fail:1`, `ci-fail:2`, `ci-fail:3+` on success
-  - Maintains existing behavior for removing `needs-fix` and `ɔkyeame:dwuma` labels
+  - Maintains existing behavior for removing `needs-fix` and `agent:in-progress` labels
 
 #### pr-checks-failed Job  
 - **Location**: Lines ~469-753
@@ -42,7 +42,7 @@ January 2, 2026
 
 ### 2. Documentation Updates
 
-#### docs/nsumankwahene-workflow.md
+#### docs/agent-workflow.md
 - **New Section**: "CI Integration & Automated Status Management" (after line 127)
 - **Content Added**:
   - Automatic status transition table
@@ -107,7 +107,7 @@ CI Success:
 
 ### GraphQL Integration
 
-Follows existing patterns in nsumankwahene-automation.yml:
+Follows existing patterns in agent-automation.yml:
 
 1. Query project structure
 2. Find status field and "Blocked" option
@@ -202,9 +202,9 @@ gh label delete ci-fail:3+
 
 ## Related Files
 
-- `.github/workflows/nsumankwahene-automation.yml` - Main workflow
+- `.github/workflows/agent-automation.yml` - Main workflow
 - `.github/CI-INTEGRATION-TEST-PLAN.md` - Test plan
-- `docs/nsumankwahene-workflow.md` - Workflow documentation
+- `docs/agent-workflow.md` - Workflow documentation
 - `docs/label-system.md` - Label system documentation
 - `.github/project-config.yml` - Project field IDs
 

@@ -121,26 +121,26 @@ jobs:
             // Calculate metrics
             const items = result.organization.projectV2.items.nodes;
             
-            // 1. Nsoromma distribution (count per status)
+            // 1. Status distribution (count per status)
             const statusCounts = {
-              'Backlog': 0,    // Backlog
-              'Ready': 0,    // Ready
-              'In Progress': 0,     // In Progress
-              'In Review': 0,    // Review
-              'Blocked': 0,      // Blocked
-              'Done': 0        // Done
+              'Backlog': 0,
+              'Ready': 0,
+              'In progress': 0,
+              'In review': 0,
+              'Blocked': 0,
+              'Done': 0
             };
             
-            // 2. Average Complexity by Component (Complexity by Component)
+            // 2. Average Complexity by Component
             const complexityByComponent = {};
             
-            // 3. Asiw (Blocked) count with issue links
+            // 3. Blocked count with issue links
             const blockedItems = [];
             
-            // 4. Ɔkyeame utilization (% by agent type)
+            // 4. Agent type utilization (% by agent type)
             const agentTypeCounts = {};
             
-            // 5. This week's Wie count
+            // 5. This week's completed count
             let completedThisWeek = 0;
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -240,34 +240,34 @@ jobs:
             
             // Format report
             const report = `
-            ## Progress Metrics (Progress Metrics)
+            ## Progress Metrics
             *Generated: ${new Date().toISOString()}*
             
-            ### Status Distribution (Status)
+            ### Status Distribution
             | Status | Count |
             |--------|-------|
             | Backlog | ${statusCounts['Backlog']} |
             | Ready | ${statusCounts['Ready']} |
-            | In Progress | ${statusCounts['In Progress']} |
-            | Review | ${statusCounts['In Review']} |
+            | In progress | ${statusCounts['In progress']} |
+            | In review | ${statusCounts['In review']} |
             | Blocked | ${statusCounts['Blocked']} |
             | Done | ${statusCounts['Done']} |
             
-            ### Blocked Items (Blocked Items)
+            ### Blocked Items
             ${blockedItems.length > 0 ? blockedItems.map(i => `- #${i.number}: ${i.title}`).join('\n') : 'No blocked items 🎉'}
             
-            ### Average Complexity by Component (Complexity by Component)
+            ### Average Complexity by Component
             | Component | Average Complexity |
             |-----------|-------------------|
             ${complexityTable}
             
-            ### Agent Type Utilization (Agent Type Distribution)
+            ### Agent Type Utilization
             | Agent Type | Count | Percentage |
             |------------|-------|------------|
             ${agentTypeTable}
             
             ### Completed This Week
-            ${completedThisWeek} items moved to Wie
+            ${completedThisWeek} items moved to Done
             
             ### Velocity Trend (Last 4 Weeks)
             \`\`\`
