@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Enable package lock files for all projects to ensure reproducible builds -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    
+    <!-- 
+      Enable locked mode in CI to enforce that lock files are up to date.
+      This ensures CI builds use exact same package versions as developers
+      and fails the build if lock files are out of sync with project files.
+      
+      Benefits:
+      - Reproducible builds across all environments
+      - Detects supply chain attacks if package hashes change
+      - Faster restores (NuGet can skip resolution)
+      - Catches drift if lock files aren't updated after changing dependencies
+    -->
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+</Project>
