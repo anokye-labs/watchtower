@@ -397,6 +397,11 @@
         "resolved": "3.8.2",
         "contentHash": "P61Pkc+2GgX9PGJmm0MTVYKh0zPbak25rkyb5MU8Vq7x/VgFV/0h3L2bP7H4Oz5sfmm03H8T010cqEKQVA4Jew=="
       },
+      "Meziantou.Framework.Win32.CredentialManager": {
+        "type": "Transitive",
+        "resolved": "1.7.15",
+        "contentHash": "sB3ZhG4/64PJ6SMeksQixFQ+e+FF5L+CrnQ/eKemaqquVK/tWdrmoLLoWGHVZThbMUShN9W+Ou0VXvkeUDHnfQ=="
+      },
       "MicroCom.CodeGenerator.MSBuild": {
         "type": "Transitive",
         "resolved": "0.11.0",
@@ -881,6 +886,7 @@
           "Avalonia.Themes.Fluent": "[11.3.11, )",
           "FluentIcons.Avalonia.Fluent": "[2.0.316.1, )",
           "Iciclecreek.AdaptiveCards.Rendering.Avalonia": "[1.0.4, )",
+          "Meziantou.Framework.Win32.CredentialManager": "[1.7.15, )",
           "Microsoft.CognitiveServices.Speech": "[1.47.0, )",
           "Microsoft.Extensions.Configuration": "[10.0.2, )",
           "Microsoft.Extensions.Configuration.Json": "[10.0.2, )",

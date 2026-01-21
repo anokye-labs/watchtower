@@ -76,12 +76,14 @@ public class StartupOrchestrator : IStartupOrchestrator
             services.AddSingleton<IAdaptiveCardThemeService, AdaptiveCardThemeService>();
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
+            services.AddSingleton<IBuildCacheService, BuildCacheService>();
 
             logger.Info("UserPreferencesService registered");
             logger.Info("CredentialStorageService registered");
             logger.Info("AdaptiveCardThemeService registered");
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
+            logger.Info("BuildCacheService registered");
 
             // Register MCP handler
             services.AddMcpHandler(config =>
