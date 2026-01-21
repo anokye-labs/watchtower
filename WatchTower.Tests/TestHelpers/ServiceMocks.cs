@@ -113,4 +113,37 @@ public static class ServiceMocks
         var mock = new Mock<IStartupOrchestrator>();
         return mock;
     }
+    
+    /// <summary>
+    /// Creates a mock IGitHubReleaseService with common default setup.
+    /// </summary>
+    public static Mock<IGitHubReleaseService> CreateGitHubReleaseService()
+    {
+        var mock = new Mock<IGitHubReleaseService>();
+        mock.Setup(s => s.ValidateTokenAsync(It.IsAny<string>())).ReturnsAsync(true);
+        mock.Setup(s => s.GetReleasesAsync()).ReturnsAsync(new List<ReleaseInfo>());
+        mock.Setup(s => s.GetPullRequestBuildsAsync()).ReturnsAsync(new List<PullRequestBuildInfo>());
+        return mock;
+    }
+    
+    /// <summary>
+    /// Creates a mock ICredentialStorageService with common default setup.
+    /// </summary>
+    public static Mock<ICredentialStorageService> CreateCredentialStorageService()
+    {
+        var mock = new Mock<ICredentialStorageService>();
+        mock.Setup(s => s.GetTokenAsync(It.IsAny<string>())).ReturnsAsync((string?)null);
+        return mock;
+    }
+    
+    /// <summary>
+    /// Creates a mock IBuildCacheService with common default setup.
+    /// </summary>
+    public static Mock<IBuildCacheService> CreateBuildCacheService()
+    {
+        var mock = new Mock<IBuildCacheService>();
+        mock.Setup(s => s.IsBuildCachedAsync(It.IsAny<string>())).ReturnsAsync(false);
+        mock.Setup(s => s.GetCachedBuildPathAsync(It.IsAny<string>())).ReturnsAsync((string?)null);
+        return mock;
+    }
 }
