@@ -14,10 +14,13 @@ class Program
         var autoYes = args.Contains("--yes");
         var configPath = GetConfigPath(args);
 
-        // Set up logging
+        // Set up logging to stderr (stdout is reserved for MCP JSON-RPC messages)
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddConsole();
+            builder.AddConsole(options =>
+            {
+                options.LogToStandardErrorThreshold = LogLevel.Trace;
+            });
             builder.SetMinimumLevel(LogLevel.Information);
         });
 
