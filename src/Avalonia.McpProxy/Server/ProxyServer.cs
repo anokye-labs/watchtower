@@ -270,12 +270,21 @@ public class ProxyServer : IDisposable
             var json = JsonDocument.Parse(message);
             root = json.RootElement;
 
-            // MCP protocol: handle list tools, execute tool, etc.
+            // MCP protocol: handle initialize, list tools, execute tool, etc.
             if (root.TryGetProperty("method", out var methodElement))
             {
                 var method = methodElement.GetString();
 
-                if (method == "tools/list")
+                if (method == "initialize")
+                {
+                    await HandleInitializeAsync(root, cancellationToken);
+                }
+                else if (method == "notifications/initialized")
+                {
+                    // Client confirmed initialization - nothing to do
+                    _logger.LogDebug("Client initialized notification received");
+                }
+                else if (method == "tools/list")
                 {
                     await HandleListToolsAsync(root, cancellationToken);
                 }
@@ -290,6 +299,40 @@ public class ProxyServer : IDisposable
             _logger.LogError(ex, "Error handling agent message");
             var requestId = root.TryGetProperty("id", out var idEl) ? (int?)idEl.GetInt32() : null;
             await SendErrorToAgentAsync("Error processing request", requestId, cancellationToken);
+        }
+    }
+
+    private async Task HandleInitializeAsync(JsonElement request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Handling MCP initialize request");
+
+            var response = new
+            {
+                jsonrpc = "2.0",
+                id = request.TryGetProperty("id", out var idEl) ? idEl.GetInt32() : 0,
+                result = new
+                {
+                    protocolVersion = "2024-11-05",
+                    capabilities = new
+                    {
+                        tools = new { listChanged = false }
+                    },
+                    serverInfo = new
+                    {
+                        name = "avalonia-mcp-proxy",
+                        version = "1.0.0"
+                    }
+                }
+            };
+
+            await SendToAgentAsync(JsonSerializer.Serialize(response), cancellationToken);
+            _logger.LogInformation("MCP initialize response sent");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling initialize");
         }
     }
 
