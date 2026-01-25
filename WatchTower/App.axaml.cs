@@ -142,6 +142,14 @@ public partial class App : Application
                 logger.LogInformation("Gamepad polling started at 60 FPS");
             });
 
+            // Initialize MCP handler to trigger auto-connect to proxy
+            // DI services are lazy - must be resolved to instantiate
+            var mcpHandler = _serviceProvider.GetService<Avalonia.Mcp.Core.Handlers.IMcpHandler>();
+            if (mcpHandler != null)
+            {
+                logger.LogInformation("MCP handler initialized (IsConnected: {IsConnected})", mcpHandler.IsConnected);
+            }
+
             // Mark startup as complete
             splashViewModel.MarkStartupComplete();
 
