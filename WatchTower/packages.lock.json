@@ -82,6 +82,12 @@
           "SkiaSharp.Svg": "1.60.0"
         }
       },
+      "Meziantou.Framework.Win32.CredentialManager": {
+        "type": "Direct",
+        "requested": "[1.7.17, )",
+        "resolved": "1.7.17",
+        "contentHash": "HdLOn5gKSMp4ZpZr8ZryGCD99KHGx6auhItZxrY3VpeUBGY8XYGPtYJwcsQ+EFIUBIbs9d9ZATe7oMe7XBBRYQ=="
+      },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
         "requested": "[1.47.0, )",
@@ -148,9 +154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "kICGrGYEzCNI3wPzfEXcwNHgTvlvVn9yJDhSdRK+oZQy4jvYH529u7O0xf5ocQKzOMjfS07+3z9PKRIjrFMJDA=="
       },
       "NAudio": {
         "type": "Direct",
