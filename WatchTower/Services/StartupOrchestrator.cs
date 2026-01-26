@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
@@ -37,6 +38,49 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info("=== Application Startup ===");
             logger.Info($"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
             logger.Info($"Platform: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+
+            // Start MCP connection immediately (don't wait for DI resolution)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    Console.WriteLine("[MCP-EARLY] Starting early connection attempt...");
+                    await Task.Delay(500);
+                    
+                    using var client = new System.Net.Sockets.TcpClient();
+                    await client.ConnectAsync("localhost", 5100);
+                    Console.WriteLine($"[MCP-EARLY] Connected! Endpoint: {client.Client.LocalEndPoint}");
+                    
+                    var stream = client.GetStream();
+                    var tools = new List<object>
+                    {
+                        new { name = "show_notification", description = "Show a notification in WatchTower", inputSchema = new { type = "object" } },
+                        new { name = "speak_text", description = "Speak text using TTS", inputSchema = new { type = "object" } }
+                    };
+                    var registration = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "register",
+                        appName = "WatchTower",
+                        tools = tools
+                    });
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(registration + "\n");
+                    await stream.WriteAsync(bytes);
+                    Console.WriteLine("[MCP-EARLY] Registration sent!");
+                    
+                    // Keep connection alive
+                    var buffer = new byte[4096];
+                    while (client.Connected)
+                    {
+                        var read = await stream.ReadAsync(buffer);
+                        if (read == 0) break;
+                        Console.WriteLine($"[MCP-EARLY] Received: {System.Text.Encoding.UTF8.GetString(buffer, 0, read)}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[MCP-EARLY] Error: {ex.Message}");
+                }
+            });
 
             // Phase 1: Initial preparation
             logger.Info("Phase 1/4: Preparing services...");
@@ -146,6 +190,28 @@ public class StartupOrchestrator : IStartupOrchestrator
             var msLogger = serviceProvider.GetRequiredService<ILogger<StartupOrchestrator>>();
             msLogger.LogInformation("Service provider initialized");
 
+            // Initialize MCP handler (triggers auto-connect to proxy)
+            Console.WriteLine("[STARTUP] About to resolve IMcpHandler from DI...");
+            try
+            {
+                var mcpHandler = serviceProvider.GetService<Avalonia.Mcp.Core.Handlers.IMcpHandler>();
+                if (mcpHandler != null)
+                {
+                    Console.WriteLine("[STARTUP] IMcpHandler resolved successfully!");
+                    msLogger.LogInformation("MCP handler initialized, auto-connect starting in background");
+                }
+                else
+                {
+                    Console.WriteLine("[STARTUP] IMcpHandler was NULL!");
+                    msLogger.LogWarning("MCP handler not available");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[STARTUP] Exception resolving IMcpHandler: {ex.Message}");
+                Console.WriteLine($"[STARTUP] Stack trace: {ex.StackTrace}");
+            }
+
             // Initialize game controller service
             var gameControllerService = serviceProvider.GetRequiredService<IGameControllerService>();
             logger.Info("Initializing game controller service...");
@@ -159,19 +225,29 @@ public class StartupOrchestrator : IStartupOrchestrator
                 logger.Warn("Game controller service initialization failed");
             }
 
-            // Initialize voice orchestration service
+            // Initialize voice orchestration service in background (don't block startup)
             var voiceService = serviceProvider.GetRequiredService<IVoiceOrchestrationService>();
-            logger.Info("Initializing voice orchestration service...");
+            logger.Info("Voice orchestration service will initialize in background...");
 
-            if (await voiceService.InitializeAsync())
+            _ = Task.Run(async () =>
             {
-                logger.Info("Voice orchestration service initialized successfully");
-            }
-            else
-            {
-                logger.Warn("Voice orchestration service initialization failed");
-                logger.Warn("Voice features may not be available");
-            }
+                try
+                {
+                    msLogger.LogInformation("Background voice initialization starting...");
+                    if (await voiceService.InitializeAsync())
+                    {
+                        msLogger.LogInformation("Voice orchestration service initialized successfully");
+                    }
+                    else
+                    {
+                        msLogger.LogWarning("Voice orchestration service initialization failed - voice features may not be available");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msLogger.LogError(ex, "Voice initialization failed with exception");
+                }
+            });
 
             logger.Info("=== Startup Complete ===");
             return serviceProvider;

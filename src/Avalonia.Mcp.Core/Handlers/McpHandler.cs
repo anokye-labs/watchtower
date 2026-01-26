@@ -17,6 +17,10 @@ public class McpHandler : IMcpHandler
     private readonly ConcurrentDictionary<string, Func<Dictionary<string, object>?, Task<McpToolResult>>> _toolHandlers = new();
     private ITransportClient? _transportClient;
     private bool _disposed;
+    private CancellationTokenSource? _reconnectCts;
+    private Task? _reconnectTask;
+    private const int MaxReconnectDelayMs = 30000;
+    private const int InitialReconnectDelayMs = 1000;
 
     public string ApplicationName => _configuration.ApplicationName;
     public bool IsConnected => _transportClient?.IsConnected ?? false;
@@ -83,8 +87,22 @@ public class McpHandler : IMcpHandler
 
     public async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
+        var connected = await TryConnectOnceAsync(cancellationToken);
+        
+        if (!connected && _configuration.AutoConnect)
+        {
+            // Start background reconnection loop
+            StartReconnectionLoop();
+        }
+        
+        return connected;
+    }
+
+    private async Task<bool> TryConnectOnceAsync(CancellationToken cancellationToken = default)
+    {
         try
         {
+            Console.WriteLine($"[MCP] TryConnectOnceAsync starting, endpoint: {_configuration.ProxyEndpoint}");
             _logger?.LogInformation("Connecting to proxy: {Endpoint}", _configuration.ProxyEndpoint);
 
             // Parse endpoint and create appropriate transport client
@@ -101,14 +119,68 @@ public class McpHandler : IMcpHandler
             {
                 // Send registration message
                 await SendRegistrationMessageAsync(cancellationToken);
+                _logger?.LogInformation("Successfully connected and registered with proxy");
             }
 
             return connected;
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to connect to proxy");
+            _logger?.LogDebug(ex, "Failed to connect to proxy (will retry if AutoConnect enabled)");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Starts a background task that continuously tries to reconnect to the proxy.
+    /// </summary>
+    public void StartReconnectionLoop()
+    {
+        if (_reconnectTask != null && !_reconnectTask.IsCompleted)
+        {
+            _logger?.LogDebug("Reconnection loop already running");
+            return;
+        }
+
+        _reconnectCts = new CancellationTokenSource();
+        _reconnectTask = Task.Run(() => ReconnectionLoopAsync(_reconnectCts.Token));
+        _logger?.LogInformation("Started background reconnection loop for proxy");
+    }
+
+    private async Task ReconnectionLoopAsync(CancellationToken cancellationToken)
+    {
+        int delayMs = InitialReconnectDelayMs;
+        
+        while (!cancellationToken.IsCancellationRequested && !IsConnected)
+        {
+            try
+            {
+                _logger?.LogDebug("Attempting to reconnect to proxy (delay: {DelayMs}ms)", delayMs);
+                
+                var connected = await TryConnectOnceAsync(cancellationToken);
+                
+                if (connected)
+                {
+                    _logger?.LogInformation("Reconnection successful!");
+                    delayMs = InitialReconnectDelayMs; // Reset delay on success
+                    return;
+                }
+                
+                // Wait before next attempt with exponential backoff
+                await Task.Delay(delayMs, cancellationToken);
+                delayMs = Math.Min(delayMs * 2, MaxReconnectDelayMs);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger?.LogDebug("Reconnection loop cancelled");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogDebug(ex, "Error during reconnection attempt");
+                await Task.Delay(delayMs, cancellationToken);
+                delayMs = Math.Min(delayMs * 2, MaxReconnectDelayMs);
+            }
         }
     }
 
@@ -218,6 +290,9 @@ public class McpHandler : IMcpHandler
         if (_disposed)
             return;
 
+        // Cancel reconnection loop
+        _reconnectCts?.Cancel();
+        
         // Dispose synchronously - disconnect will be handled by finalizer or explicit DisposeAsync call
         _transportClient?.Dispose();
         _disposed = true;
@@ -229,6 +304,13 @@ public class McpHandler : IMcpHandler
     {
         if (_disposed)
             return;
+
+        // Cancel reconnection loop and wait for it to complete
+        _reconnectCts?.Cancel();
+        if (_reconnectTask != null)
+        {
+            try { await _reconnectTask; } catch { /* ignore cancellation */ }
+        }
 
         await DisconnectAsync();
         _transportClient?.Dispose();
