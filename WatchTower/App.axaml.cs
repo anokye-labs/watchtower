@@ -127,6 +127,13 @@ public partial class App : Application
             var logger = _serviceProvider.GetRequiredService<ILogger<App>>();
             logger.LogInformation("Application initialization completed");
 
+            // Initialize MCP handler (triggers auto-connect if configured)
+            var mcpHandler = _serviceProvider.GetService<Avalonia.Mcp.Core.Handlers.IMcpHandler>();
+            if (mcpHandler != null)
+            {
+                logger.LogInformation("MCP handler initialized, auto-connect will start in background");
+            }
+
             // Start game controller service polling (service already initialized in StartupOrchestrator)
             _gameControllerService = _serviceProvider.GetRequiredService<IGameControllerService>();
 
