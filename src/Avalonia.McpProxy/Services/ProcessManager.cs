@@ -1,23 +1,22 @@
 using System;
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace Avalonia.McpProxy.Services;
 
 /// <summary>
-/// Launches and tracks Avalonia apps with diagnostic support.
-/// Captures the diagnostic port from app stdout, then registers with connection manager.
+/// Launches and tracks Avalonia apps.
+/// Sets MCP_PROXY_ENDPOINT env var so apps connect back to the proxy.
 /// </summary>
-public partial class ProcessManager
+public class ProcessManager
 {
     private readonly Action<string> _log;
-    private readonly AppConnectionManager _connectionManager;
+    private readonly int _proxyPort;
 
-    public ProcessManager(Action<string> log, AppConnectionManager connectionManager)
+    public ProcessManager(Action<string> log, int proxyPort)
     {
         _log = log;
-        _connectionManager = connectionManager;
+        _proxyPort = proxyPort;
     }
 
     public async Task<string> LaunchAppAsync(JsonElement arguments, CancellationToken ct)
@@ -39,22 +38,16 @@ public partial class ProcessManager
             CreateNoWindow = false
         };
 
+        // Tell the app where to connect back to
+        startInfo.EnvironmentVariables["MCP_PROXY_ENDPOINT"] = $"tcp://localhost:{_proxyPort}";
+
         var process = new Process { StartInfo = startInfo };
-        var portTcs = new TaskCompletionSource<int>();
-        var outputBuffer = new List<string>();
 
         process.OutputDataReceived += (_, e) =>
         {
-            if (e.Data == null) return;
-            
-            outputBuffer.Add(e.Data);
-            _log($"[{Path.GetFileName(path)}] {e.Data}");
-
-            // Look for diagnostic port announcement
-            var match = DiagnosticPortRegex().Match(e.Data);
-            if (match.Success && int.TryParse(match.Groups[1].Value, out var port))
+            if (e.Data != null)
             {
-                portTcs.TrySetResult(port);
+                _log($"[{Path.GetFileName(path)}] {e.Data}");
             }
         };
 
@@ -72,41 +65,25 @@ public partial class ProcessManager
 
         _log($"Process started with PID {process.Id}");
 
-        // Wait for diagnostic port with timeout
-        var portTask = portTcs.Task;
-        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), ct);
+        // Wait briefly to check if the process is alive
+        await Task.Delay(TimeSpan.FromSeconds(3), ct);
 
-        var completed = await Task.WhenAny(portTask, timeoutTask);
-
-        if (completed == portTask)
+        if (process.HasExited)
         {
-            var port = await portTask;
-            _log($"App listening on diagnostic port {port}");
-            
-            // Register with connection manager so it connects
-            _connectionManager.RegisterLaunchedApp(port, process.Id, path);
-
             return JsonSerializer.Serialize(new
             {
-                status = "launched",
+                status = "exited",
                 pid = process.Id,
-                diagnostic_port = port,
-                message = $"App launched and listening on port {port}"
+                exit_code = process.ExitCode,
+                message = $"App exited immediately with code {process.ExitCode}"
             });
         }
-        else
+
+        return JsonSerializer.Serialize(new
         {
-            _log("Timeout waiting for diagnostic port - app may not support diagnostics");
-            
-            return JsonSerializer.Serialize(new
-            {
-                status = "launched_no_diagnostics",
-                pid = process.Id,
-                message = "App launched but did not announce a diagnostic port. It may not have diagnostic support enabled."
-            });
-        }
+            status = "launched",
+            pid = process.Id,
+            message = $"App launched (PID {process.Id}). It will connect back to proxy on port {_proxyPort}."
+        });
     }
-
-    [GeneratedRegex(@"DIAGNOSTIC_PORT:(\d+)")]
-    private static partial Regex DiagnosticPortRegex();
 }

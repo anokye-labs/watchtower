@@ -39,49 +39,6 @@ public class StartupOrchestrator : IStartupOrchestrator
             logger.Info($"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
             logger.Info($"Platform: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
 
-            // Start MCP connection immediately (don't wait for DI resolution)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    Console.WriteLine("[MCP-EARLY] Starting early connection attempt...");
-                    await Task.Delay(500);
-                    
-                    using var client = new System.Net.Sockets.TcpClient();
-                    await client.ConnectAsync("localhost", 5100);
-                    Console.WriteLine($"[MCP-EARLY] Connected! Endpoint: {client.Client.LocalEndPoint}");
-                    
-                    var stream = client.GetStream();
-                    var tools = new List<object>
-                    {
-                        new { name = "show_notification", description = "Show a notification in WatchTower", inputSchema = new { type = "object" } },
-                        new { name = "speak_text", description = "Speak text using TTS", inputSchema = new { type = "object" } }
-                    };
-                    var registration = System.Text.Json.JsonSerializer.Serialize(new
-                    {
-                        type = "register",
-                        appName = "WatchTower",
-                        tools = tools
-                    });
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(registration + "\n");
-                    await stream.WriteAsync(bytes);
-                    Console.WriteLine("[MCP-EARLY] Registration sent!");
-                    
-                    // Keep connection alive
-                    var buffer = new byte[4096];
-                    while (client.Connected)
-                    {
-                        var read = await stream.ReadAsync(buffer);
-                        if (read == 0) break;
-                        Console.WriteLine($"[MCP-EARLY] Received: {System.Text.Encoding.UTF8.GetString(buffer, 0, read)}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[MCP-EARLY] Error: {ex.Message}");
-                }
-            });
-
             // Phase 1: Initial preparation
             logger.Info("Phase 1/4: Preparing services...");
             logger.Info("Initial preparation complete");
@@ -121,17 +78,26 @@ public class StartupOrchestrator : IStartupOrchestrator
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
 
+            // Register HttpClientFactory for HTTP-based services
+            services.AddHttpClient();
+
+            // Register Developer Build Menu services
+            services.AddSingleton<IBuildCacheService, BuildCacheService>();
+            services.AddSingleton<IGitHubBuildService, GitHubBuildService>();
+
             logger.Info("UserPreferencesService registered");
             logger.Info("CredentialStorageService registered");
             logger.Info("AdaptiveCardThemeService registered");
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
+            logger.Info("BuildCacheService registered");
+            logger.Info("GitHubBuildService registered");
 
             // Register MCP handler
             services.AddMcpHandler(config =>
             {
                 config.ApplicationName = "WatchTower";
-                config.ProxyEndpoint = "tcp://localhost:5100";
+                config.ProxyEndpoint = Environment.GetEnvironmentVariable("MCP_PROXY_ENDPOINT") ?? "tcp://localhost:5100";
                 config.AutoConnect = true;
                 config.HeadlessMode = false;
             }, registerStandardTools: true);
@@ -178,6 +144,7 @@ public class StartupOrchestrator : IStartupOrchestrator
             // Register ViewModels
             services.AddTransient<ViewModels.MainWindowViewModel>();
             services.AddTransient<ViewModels.VoiceControlViewModel>();
+            services.AddTransient<ViewModels.DevBuildMenuViewModel>();
             logger.Info("ViewModels registered");
 
             // Build service provider

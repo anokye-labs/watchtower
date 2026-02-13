@@ -69,12 +69,10 @@ public class ConnectedAppInfoTests
         var info = new ConnectedAppInfo
         {
             Name = "WatchTower",
-            Port = 5100,
             ToolCount = 6
         };
 
         Assert.Equal("WatchTower", info.Name);
-        Assert.Equal(5100, info.Port);
         Assert.Equal(6, info.ToolCount);
     }
 
@@ -84,7 +82,6 @@ public class ConnectedAppInfoTests
         var info = new ConnectedAppInfo();
 
         Assert.Equal("", info.Name);
-        Assert.Equal(0, info.Port);
         Assert.Equal(0, info.ToolCount);
     }
 

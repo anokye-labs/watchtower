@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -9,42 +10,42 @@ using Avalonia.Mcp.Core.Models;
 namespace Avalonia.McpProxy.Services;
 
 /// <summary>
-/// Manages connections to diagnostic-enabled apps.
-/// Apps listen on ports; proxy connects to them.
-/// State is persisted so proxy can reconnect after restart.
+/// Listens on a TCP port for inbound connections from diagnostic-enabled apps.
+/// Apps connect TO the proxy and send a registration message with their name and tools.
 /// </summary>
 public class AppConnectionManager
 {
     private readonly Action<string> _log;
-    private readonly Action<string, int, int> _onAppConnected;
-    private readonly Action<int> _onAppDisconnected;
-    private readonly ConcurrentDictionary<int, AppConnection> _connections = new();
-    private readonly string _stateFilePath;
+    private readonly Action<string, int> _onAppConnected;
+    private readonly Action<string> _onAppDisconnected;
+    private readonly ConcurrentDictionary<string, AppConnection> _connections = new(StringComparer.OrdinalIgnoreCase);
+    private readonly int _listenPort;
     private readonly McpProxyBridge _mcpBridge;
+    private TcpListener? _listener;
     private CancellationTokenSource? _cts;
+
+    public int ListenPort => _listenPort;
 
     public AppConnectionManager(
         Action<string> log,
-        Action<string, int, int> onAppConnected,
-        Action<int> onAppDisconnected)
+        Action<string, int> onAppConnected,
+        Action<string> onAppDisconnected,
+        int listenPort = 5100)
     {
         _log = log;
         _onAppConnected = onAppConnected;
         _onAppDisconnected = onAppDisconnected;
-        _stateFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AvaloniaProxy",
-            "apps.json");
+        _listenPort = listenPort;
         _mcpBridge = new McpProxyBridge(log, this);
     }
 
     public void Start()
     {
         _cts = new CancellationTokenSource();
-        
-        // Load persisted app state and try to reconnect
-        LoadAndReconnect();
-        
+
+        // Start TCP listener for inbound app connections
+        _ = ListenForAppsAsync(_cts.Token);
+
         // Start MCP stdio bridge for agent communication
         _ = _mcpBridge.StartAsync(_cts.Token);
     }
@@ -52,7 +53,8 @@ public class AppConnectionManager
     public void Stop()
     {
         _cts?.Cancel();
-        
+        _listener?.Stop();
+
         foreach (var conn in _connections.Values)
         {
             conn.Dispose();
@@ -60,203 +62,128 @@ public class AppConnectionManager
         _connections.Clear();
     }
 
-    public void ReconnectAll()
-    {
-        LoadAndReconnect();
-    }
-
-    /// <summary>
-    /// Register a new app that was just launched. Called by ProcessManager.
-    /// </summary>
-    public void RegisterLaunchedApp(int port, int pid, string path)
-    {
-        var appInfo = new PersistedAppInfo
-        {
-            Port = port,
-            Pid = pid,
-            Path = path,
-            LaunchedAt = DateTime.UtcNow
-        };
-        
-        SaveAppInfo(appInfo);
-        _ = ConnectToAppAsync(port, _cts?.Token ?? CancellationToken.None);
-    }
-
     /// <summary>
     /// Get all currently connected apps with their tools.
     /// </summary>
-    public IEnumerable<(string Name, int Port, List<McpToolDefinition> Tools)> GetConnectedApps()
+    public IEnumerable<(string Name, List<McpToolDefinition> Tools)> GetConnectedApps()
     {
         foreach (var conn in _connections.Values)
         {
             if (conn.IsConnected)
             {
-                yield return (conn.AppName, conn.Port, conn.Tools);
+                yield return (conn.AppName, conn.Tools);
             }
         }
     }
 
     /// <summary>
-    /// Invoke a tool on a connected app.
+    /// Invoke a tool on a connected app by name.
     /// </summary>
     public async Task<(bool Success, string? Data, string? Error)> InvokeToolAsync(
-        int port, string toolName, JsonElement parameters, CancellationToken ct)
+        string appName, string toolName, JsonElement parameters, CancellationToken ct)
     {
-        if (!_connections.TryGetValue(port, out var conn) || !conn.IsConnected)
+        if (!_connections.TryGetValue(appName, out var conn) || !conn.IsConnected)
         {
-            return (false, null, $"App on port {port} is not connected");
+            return (false, null, $"App '{appName}' is not connected");
         }
-        
+
         return await conn.InvokeToolAsync(toolName, parameters, ct);
     }
 
-    private void LoadAndReconnect()
-    {
-        var apps = LoadPersistedApps();
-        _log($"Found {apps.Count} persisted apps");
-        
-        foreach (var app in apps)
-        {
-            _ = ConnectToAppAsync(app.Port, _cts?.Token ?? CancellationToken.None);
-        }
-    }
-
-    private async Task ConnectToAppAsync(int port, CancellationToken ct)
-    {
-        // Don't reconnect if already connected
-        if (_connections.TryGetValue(port, out var existing) && existing.IsConnected)
-        {
-            _log($"Already connected to port {port}");
-            return;
-        }
-
-        try
-        {
-            _log($"Connecting to app on port {port}...");
-            
-            var client = new TcpClient();
-            await client.ConnectAsync("127.0.0.1", port, ct);
-            
-            var conn = new AppConnection(port, client, _log);
-            _connections[port] = conn;
-            
-            // Send handshake and wait for response
-            var (appName, tools) = await conn.HandshakeAsync(ct);
-            
-            _log($"Connected to {appName} on port {port} with {tools.Count} tools");
-            _onAppConnected(appName, port, tools.Count);
-            
-            // Start listening for disconnection
-            _ = conn.MonitorConnectionAsync(ct).ContinueWith(_ =>
-            {
-                _log($"App on port {port} disconnected");
-                _onAppDisconnected(port);
-            }, TaskScheduler.Default);
-        }
-        catch (SocketException)
-        {
-            _log($"Could not connect to port {port} - app may not be running");
-            RemoveAppInfo(port);
-        }
-        catch (Exception ex)
-        {
-            _log($"Error connecting to port {port}: {ex.Message}");
-        }
-    }
-
-    private List<PersistedAppInfo> LoadPersistedApps()
+    private async Task ListenForAppsAsync(CancellationToken ct)
     {
         try
         {
-            if (File.Exists(_stateFilePath))
+            _listener = new TcpListener(IPAddress.Loopback, _listenPort);
+            _listener.Start();
+            _log($"Listening for app connections on port {_listenPort}");
+
+            while (!ct.IsCancellationRequested)
             {
-                var json = File.ReadAllText(_stateFilePath);
-                return JsonSerializer.Deserialize<List<PersistedAppInfo>>(json) ?? new();
+                var client = await _listener.AcceptTcpClientAsync(ct);
+                _log($"Inbound connection from {client.Client.RemoteEndPoint}");
+                _ = HandleInboundConnectionAsync(client, ct);
             }
         }
+        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            _log($"Error loading app state: {ex.Message}");
+            _log($"Listener error: {ex.Message}");
         }
-        return new();
     }
 
-    private void SaveAppInfo(PersistedAppInfo app)
+    private async Task HandleInboundConnectionAsync(TcpClient client, CancellationToken ct)
     {
         try
         {
-            var dir = Path.GetDirectoryName(_stateFilePath)!;
-            Directory.CreateDirectory(dir);
-            
-            var apps = LoadPersistedApps();
-            apps.RemoveAll(a => a.Port == app.Port);
-            apps.Add(app);
-            
-            var json = JsonSerializer.Serialize(apps, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_stateFilePath, json);
+            var conn = new AppConnection(client, _log);
+
+            // Read the first message — expect a registration
+            var (appName, tools) = await conn.ReadRegistrationAsync(ct);
+
+            // Store connection by app name (replaces any previous connection for same app)
+            if (_connections.TryGetValue(appName, out var old))
+            {
+                old.Dispose();
+            }
+            _connections[appName] = conn;
+
+            _log($"App '{appName}' registered with {tools.Count} tools");
+            _onAppConnected(appName, tools.Count);
+
+            // Monitor for disconnection
+            _ = conn.MonitorConnectionAsync(ct).ContinueWith(t =>
+            {
+                _log($"App '{appName}' disconnected");
+                _connections.TryRemove(appName, out var removed);
+                removed?.Dispose();
+                _onAppDisconnected(appName);
+            }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
-            _log($"Error saving app state: {ex.Message}");
+            _log($"Failed to handle inbound connection: {ex.Message}");
+            client.Dispose();
         }
     }
-
-    private void RemoveAppInfo(int port)
-    {
-        try
-        {
-            var apps = LoadPersistedApps();
-            apps.RemoveAll(a => a.Port == port);
-            
-            var json = JsonSerializer.Serialize(apps, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_stateFilePath, json);
-        }
-        catch { }
-    }
-}
-
-internal class PersistedAppInfo
-{
-    public int Port { get; set; }
-    public int Pid { get; set; }
-    public string Path { get; set; } = "";
-    public DateTime LaunchedAt { get; set; }
 }
 
 internal class AppConnection : IDisposable
 {
-    private readonly int _port;
     private readonly TcpClient _client;
     private readonly NetworkStream _stream;
     private readonly Action<string> _log;
     private long _correlationId;
 
-    public int Port => _port;
     public string AppName { get; private set; } = "";
     public List<McpToolDefinition> Tools { get; } = new();
     public bool IsConnected => _client.Connected;
 
-    public AppConnection(int port, TcpClient client, Action<string> log)
+    public AppConnection(TcpClient client, Action<string> log)
     {
-        _port = port;
         _client = client;
         _stream = client.GetStream();
         _log = log;
     }
 
-    public async Task<(string AppName, List<McpToolDefinition> Tools)> HandshakeAsync(CancellationToken ct)
+    /// <summary>
+    /// Read the first message from the app, expecting:
+    /// {"type":"register","appName":"...","tools":[...]}
+    /// </summary>
+    public async Task<(string AppName, List<McpToolDefinition> Tools)> ReadRegistrationAsync(CancellationToken ct)
     {
-        // Send handshake request
-        var handshake = JsonSerializer.Serialize(new { type = "handshake" });
-        await SendAsync(handshake, ct);
-        
-        // Wait for handshake response
-        var response = await ReceiveOneAsync(ct);
-        var json = JsonDocument.Parse(response);
+        var message = await ReceiveOneAsync(ct);
+        var json = JsonDocument.Parse(message);
         var root = json.RootElement;
-        
+
+        var type = root.TryGetProperty("type", out var typeEl) ? typeEl.GetString() : null;
+        if (type != "register")
+        {
+            throw new InvalidOperationException($"Expected 'register' message, got '{type}'");
+        }
+
         AppName = root.GetProperty("appName").GetString() ?? "Unknown";
-        
+
         if (root.TryGetProperty("tools", out var toolsEl))
         {
             foreach (var tool in toolsEl.EnumerateArray())
@@ -269,7 +196,7 @@ internal class AppConnection : IDisposable
                 });
             }
         }
-        
+
         return (AppName, Tools);
     }
 
@@ -277,48 +204,46 @@ internal class AppConnection : IDisposable
         string toolName, JsonElement parameters, CancellationToken ct)
     {
         var correlationId = Interlocked.Increment(ref _correlationId);
-        
+
         var request = JsonSerializer.Serialize(new
         {
             type = "toolInvocation",
             correlationId,
-            tool = toolName,
+            tool = $"{AppName}:{toolName}",
             parameters
         });
-        
+
         await SendAsync(request, ct);
-        
+
         // Wait for response with matching correlation ID
         while (!ct.IsCancellationRequested)
         {
             var response = await ReceiveOneAsync(ct);
             var json = JsonDocument.Parse(response);
             var root = json.RootElement;
-            
+
             if (root.TryGetProperty("correlationId", out var cid) && cid.GetInt64() == correlationId)
             {
                 var result = root.GetProperty("result");
                 var success = result.GetProperty("success").GetBoolean();
-                var data = result.TryGetProperty("data", out var d) ? d.GetString() : null;
-                var error = result.TryGetProperty("error", out var e) ? e.GetString() : null;
+                var data = result.TryGetProperty("data", out var dataEl) ? dataEl.GetString() : null;
+                var error = result.TryGetProperty("error", out var errEl) ? errEl.GetString() : null;
                 return (success, data, error);
             }
         }
-        
+
         return (false, null, "Cancelled");
     }
 
     public async Task MonitorConnectionAsync(CancellationToken ct)
     {
-        var buffer = new byte[1];
         try
         {
             while (!ct.IsCancellationRequested && _client.Connected)
             {
-                // Just wait for disconnection
                 await Task.Delay(1000, ct);
-                
-                // Check if still connected by peeking
+
+                // Check if still connected by polling
                 if (_client.Client.Poll(0, SelectMode.SelectRead) && _client.Client.Available == 0)
                 {
                     break; // Disconnected
@@ -339,15 +264,15 @@ internal class AppConnection : IDisposable
     {
         var buffer = new byte[16384];
         var sb = new StringBuilder();
-        
+
         while (!ct.IsCancellationRequested)
         {
             var read = await _stream.ReadAsync(buffer, ct);
             if (read == 0) throw new IOException("Connection closed");
-            
+
             var data = Encoding.UTF8.GetString(buffer, 0, read);
             sb.Append(data);
-            
+
             var content = sb.ToString();
             var newlineIdx = content.IndexOf('\n');
             if (newlineIdx >= 0)
@@ -355,7 +280,7 @@ internal class AppConnection : IDisposable
                 return content[..newlineIdx].Trim();
             }
         }
-        
+
         throw new OperationCanceledException();
     }
 

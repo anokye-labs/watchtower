@@ -113,8 +113,7 @@ public class ProxyViewModel : INotifyPropertyChanged
 
     public void ReconnectAll()
     {
-        Log("Reconnecting to all known apps...");
-        _connectionManager.ReconnectAll();
+        Log("Apps reconnect automatically - no manual reconnect needed");
     }
 
     private void LaunchApp()
@@ -144,7 +143,7 @@ public class ProxyViewModel : INotifyPropertyChanged
 
             if (process != null)
             {
-                Log($"Launched PID {process.Id}, waiting for diagnostic port...");
+                Log($"Launched PID {process.Id}, waiting for app to connect...");
                 AppStatusText = "Launched, waiting for connection...";
             }
         }
@@ -166,10 +165,10 @@ public class ProxyViewModel : INotifyPropertyChanged
 
         try
         {
-            Log($"Sending shutdown to {app.Name} on port {app.Port}...");
+            Log($"Sending shutdown to {app.Name}...");
             AppStatusText = $"Stopping {app.Name}...";
             var (success, data, error) = await _connectionManager.InvokeToolAsync(
-                app.Port, "__shutdown__", default, CancellationToken.None);
+                app.Name, "__shutdown__", default, CancellationToken.None);
 
             if (success)
             {
@@ -204,7 +203,7 @@ public class ProxyViewModel : INotifyPropertyChanged
             AppStatusText = "Capturing screenshot...";
 
             var (success, data, error) = await _connectionManager.InvokeToolAsync(
-                app.Port, "capture_screenshot", default, CancellationToken.None);
+                app.Name, "CaptureScreenshot", default, CancellationToken.None);
 
             if (!success || data == null)
             {
@@ -266,21 +265,20 @@ public class ProxyViewModel : INotifyPropertyChanged
         await StopSelectedAppAsync();
     }
 
-    private void OnAppConnected(string appName, int port, int toolCount)
+    private void OnAppConnected(string appName, int toolCount)
     {
         Dispatcher.UIThread.Post(() =>
         {
             // Remove existing entry if any
             for (int i = ConnectedApps.Count - 1; i >= 0; i--)
             {
-                if (ConnectedApps[i].Port == port)
+                if (string.Equals(ConnectedApps[i].Name, appName, StringComparison.OrdinalIgnoreCase))
                     ConnectedApps.RemoveAt(i);
             }
             
             ConnectedApps.Add(new ConnectedAppInfo
             {
                 Name = appName,
-                Port = port,
                 ToolCount = toolCount,
                 StatusColor = Brushes.LimeGreen
             });
@@ -289,17 +287,15 @@ public class ProxyViewModel : INotifyPropertyChanged
         });
     }
 
-    private void OnAppDisconnected(int port)
+    private void OnAppDisconnected(string appName)
     {
         Dispatcher.UIThread.Post(() =>
         {
             for (int i = ConnectedApps.Count - 1; i >= 0; i--)
             {
-                if (ConnectedApps[i].Port == port)
+                if (string.Equals(ConnectedApps[i].Name, appName, StringComparison.OrdinalIgnoreCase))
                 {
                     ConnectedApps[i].StatusColor = Brushes.Gray;
-                    // Keep it in list but grayed out, or remove:
-                    // ConnectedApps.RemoveAt(i);
                 }
             }
             OnPropertyChanged(nameof(HasConnectedApps));
@@ -347,7 +343,6 @@ public class ConnectedAppInfo : INotifyPropertyChanged
     private bool _isSelected;
     
     public string Name { get; init; } = "";
-    public int Port { get; init; }
     public int ToolCount { get; init; }
     
     public IBrush StatusColor

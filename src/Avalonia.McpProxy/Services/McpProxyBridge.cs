@@ -22,7 +22,7 @@ public class McpProxyBridge
     {
         _log = log;
         _connectionManager = connectionManager;
-        _processManager = new ProcessManager(log, connectionManager);
+        _processManager = new ProcessManager(log, connectionManager.ListenPort);
     }
 
     public async Task StartAsync(CancellationToken ct)
@@ -92,7 +92,7 @@ public class McpProxyBridge
         tools.Add(new
         {
             name = "launch_app",
-            description = "Launch an Avalonia app with diagnostic support. The app will start a diagnostic listener that the proxy can connect to.",
+            description = "Launch an Avalonia app. The app will connect back to the proxy automatically.",
             inputSchema = new
             {
                 type = "object",
@@ -109,7 +109,7 @@ public class McpProxyBridge
         tools.Add(new
         {
             name = "list_apps",
-            description = "List all connected diagnostic apps and their available tools.",
+            description = "List all connected apps and their available tools.",
             inputSchema = new { type = "object", properties = new { } }
         });
 
@@ -122,14 +122,14 @@ public class McpProxyBridge
                 type = "object",
                 properties = new
                 {
-                    port = new { type = "integer", description = "The diagnostic port of the app to stop" }
+                    app_name = new { type = "string", description = "The name of the app to stop" }
                 },
-                required = new[] { "port" }
+                required = new[] { "app_name" }
             }
         });
 
         // Add tools from all connected apps
-        foreach (var (appName, port, appTools) in _connectionManager.GetConnectedApps())
+        foreach (var (appName, appTools) in _connectionManager.GetConnectedApps())
         {
             foreach (var tool in appTools)
             {
@@ -164,36 +164,18 @@ public class McpProxyBridge
         }
         else if (toolName == "stop_app")
         {
-            var port = arguments.GetProperty("port").GetInt32();
-            resultText = await StopAppAsync(port, ct);
+            var appName = arguments.GetProperty("app_name").GetString()!;
+            resultText = await StopAppAsync(appName, ct);
         }
         else if (toolName.Contains(':'))
         {
-            // App-specific tool: "AppName:tool_name"
+            // App-specific tool: "AppName:ToolName"
             var parts = toolName.Split(':', 2);
             var appName = parts[0];
             var actualTool = parts[1];
 
-            // Find the app by name
-            var targetPort = -1;
-            foreach (var (name, port, _) in _connectionManager.GetConnectedApps())
-            {
-                if (name.Equals(appName, StringComparison.OrdinalIgnoreCase))
-                {
-                    targetPort = port;
-                    break;
-                }
-            }
-
-            if (targetPort < 0)
-            {
-                resultText = JsonSerializer.Serialize(new { error = $"App '{appName}' not connected" });
-            }
-            else
-            {
-                var (success, data, error) = await _connectionManager.InvokeToolAsync(targetPort, actualTool, arguments, ct);
-                resultText = success ? data! : JsonSerializer.Serialize(new { error });
-            }
+            var (success, data, error) = await _connectionManager.InvokeToolAsync(appName, actualTool, arguments, ct);
+            resultText = success ? data! : JsonSerializer.Serialize(new { error = error ?? $"App '{appName}' not connected" });
         }
         else
         {
@@ -210,12 +192,11 @@ public class McpProxyBridge
     {
         var apps = new List<object>();
         
-        foreach (var (name, port, tools) in _connectionManager.GetConnectedApps())
+        foreach (var (name, tools) in _connectionManager.GetConnectedApps())
         {
             apps.Add(new
             {
                 name,
-                port,
                 tool_count = tools.Count,
                 tools = tools.Select(t => t.Name).ToList()
             });
@@ -224,15 +205,12 @@ public class McpProxyBridge
         return JsonSerializer.Serialize(new { apps, count = apps.Count });
     }
 
-    private async Task<string> StopAppAsync(int port, CancellationToken ct)
+    private async Task<string> StopAppAsync(string appName, CancellationToken ct)
     {
-        var (success, _, error) = await _connectionManager.InvokeToolAsync(port, "__shutdown__", default, ct);
-        
-        // Also send shutdown message directly
-        // The app's DiagnosticListener handles "shutdown" message type
+        var (success, _, error) = await _connectionManager.InvokeToolAsync(appName, "__shutdown__", default, ct);
         
         return success 
-            ? JsonSerializer.Serialize(new { status = "shutdown_sent", port })
+            ? JsonSerializer.Serialize(new { status = "shutdown_sent", app_name = appName })
             : JsonSerializer.Serialize(new { error = error ?? "Failed to stop app" });
     }
 
