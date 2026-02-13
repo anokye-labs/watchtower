@@ -128,15 +128,15 @@ public class McpProxyBridge
             }
         });
 
-        // Add tools from all connected apps
+        // Add tools from all connected apps (already namespaced by McpHandler as "AppName:ToolName")
         foreach (var (appName, appTools) in _connectionManager.GetConnectedApps())
         {
             foreach (var tool in appTools)
             {
                 tools.Add(new
                 {
-                    name = $"{appName}:{tool.Name}",
-                    description = $"[{appName}] {tool.Description}",
+                    name = tool.Name,
+                    description = tool.Description,
                     inputSchema = tool.InputSchema
                 });
             }
@@ -169,12 +169,11 @@ public class McpProxyBridge
         }
         else if (toolName.Contains(':'))
         {
-            // App-specific tool: "AppName:ToolName"
+            // App-specific tool: "AppName:ToolName" - send full name to app (McpHandler expects it)
             var parts = toolName.Split(':', 2);
             var appName = parts[0];
-            var actualTool = parts[1];
 
-            var (success, data, error) = await _connectionManager.InvokeToolAsync(appName, actualTool, arguments, ct);
+            var (success, data, error) = await _connectionManager.InvokeToolAsync(appName, toolName, arguments, ct);
             resultText = success ? data! : JsonSerializer.Serialize(new { error = error ?? $"App '{appName}' not connected" });
         }
         else

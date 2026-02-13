@@ -209,7 +209,7 @@ internal class AppConnection : IDisposable
         {
             type = "toolInvocation",
             correlationId,
-            tool = $"{AppName}:{toolName}",
+            tool = toolName,
             parameters
         });
 
@@ -226,7 +226,7 @@ internal class AppConnection : IDisposable
             {
                 var result = root.GetProperty("result");
                 var success = result.GetProperty("success").GetBoolean();
-                var data = result.TryGetProperty("data", out var dataEl) ? dataEl.GetString() : null;
+                var data = result.TryGetProperty("data", out var dataEl) ? dataEl.ToString() : null;
                 var error = result.TryGetProperty("error", out var errEl) ? errEl.GetString() : null;
                 return (success, data, error);
             }
