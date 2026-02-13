@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Avalonia.McpProxy.ViewModels"
+        x:Class="Avalonia.McpProxy.Views.LogWindow"
+        x:DataType="vm:ProxyViewModel"
+        Title="MCP Proxy - Logs"
+        Width="800" Height="500"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header with connected apps -->
+        <Border Grid.Row="0" Background="#1a1a2e" Padding="10">
+            <StackPanel>
+                <TextBlock Text="Connected Apps" FontWeight="Bold" Foreground="#8be9fd" Margin="0,0,0,5"/>
+                <ItemsControl ItemsSource="{Binding ConnectedApps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#16213e" CornerRadius="4" Padding="8,4" Margin="0,2">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}"/>
+                                    <TextBlock Text="{Binding Name}" Foreground="White"/>
+                                    <TextBlock Text="{Binding Port, StringFormat=':{0}'}" Foreground="#666"/>
+                                    <TextBlock Text="{Binding ToolCount, StringFormat=\{0\} tools}" Foreground="#50fa7b"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="No apps connected" Foreground="#666" 
+                           IsVisible="{Binding !HasConnectedApps}" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Log output -->
+        <Border Grid.Row="1" Background="#0f0f23" Padding="5">
+            <ScrollViewer x:Name="LogScroller">
+                <TextBlock Text="{Binding LogText}" 
+                           FontFamily="Consolas,monospace" 
+                           FontSize="12"
+                           Foreground="#cccccc"
+                           TextWrapping="Wrap"/>
+            </ScrollViewer>
+        </Border>
+        
+        <!-- Status bar -->
+        <Border Grid.Row="2" Background="#1a1a2e" Padding="10,5">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding StatusText}" Foreground="#888"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <Button Content="Clear" Command="{Binding ClearLogsCommand}" Padding="10,3"/>
+                    <Button Content="Reconnect All" Command="{Binding ReconnectCommand}" Padding="10,3"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

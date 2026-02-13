@@ -2,33 +2,44 @@
 
 ## Overview
 
-This document describes the implementation of bidirectional tool execution routing between the MCP proxy server and connected Avalonia applications.
+This document describes the implementation of bidirectional tool execution routing between the MCP proxy and connected Avalonia applications.
 
 ## Architecture
 
-The tool routing system uses a request/response correlation pattern with the following components:
+The tool routing system uses a correlation-based request/response pattern across three service classes:
 
-### 1. Correlation Infrastructure (ProxyServer)
+### Components
 
-- **Correlation ID Generation**: Thread-safe counter using `Interlocked.Increment`
-- **Pending Requests**: `ConcurrentDictionary<long, TaskCompletionSource<McpToolResult>>` tracks in-flight requests
-- **Stream Management**: `ConcurrentDictionary<string, NetworkStream>` stores app TCP connections
+- **McpProxyBridge** (`Services/McpProxyBridge.cs`): Receives MCP JSON-RPC requests from agents via stdio, routes tool calls to the appropriate app
+- **AppConnectionManager** (`Services/AppConnectionManager.cs`): Manages TCP connections to apps, handles handshakes, and forwards tool invocations
+- **AppConnection** (internal, in `AppConnectionManager.cs`): Per-app TCP connection with correlation-based request/response tracking
 
-### 2. Request Flow
+### Request Flow
 
 ```
-Agent → Proxy (tools/call) → App (toolInvocation) → Execution → App (toolResponse) → Proxy (result) → Agent
+Agent -> Proxy (stdio, tools/call)
+  -> McpProxyBridge.HandleToolCallAsync
+    -> Parse "AppName:ToolName" format
+    -> Find app by name via AppConnectionManager.GetConnectedApps()
+    -> AppConnectionManager.InvokeToolAsync(port, toolName, parameters)
+      -> AppConnection.InvokeToolAsync
+        -> Send toolInvocation with correlationId over TCP
+        -> Wait for response with matching correlationId
+      <- Return (success, data, error)
+    <- Return result
+  <- Send MCP response on stdout
+<- Agent receives result
 ```
 
-### 3. Message Formats
+### Message Formats
 
-#### Tool Invocation (Proxy → App)
+#### Tool Invocation (Proxy -> App, TCP)
 
 ```json
 {
   "type": "toolInvocation",
-  "correlationId": 123,
-  "tool": "WatchTower:ClickElement",
+  "correlationId": 1,
+  "tool": "ClickElement",
   "parameters": {
     "x": 100,
     "y": 50
@@ -36,15 +47,16 @@ Agent → Proxy (tools/call) → App (toolInvocation) → Execution → App (too
 }
 ```
 
-#### Tool Response (App → Proxy)
+Note: The tool name sent to the app is the raw name (e.g., `ClickElement`), not the namespaced name (e.g., `WatchTower:ClickElement`). The proxy strips the app prefix before forwarding.
+
+#### Tool Response (App -> Proxy, TCP)
 
 ```json
 {
-  "type": "toolResponse",
-  "correlationId": 123,
+  "correlationId": 1,
   "result": {
     "success": true,
-    "data": { "clicked": true },
+    "data": "{\"clicked\":true,\"x\":100,\"y\":50}",
     "error": null
   }
 }
@@ -52,106 +64,78 @@ Agent → Proxy (tools/call) → App (toolInvocation) → Execution → App (too
 
 ## Implementation Details
 
-### ProxyServer Changes
-
-#### Added Fields
+### Correlation Infrastructure (AppConnection)
 
 ```csharp
-private readonly ConcurrentDictionary<string, NetworkStream> _appStreams = new();
-private long _nextCorrelationId;
-private readonly ConcurrentDictionary<long, TaskCompletionSource<McpToolResult>> _pendingRequests = new();
+private long _correlationId; // Thread-safe counter via Interlocked.Increment
 ```
 
-#### HandleCallToolAsync
+Each `AppConnection` maintains its own correlation ID counter. When `InvokeToolAsync` is called:
 
-1. Validates tool exists and app is connected
-2. Generates unique correlation ID
-3. Creates `TaskCompletionSource` for response tracking
-4. Sends tool invocation to app via TCP
-5. Waits for response with 30-second timeout
-6. Converts result to MCP protocol format
-7. Sends response back to agent
+1. Generates unique correlation ID via `Interlocked.Increment`
+2. Serializes tool invocation with correlation ID
+3. Sends over TCP (line-delimited JSON)
+4. Reads responses in a loop until matching correlation ID found
+5. Returns parsed result
 
-#### HandleAppMessageAsync
+### Tool Name Routing (McpProxyBridge)
 
-Handles two message types:
+The bridge handles three categories of tools:
 
-- **register**: App registration (existing)
-- **toolResponse**: Tool execution results (new)
-  - Extracts correlation ID
-  - Looks up pending request
-  - Completes TaskCompletionSource with result
+1. **Proxy management tools**: `launch_app`, `list_apps`, `stop_app` - handled directly
+2. **App tools** (contain `:`): Split on `:` to get app name and raw tool name, look up app by name, forward to app
+3. **Unknown tools**: Return error
 
-### McpHandler Changes
+### Connection Management (AppConnectionManager)
 
-#### OnMessageReceived
-
-1. Parses incoming message type
-2. Extracts correlation ID, tool name, and parameters
-3. Creates `McpToolInvocation` object
-4. Executes tool via existing `ExecuteToolAsync`
-5. Wraps result in response message with correlation ID
-6. Sends response back to proxy
-
-## Timeout Handling
-
-Default timeout: **30 seconds**
-
-When a timeout occurs:
-1. Pending request is removed from dictionary
-2. `McpToolResult.Fail("Tool execution timed out after 30 seconds")` is created
-3. Error is sent back to agent in MCP format
-
-## Error Handling
-
-### App Disconnection
-
-If an app disconnects while a request is pending:
-- The proxy detects broken connection during write
-- Exception is caught in `HandleCallToolAsync`
-- Pending request is cleaned up
-- Error is sent to agent
-
-### Unknown Correlation ID
-
-If a response arrives with an unknown correlation ID:
-- Warning is logged
-- Response is ignored
-- Original request eventually times out
-
-## Testing
-
-Test coverage includes:
-
-1. **ProxyServer_CanBeCreated**: Basic instantiation
-2. **AppRegistry_RegisterApp_StoresAppCorrectly**: App registration
-3. **AppRegistry_FindAppByTool_ReturnsCorrectApp**: Tool lookup
-4. **AppRegistry_FindAppByTool_ReturnsNullForUnknownTool**: Missing tool handling
-5. **AppRegistry_GetAllTools_ReturnsAllToolsFromConnectedApps**: Multi-app tool aggregation
-6. **AppRegistry_MarkDisconnected_UpdatesConnectionStatus**: Disconnection handling
-
-All tests pass: **6/6**
-
-## Performance Characteristics
-
-- **Correlation ID Generation**: O(1) atomic operation
-- **Pending Request Lookup**: O(1) concurrent dictionary access
-- **Memory Overhead**: ~100 bytes per pending request
-- **Typical Latency**: < 100ms for simple tools (depends on tool execution time)
+- Connections stored in `ConcurrentDictionary<int, AppConnection>` keyed by port
+- State persisted to `%LOCALAPPDATA%/AvaloniaProxy/apps.json`
+- On startup, loads persisted apps and attempts reconnection
+- Connection monitoring via `AppConnection.MonitorConnectionAsync` (polls for disconnection)
 
 ## Thread Safety
 
 All operations are thread-safe:
 - Correlation ID generation uses `Interlocked.Increment`
-- Pending requests use `ConcurrentDictionary`
-- App streams use `ConcurrentDictionary`
-- TaskCompletionSource operations are thread-safe
+- Connections stored in `ConcurrentDictionary`
+- TCP stream operations are serialized per-connection
+
+## Error Handling
+
+### App Not Connected
+
+If the target app is not in `GetConnectedApps()`, the bridge returns:
+```json
+{"error": "App 'AppName' not connected"}
+```
+
+### App Disconnected Mid-Request
+
+If TCP read fails during `ReceiveOneAsync`, an `IOException` is thrown and the connection is marked disconnected.
+
+### Unknown Tool
+
+Tools without a `:` separator that don't match proxy management tools return:
+```json
+{"error": "Unknown tool: toolName"}
+```
+
+## Testing
+
+Test coverage focuses on the ViewModel and model layer:
+
+1. **ProxyViewModel_CanBeCreated**: Basic instantiation with correct defaults
+2. **ProxyViewModel_ClearLogsCommand**: Log clearing behavior
+3. **ConnectedAppInfo**: Model property storage and change notification
+4. **RelayCommand**: Command execution and CanExecute behavior
+
+Integration tests for the full TCP routing path require a running DiagnosticListener and are documented in `docs/mcp-tool-routing-test-guide.md`.
 
 ## Future Enhancements
 
-1. **Configurable Timeout**: Make timeout duration configurable per tool
-2. **Request Queueing**: Add rate limiting and request queuing (blocked by this issue)
-3. **Metrics**: Add telemetry for request latency and success rates
+1. **Configurable Timeout**: Per-tool timeout configuration
+2. **Request Queueing**: Rate limiting and request queuing
+3. **Metrics**: Telemetry for request latency and success rates
 4. **Cancellation**: Support cancellation of in-flight requests
 5. **Streaming Results**: Support tools that stream partial results
 
