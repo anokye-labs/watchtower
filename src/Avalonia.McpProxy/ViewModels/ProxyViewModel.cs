@@ -114,22 +114,30 @@ public class ProxyViewModel : INotifyPropertyChanged
         });
     }
 
+    private readonly object _logLock = new();
+
     private void Log(string message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
         var line = $"[{timestamp}] {message}\n";
-        
-        _logBuilder.Append(line);
-        
-        // Keep log size reasonable
-        if (_logBuilder.Length > 50000)
+
+        string snapshot;
+        lock (_logLock)
         {
-            _logBuilder.Remove(0, 10000);
+            _logBuilder.Append(line);
+
+            // Keep log size reasonable
+            if (_logBuilder.Length > 50000)
+            {
+                _logBuilder.Remove(0, 10000);
+            }
+
+            snapshot = _logBuilder.ToString();
         }
         
         Dispatcher.UIThread.Post(() =>
         {
-            LogText = _logBuilder.ToString();
+            LogText = snapshot;
         });
         
         Console.Error.WriteLine(message);
