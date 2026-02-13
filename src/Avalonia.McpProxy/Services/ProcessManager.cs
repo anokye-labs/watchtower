@@ -25,43 +25,24 @@ public class ProcessManager
         var args = arguments.TryGetProperty("args", out var a) ? a.GetString() : null;
         var workingDir = arguments.TryGetProperty("working_directory", out var w) ? w.GetString() : null;
 
-        _log($"Launching: {path}");
+        _log($"Launching: {path} {args}");
+
+        // Use cmd /C with SET to pass env var AND UseShellExecute=true for proper Windows GUI context.
+        // UseShellExecute=true is required so child processes get a desktop session
+        // (without it, processes launched from WSL2-interop parents have no GUI).
+        var cmdArgs = $"/C \"SET MCP_PROXY_ENDPOINT=tcp://localhost:{_proxyPort} && \"{path}\" {args ?? ""}\"";
 
         var startInfo = new ProcessStartInfo
         {
-            FileName = path,
-            Arguments = args ?? "",
+            FileName = "cmd.exe",
+            Arguments = cmdArgs,
             WorkingDirectory = workingDir ?? Path.GetDirectoryName(path) ?? "",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
+            UseShellExecute = true,
             CreateNoWindow = false
         };
 
-        // Tell the app where to connect back to
-        startInfo.EnvironmentVariables["MCP_PROXY_ENDPOINT"] = $"tcp://localhost:{_proxyPort}";
-
         var process = new Process { StartInfo = startInfo };
-
-        process.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data != null)
-            {
-                _log($"[{Path.GetFileName(path)}] {e.Data}");
-            }
-        };
-
-        process.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data != null)
-            {
-                _log($"[{Path.GetFileName(path)}:ERR] {e.Data}");
-            }
-        };
-
         process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
 
         _log($"Process started with PID {process.Id}");
 

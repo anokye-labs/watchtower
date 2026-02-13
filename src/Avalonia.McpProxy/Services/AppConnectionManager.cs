@@ -63,6 +63,18 @@ public class AppConnectionManager
     }
 
     /// <summary>
+    /// Disconnect and dispose a specific app connection by name.
+    /// </summary>
+    public void DisconnectApp(string appName)
+    {
+        if (_connections.TryRemove(appName, out var conn))
+        {
+            conn.Dispose();
+            _onAppDisconnected(appName);
+        }
+    }
+
+    /// <summary>
     /// Get all currently connected apps with their tools.
     /// </summary>
     public IEnumerable<(string Name, List<McpToolDefinition> Tools)> GetConnectedApps()

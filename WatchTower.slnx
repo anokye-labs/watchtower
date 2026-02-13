@@ -5,6 +5,7 @@
     <Project Path="src/Avalonia.Mcp.Core/Avalonia.Mcp.Core.csproj" />
     <Project Path="src/Avalonia.McpProxy.Tests/Avalonia.McpProxy.Tests.csproj" />
     <Project Path="src/Avalonia.McpProxy/Avalonia.McpProxy.csproj" />
+    <Project Path="src/McpTestApp/McpTestApp.csproj" />
   </Folder>
   <Project Path="WatchTower/WatchTower.csproj" />
 </Solution>

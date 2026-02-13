@@ -206,11 +206,19 @@ public class McpProxyBridge
 
     private async Task<string> StopAppAsync(string appName, CancellationToken ct)
     {
-        var (success, _, error) = await _connectionManager.InvokeToolAsync(appName, "__shutdown__", default, ct);
-        
-        return success 
-            ? JsonSerializer.Serialize(new { status = "shutdown_sent", app_name = appName })
-            : JsonSerializer.Serialize(new { error = error ?? "Failed to stop app" });
+        _log($"Stopping app: {appName}");
+
+        // Disconnect from the proxy side
+        _connectionManager.DisconnectApp(appName);
+
+        // Kill the process by name
+        var killed = 0;
+        foreach (var proc in Process.GetProcessesByName(appName))
+        {
+            try { proc.Kill(); killed++; } catch { }
+        }
+
+        return JsonSerializer.Serialize(new { status = "stopped", app_name = appName, processes_killed = killed });
     }
 
     private async Task SendResponseAsync(StreamWriter writer, JsonElement id, object result)

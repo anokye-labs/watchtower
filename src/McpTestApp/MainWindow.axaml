@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="McpTestApp.MainWindow"
+        Title="MCP Test App"
+        Width="400" Height="300"
+        WindowStartupLocation="CenterScreen">
+    
+    <StackPanel Margin="20" Spacing="15">
+        <TextBlock Text="MCP Interactive Test App" 
+                   FontSize="18" FontWeight="Bold" 
+                   HorizontalAlignment="Center"/>
+        
+        <TextBox Name="InputBox" 
+                 AutomationProperties.AutomationId="InputBox"
+                 Watermark="Type something here..."
+                 FontSize="14"/>
+        
+        <Button Name="ActionButton"
+                AutomationProperties.AutomationId="ActionButton"
+                Content="Click Me" 
+                HorizontalAlignment="Center"
+                FontSize="14"
+                Padding="20,8"
+                Click="OnButtonClick"/>
+        
+        <Border Background="#1a1a2e" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="5">
+                <TextBlock Text="Results:" FontWeight="Bold" Foreground="#8be9fd"/>
+                <TextBlock Name="ClickCountLabel"
+                           AutomationProperties.AutomationId="ClickCountLabel"
+                           Text="Clicks: 0" 
+                           FontSize="16" Foreground="#50fa7b"/>
+                <TextBlock Name="LastInputLabel"
+                           AutomationProperties.AutomationId="LastInputLabel"
+                           Text="Last input: (none)" 
+                           Foreground="#cccccc"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Window>
