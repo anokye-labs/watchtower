@@ -31,10 +31,8 @@
     <ProjectReference Include="..\Avalonia.Mcp.Core\Avalonia.Mcp.Core.csproj" />
   </ItemGroup>
   
-  <!-- Assets can be added later
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
-  -->
 
 </Project>

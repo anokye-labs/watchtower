@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.McpProxy.ViewModels;
 using Avalonia.McpProxy.Views;
+using Avalonia.Platform;
 using System;
 
 namespace Avalonia.McpProxy;
@@ -44,7 +45,7 @@ public class App : Application
     {
         var menu = new NativeMenu();
         
-        var showLogsItem = new NativeMenuItem("Show Logs");
+        var showLogsItem = new NativeMenuItem("Show Dashboard");
         showLogsItem.Click += (_, _) => ShowLogWindow();
         menu.Add(showLogsItem);
         
@@ -64,9 +65,23 @@ public class App : Application
         };
         menu.Add(exitItem);
 
+        // Load tray icon from embedded asset
+        WindowIcon? icon = null;
+        try
+        {
+            var iconUri = new Uri("avares://Avalonia.McpProxy/Assets/proxy-icon.png");
+            var asset = AssetLoader.Open(iconUri);
+            icon = new WindowIcon(asset);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[Proxy] Could not load tray icon: {ex.Message}");
+        }
+
         _trayIcon = new TrayIcon
         {
             ToolTipText = "MCP Proxy",
+            Icon = icon,
             Menu = menu,
             IsVisible = true
         };

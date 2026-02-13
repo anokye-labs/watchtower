@@ -1,11 +1,13 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using WatchTower.Services;
 using WatchTower.ViewModels;
@@ -70,6 +72,27 @@ public partial class App : Application
             shellViewModel.ExitRequested += exitHandler;
 
             desktop.MainWindow = shellWindow;
+
+            // Wire up screenshot capture for diagnostic tool
+            Program.OnCaptureScreenshot += async () =>
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    var window = desktop.MainWindow ?? desktop.Windows.FirstOrDefault();
+                    if (window == null) return null;
+
+                    var pixelSize = new PixelSize((int)window.Width, (int)window.Height);
+                    var dpiScale = window.RenderScaling;
+
+                    using var renderTarget = new RenderTargetBitmap(pixelSize, new Vector(96 * dpiScale, 96 * dpiScale));
+                    renderTarget.Render(window);
+
+                    using var ms = new System.IO.MemoryStream();
+                    renderTarget.Save(ms);
+                    return Convert.ToBase64String(ms.ToArray());
+                });
+            };
+
             shellWindow.Show();
 
             // Start async startup workflow

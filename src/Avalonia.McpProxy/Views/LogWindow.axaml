@@ -3,52 +3,150 @@
         xmlns:vm="using:Avalonia.McpProxy.ViewModels"
         x:Class="Avalonia.McpProxy.Views.LogWindow"
         x:DataType="vm:ProxyViewModel"
-        Title="MCP Proxy - Logs"
-        Width="800" Height="500"
-        WindowStartupLocation="CenterScreen">
+        Title="MCP Proxy Dashboard"
+        Width="900" Height="700"
+        MinWidth="600" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="#0f0f23">
     
-    <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Header with connected apps -->
-        <Border Grid.Row="0" Background="#1a1a2e" Padding="10">
-            <StackPanel>
-                <TextBlock Text="Connected Apps" FontWeight="Bold" Foreground="#8be9fd" Margin="0,0,0,5"/>
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        
+        <!-- Title Bar -->
+        <Border Grid.Row="0" Background="#1a1a2e" Padding="16,12">
+            <TextBlock Text="MCP Proxy Dashboard" 
+                       FontSize="18" FontWeight="Bold" 
+                       Foreground="#8be9fd"/>
+        </Border>
+        
+        <!-- Connected Apps Section -->
+        <Border Grid.Row="1" Background="#12122a" Padding="16,10">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Connected Apps" 
+                           FontWeight="SemiBold" Foreground="#8be9fd" 
+                           FontSize="13" Margin="0,0,0,4"/>
+                
                 <ItemsControl ItemsSource="{Binding ConnectedApps}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="#16213e" CornerRadius="4" Padding="8,4" Margin="0,2">
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}"/>
-                                    <TextBlock Text="{Binding Name}" Foreground="White"/>
-                                    <TextBlock Text="{Binding Port, StringFormat=':{0}'}" Foreground="#666"/>
-                                    <TextBlock Text="{Binding ToolCount, StringFormat=\{0\} tools}" Foreground="#50fa7b"/>
-                                </StackPanel>
+                        <DataTemplate x:DataType="vm:ConnectedAppInfo">
+                            <Border Background="#16213e" CornerRadius="6" Padding="12,8" Margin="0,2">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- App info -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <Ellipse Width="10" Height="10" Fill="{Binding StatusColor}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding Port, StringFormat=':{0}'}" Foreground="#666" FontSize="12"/>
+                                        <TextBlock Text="{Binding ToolCount, StringFormat=\{0\} tools}" Foreground="#50fa7b" FontSize="12"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Per-app action buttons -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                        <Button Content="Screenshot" 
+                                                Click="OnScreenshotAppClick"
+                                                Tag="{Binding}"
+                                                Padding="10,4"
+                                                FontSize="11"
+                                                Background="#2a3a5e" Foreground="#8be9fd"
+                                                CornerRadius="4"/>
+                                        <Button Content="Stop" 
+                                                Click="OnStopAppClick"
+                                                Tag="{Binding}"
+                                                Padding="10,4"
+                                                FontSize="11"
+                                                Background="#3a1a1a" Foreground="#ff5555"
+                                                CornerRadius="4"/>
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="No apps connected" Foreground="#666" 
-                           IsVisible="{Binding !HasConnectedApps}" Margin="0,5,0,0"/>
+                
+                <TextBlock Text="No apps connected" 
+                           Foreground="#555" FontSize="12"
+                           IsVisible="{Binding !HasConnectedApps}" 
+                           Margin="4,4,0,0"/>
+                
+                <!-- Launch App Section -->
+                <Border Background="#16213e" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto" >
+                        <TextBlock Grid.Column="0" Text="Launch App:" 
+                                   Foreground="#888" FontSize="12" 
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" 
+                                 Text="{Binding LaunchAppPath, Mode=TwoWay}"
+                                 Watermark="Path to executable..."
+                                 FontSize="12"
+                                 Background="#0f0f23" Foreground="#ccc"
+                                 BorderBrush="#333" CornerRadius="4"
+                                 Padding="8,4"
+                                 Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="Launch" 
+                                Command="{Binding LaunchAppCommand}"
+                                Padding="14,4"
+                                FontSize="12"
+                                Background="#1a3a1a" Foreground="#50fa7b"
+                                CornerRadius="4"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Screenshot Preview Section -->
+        <Border Grid.Row="2" Background="#12122a" Padding="16,10"
+                IsVisible="{Binding ScreenshotImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Screenshot Preview" 
+                           FontWeight="SemiBold" Foreground="#8be9fd" 
+                           FontSize="13"/>
+                <Border Background="#0a0a1a" CornerRadius="6" Padding="4" MaxHeight="300">
+                    <Image Source="{Binding ScreenshotImage}" 
+                           Stretch="Uniform"
+                           MaxHeight="280"/>
+                </Border>
             </StackPanel>
         </Border>
         
-        <!-- Log output -->
-        <Border Grid.Row="1" Background="#0f0f23" Padding="5">
-            <ScrollViewer x:Name="LogScroller">
-                <TextBlock Text="{Binding LogText}" 
-                           FontFamily="Consolas,monospace" 
-                           FontSize="12"
-                           Foreground="#cccccc"
-                           TextWrapping="Wrap"/>
-            </ScrollViewer>
+        <!-- Log Output -->
+        <Border Grid.Row="3" Background="#0f0f23" Padding="16,10">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Log Output" 
+                           FontWeight="SemiBold" Foreground="#8be9fd" 
+                           FontSize="13" Margin="0,0,0,6"/>
+                <Border Background="#0a0a1a" CornerRadius="6" Padding="8">
+                    <ScrollViewer x:Name="LogScroller">
+                        <TextBlock Text="{Binding LogText}" 
+                                   FontFamily="Consolas,Courier New,monospace" 
+                                   FontSize="11.5"
+                                   Foreground="#aaaaaa"
+                                   TextWrapping="Wrap"/>
+                    </ScrollViewer>
+                </Border>
+            </DockPanel>
         </Border>
         
-        <!-- Status bar -->
-        <Border Grid.Row="2" Background="#1a1a2e" Padding="10,5">
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="{Binding StatusText}" Foreground="#888"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-                    <Button Content="Clear" Command="{Binding ClearLogsCommand}" Padding="10,3"/>
-                    <Button Content="Reconnect All" Command="{Binding ReconnectCommand}" Padding="10,3"/>
+        <!-- Status Bar -->
+        <Border Grid.Row="4" Background="#1a1a2e" Padding="16,8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding StatusText, StringFormat='Status: {0}'}" 
+                           Foreground="#888" FontSize="12"
+                           VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" 
+                           Text="{Binding AppStatusText}" 
+                           Foreground="#666" FontSize="11"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Clear Logs" 
+                            Command="{Binding ClearLogsCommand}" 
+                            Padding="12,4" FontSize="11"
+                            Background="#2a2a4e" Foreground="#aaa"
+                            CornerRadius="4"/>
+                    <Button Content="Reconnect All" 
+                            Command="{Binding ReconnectCommand}" 
+                            Padding="12,4" FontSize="11"
+                            Background="#2a3a5e" Foreground="#8be9fd"
+                            CornerRadius="4"/>
                 </StackPanel>
             </Grid>
         </Border>
