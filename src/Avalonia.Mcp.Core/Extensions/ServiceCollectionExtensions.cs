@@ -52,10 +52,21 @@ public static class ServiceCollectionExtensions
             // Auto-connect if configured
             if (configuration.AutoConnect)
             {
+                Console.WriteLine($"[MCP] Auto-connect enabled, will connect to {configuration.ProxyEndpoint}");
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(1000); // Small delay to let app initialize
-                    await handler.ConnectAsync();
+                    try
+                    {
+                        Console.WriteLine("[MCP] Auto-connect task starting, waiting 1 second...");
+                        await Task.Delay(1000); // Small delay to let app initialize
+                        Console.WriteLine("[MCP] Calling ConnectAsync...");
+                        var result = await handler.ConnectAsync();
+                        Console.WriteLine($"[MCP] ConnectAsync returned: {result}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[MCP] Auto-connect failed: {ex.Message}");
+                    }
                 });
             }
 

@@ -4,144 +4,114 @@
 
 1. Build the solution:
    ```bash
-   dotnet build
+   dotnet build WatchTower.slnx
    ```
 
-2. Have the MCP proxy server ready to run
-3. Have WatchTower (or another app using Avalonia.Mcp.Core) ready to run
+2. Have the MCP proxy ready to run
+3. Have WatchTower (or another app with DiagnosticListener) ready to run
 
 ## Manual Integration Test Scenario
 
-### Step 1: Start the Proxy Server
+### Step 1: Start WatchTower (with Diagnostic Listener)
 
 ```bash
-cd src/Avalonia.McpProxy
-dotnet run
+dotnet run --project WatchTower/WatchTower.csproj
 ```
 
-Expected output:
+Watch for the diagnostic port announcement in output:
 ```
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      Starting MCP Proxy Server
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      TCP listener started on localhost:5100
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      Starting stdio handler for agent communication
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      MCP Proxy Server started successfully
+DIAGNOSTIC_PORT:51234
 ```
 
-### Step 2: Start WatchTower App
+Note the port number - the proxy will connect to it.
 
-In another terminal:
+### Step 2: Start the Proxy
+
 ```bash
-cd WatchTower
-dotnet run
+dotnet run --project src/Avalonia.McpProxy/Avalonia.McpProxy.csproj
 ```
 
-Expected proxy output:
+The proxy starts as a system tray app. Right-click the tray icon and select "Show Logs" to see activity.
+
+Expected log output:
 ```
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      Accepted connection: {ConnectionId}
-info: Avalonia.McpProxy.Server.AppRegistry[0]
-      Registered app 'WatchTower' with {N} tools (connection: {ConnectionId})
+MCP Proxy starting...
+MCP bridge ready on stdio
+Found 0 persisted apps
 ```
 
-### Step 3: List Available Tools via Proxy
+### Step 3: Launch App via Proxy (Alternative to Step 1)
 
-Send a `tools/list` request to the proxy's stdin:
+Instead of starting WatchTower manually, you can have the proxy launch it. Send this to the proxy's stdin:
 
 ```json
-{"jsonrpc":"2.0","method":"tools/list","id":1}
+{"jsonrpc":"2.0","method":"initialize","id":0,"params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}
 ```
 
-Expected output:
+Then launch the app:
+```json
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"launch_app","arguments":{"path":"path/to/WatchTower.exe"}},"id":1}
+```
+
+Expected response:
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "tools": [
+    "content": [
       {
-        "name": "WatchTower:ClickElement",
-        "description": "Clicks an element at the specified coordinates",
-        "inputSchema": { ... }
-      },
-      {
-        "name": "WatchTower:TypeText",
-        "description": "Types text into the focused element",
-        "inputSchema": { ... }
+        "type": "text",
+        "text": "{\"status\":\"launched\",\"pid\":12345,\"diagnostic_port\":51234,\"message\":\"App launched and listening on port 51234\"}"
       }
-      // ... more tools
     ]
   }
-}
-```
-
-### Step 4: Call a Tool
-
-Send a `tools/call` request:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call",
-  "params": {
-    "name": "WatchTower:ClickElement",
-    "arguments": {
-      "x": 100,
-      "y": 50
-    }
-  },
-  "id": 2
 }
 ```
 
 Expected proxy logs:
 ```
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      Forwarded tool 'WatchTower:ClickElement' to app 'WatchTower' with correlation ID 1
-debug: Avalonia.McpProxy.Server.ProxyServer[0]
-      Completed pending request 1
+Launching: path/to/WatchTower.exe
+Process started with PID 12345
+App listening on diagnostic port 51234
+Connecting to app on port 51234...
+Connected to WatchTower on port 51234 with 6 tools
 ```
 
-Expected output (success):
+### Step 4: List Available Tools
+
+```json
+{"jsonrpc":"2.0","method":"tools/list","id":2}
+```
+
+Expected response:
 ```json
 {
   "jsonrpc": "2.0",
   "id": 2,
   "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "{\"clicked\":true,\"x\":100,\"y\":50}"
-      }
+    "tools": [
+      {"name": "launch_app", "description": "Launch an Avalonia app with diagnostic support...", "inputSchema": {...}},
+      {"name": "list_apps", "description": "List all connected diagnostic apps...", "inputSchema": {...}},
+      {"name": "stop_app", "description": "Stop a connected app...", "inputSchema": {...}},
+      {"name": "WatchTower:ClickElement", "description": "[WatchTower] Clicks an element...", "inputSchema": {...}},
+      {"name": "WatchTower:TypeText", "description": "[WatchTower] Types text...", "inputSchema": {...}},
+      {"name": "WatchTower:CaptureScreenshot", "description": "[WatchTower] Captures a screenshot...", "inputSchema": {...}},
+      {"name": "WatchTower:GetElementTree", "description": "[WatchTower] Gets the UI element tree...", "inputSchema": {...}},
+      {"name": "WatchTower:FindElement", "description": "[WatchTower] Finds a UI element...", "inputSchema": {...}},
+      {"name": "WatchTower:WaitForElement", "description": "[WatchTower] Waits for a UI element...", "inputSchema": {...}}
     ]
   }
 }
 ```
 
-Expected output (error):
+### Step 5: Call a Tool
+
 ```json
-{
-  "jsonrpc": "2.0",
-  "id": 2,
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "Error: Element not found at coordinates"
-      }
-    ]
-  }
-}
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"WatchTower:GetElementTree","arguments":{"maxDepth":3}},"id":3}
 ```
 
-### Step 5: Test Timeout Handling
-
-Call a tool that takes longer than 30 seconds (if available) or disconnect the app mid-request.
-
-Expected output after 30s:
+Expected response (success):
 ```json
 {
   "jsonrpc": "2.0",
@@ -150,94 +120,100 @@ Expected output after 30s:
     "content": [
       {
         "type": "text",
-        "text": "Error: Tool execution timed out after 30 seconds"
+        "text": "{...tool result data...}"
       }
     ]
   }
 }
 ```
 
-Expected proxy logs:
-```
-warn: Avalonia.McpProxy.Server.ProxyServer[0]
-      Tool 'WatchTower:SomeTool' timed out (correlation ID: 2)
-```
+### Step 6: List Connected Apps
 
-### Step 6: Test App Disconnection
-
-1. Close the WatchTower app
-2. Try to call a tool
-
-Expected proxy logs:
-```
-info: Avalonia.McpProxy.Server.ProxyServer[0]
-      Connection closed: {ConnectionId}
-info: Avalonia.McpProxy.Server.AppRegistry[0]
-      Marked app 'WatchTower' as disconnected
+```json
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"list_apps","arguments":{}},"id":4}
 ```
 
-Expected output:
+Expected response:
 ```json
 {
   "jsonrpc": "2.0",
   "id": 4,
-  "error": {
-    "code": -32000,
-    "message": "App 'WatchTower' is not connected"
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"apps\":[{\"name\":\"WatchTower\",\"port\":51234,\"tool_count\":6,\"tools\":[\"ClickElement\",\"TypeText\",...]}],\"count\":1}"
+      }
+    ]
   }
 }
 ```
 
+### Step 7: Test App Disconnection
+
+1. Close WatchTower
+2. Check proxy logs for disconnection message
+3. Try calling a WatchTower tool
+
+Expected response:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":\"App 'WatchTower' not connected\"}"
+      }
+    ]
+  }
+}
+```
+
+### Step 8: Test Reconnection
+
+1. Restart WatchTower
+2. In proxy tray menu, click "Reconnect All Apps" (or the proxy will auto-reconnect on next `launch_app`)
+3. Verify tools reappear in `tools/list`
+
 ## Expected Behavior Summary
 
-✅ **Success Cases:**
-- Tools list returns all registered tools from connected apps
-- Tool calls route to correct app based on tool name prefix
-- Tool execution results return to agent
-- Multiple apps can connect and expose different tools
+**Success Cases:**
+- `initialize` returns protocol version and capabilities
+- `tools/list` returns proxy management tools + all app tools (namespaced)
+- `tools/call` routes to correct app based on `AppName:` prefix
+- Tool results flow back through the proxy to the agent
+- Multiple apps can connect with distinct namespaces
 
-✅ **Error Cases:**
-- Unknown tool returns error
-- Disconnected app returns error
-- Tool execution timeout returns error after 30s
-- Tool execution errors are properly propagated
+**Error Cases:**
+- Unknown tool returns error message
+- Disconnected app returns error message
+- App tools stripped of namespace prefix when forwarded
+- Proxy management tools (`launch_app`, `list_apps`, `stop_app`) always available
 
-✅ **Connection Management:**
-- Apps can connect and disconnect dynamically
-- Disconnected apps' tools are removed from tool list
-- Reconnected apps re-register their tools
-
-## Automated Integration Tests
-
-To create automated integration tests:
-
-1. Create a mock app that connects to the proxy
-2. Register fake tools with known behavior
-3. Send tool invocation requests via proxy stdin
-4. Verify responses match expected format
-5. Test timeout scenarios with delayed responses
-6. Test error scenarios with failing tools
-
-See `src/Avalonia.McpProxy.Tests/Integration/` for examples (to be implemented).
+**Connection Management:**
+- Proxy connects TO apps (inverted model)
+- App state persisted across proxy restarts
+- Reconnection via tray menu or on next launch
+- Disconnected apps detected via connection monitoring
 
 ## Troubleshooting
 
-### "Tool not found" error
-- Check that the app is connected
-- Verify tool name includes app prefix (e.g., "WatchTower:ToolName")
-- Check app registered successfully
-
 ### "App not connected" error
-- Verify app is running
-- Check TCP connection on port 5100
-- Review proxy logs for connection acceptance
+- Verify app is running and announced `DIAGNOSTIC_PORT:NNNN`
+- Check proxy logs for connection attempt
+- Try "Reconnect All Apps" from tray menu
 
-### Timeout after 30 seconds
-- Tool execution is taking too long
-- Check app logs for tool execution errors
-- Consider increasing timeout (requires code change)
+### No tools appearing for app
+- Check that DiagnosticListener handshake completed (look for "Connected to AppName" in logs)
+- Verify app registered tools with the listener
 
-### No response from proxy
-- Check proxy is running
-- Verify stdin message is valid JSON-RPC
-- Check proxy logs for parsing errors
+### stdout corruption (garbled JSON)
+- All proxy logging goes to stderr
+- Check for stray `Console.WriteLine` calls (should be `Console.Error.WriteLine`)
+- Framework logging should use `LogToStandardErrorThreshold = LogLevel.Trace`
+
+### Proxy tray icon not visible
+- Check system tray overflow area
+- The proxy has no main window - it runs entirely in the tray

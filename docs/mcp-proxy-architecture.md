@@ -4,80 +4,83 @@
 
 The Avalonia MCP Proxy Platform enables AI agents (Claude, GitHub Copilot, etc.) to interact with Avalonia applications through the Model Context Protocol (MCP). The platform consists of three main components:
 
-1. **Avalonia.Mcp.Core** - Reusable library for embedding MCP handlers in Avalonia apps
-2. **Avalonia.McpProxy** - Standalone proxy server that federates multiple app handlers
+1. **Avalonia.Mcp.Core** - Reusable library for embedding diagnostic listeners in Avalonia apps
+2. **Avalonia.McpProxy** - System tray proxy app that federates multiple app handlers
 3. **Client Apps** (e.g., WatchTower) - Avalonia applications using the core library
 
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    AI Agent (Claude, Copilot)                    │
-│                                                                   │
-│  Capabilities:                                                    │
-│  • Discover tools via MCP protocol                              │
-│  • Execute tools on any connected Avalonia app                  │
-│  • Receive real-time feedback                                   │
-│  • Iterate on development/testing workflows                     │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                             │ MCP Protocol (stdio)
-                             │ JSON-RPC 2.0
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│              Avalonia.McpProxy (Standalone Server)               │
-│                                                                   │
-│  ┌────────────────┐  ┌────────────────┐  ┌──────────────────┐  │
-│  │  Stdio Handler │  │  App Registry  │  │  Tool Router     │  │
-│  │                │  │                │  │                  │  │
-│  │ • MCP Protocol │  │ • Track Apps   │  │ • Route Calls    │  │
-│  │ • List Tools   │  │ • Track Tools  │  │ • Forward Results│  │
-│  │ • Call Tools   │  │ • Live Updates │  │ • Error Handling │  │
-│  └────────────────┘  └────────────────┘  └──────────────────┘  │
-│                                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │          TCP Listener (localhost:5100)                    │  │
-│  │  • Accepts app connections                                │  │
-│  │  • Handles registration messages                          │  │
-│  │  • Maintains persistent connections                       │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└──────────────┬──────────────┬──────────────┬──────────────────┘
-               │              │              │
-               │ TCP          │ TCP          │ TCP
-               │              │              │
-┌──────────────▼─┐  ┌─────────▼──┐  ┌───────▼──────┐
-│  WatchTower    │  │  App 2     │  │  App N       │
-│                │  │            │  │              │
-│  Avalonia.Mcp  │  │  Avalonia  │  │  Avalonia    │
-│  .Core         │  │  .Mcp.Core │  │  .Mcp.Core   │
-│  (Embedded)    │  │  (Embedded)│  │  (Embedded)  │
-│                │  │            │  │              │
-│  • Standard    │  │  • Standard│  │  • Standard  │
-│    Tools       │  │    Tools   │  │    Tools     │
-│  • Custom      │  │  • Custom  │  │  • Custom    │
-│    Tools       │  │    Tools   │  │    Tools     │
-│  • TCP Client  │  │  • TCP     │  │  • TCP       │
-│                │  │    Client  │  │    Client    │
-└────────────────┘  └────────────┘  └──────────────┘
++-------------------------------------------------------------------+
+|                    AI Agent (Claude, Copilot)                      |
+|                                                                    |
+|  Capabilities:                                                     |
+|  - Discover tools via MCP protocol                                 |
+|  - Execute tools on any connected Avalonia app                     |
+|  - Launch apps with diagnostic support                             |
+|  - Receive real-time feedback                                      |
++-----------------------------+--------------------------------------+
+                              |
+                              | MCP Protocol (stdio)
+                              | JSON-RPC 2.0
+                              v
++-------------------------------------------------------------------+
+|         Avalonia.McpProxy (System Tray Application)                |
+|                                                                    |
+|  +------------------+  +---------------------+  +----------------+ |
+|  | McpProxyBridge   |  | AppConnectionManager|  | ProcessManager | |
+|  |                  |  |                     |  |                | |
+|  | - MCP Protocol   |  | - Track Connections |  | - Launch Apps  | |
+|  | - List Tools     |  | - Persist State     |  | - Capture Port | |
+|  | - Call Tools     |  | - Reconnect         |  | - Register App | |
+|  +------------------+  +---------------------+  +----------------+ |
+|                                                                    |
+|  +------------------------------------------------------------+   |
+|  |  System Tray Icon + Log Window (ProxyViewModel)             |   |
+|  |  - Show connected apps                                      |   |
+|  |  - View logs                                                |   |
+|  |  - Reconnect all                                            |   |
+|  +------------------------------------------------------------+   |
++-------+----------------+----------------+-------------------------+
+        |                |                |
+        | TCP            | TCP            | TCP
+        | (proxy         | (proxy         | (proxy
+        |  connects      |  connects      |  connects
+        |  TO app)       |  TO app)       |  TO app)
+        v                v                v
++----------------+  +------------+  +--------------+
+|  WatchTower    |  |  App 2     |  |  App N       |
+|                |  |            |  |              |
+|  Diagnostic    |  |  Diagnostic|  |  Diagnostic  |
+|  Listener      |  |  Listener  |  |  Listener    |
+|  (TCP Server)  |  |  (TCP Srv) |  |  (TCP Srv)   |
+|                |  |            |  |              |
+|  - Standard    |  |  - Standard|  |  - Standard  |
+|    Tools       |  |    Tools   |  |    Tools     |
+|  - Custom      |  |  - Custom  |  |  - Custom    |
+|    Tools       |  |    Tools   |  |    Tools     |
++----------------+  +------------+  +--------------+
 ```
+
+### Connection Model (Inverted)
+
+The proxy connects TO apps, not the other way around. Each app embeds a `DiagnosticListener` that listens on a random TCP port and announces it via stdout (`DIAGNOSTIC_PORT:NNNN`). The proxy discovers this port and initiates the connection.
+
+This inversion simplifies app integration: apps just start a listener, and the proxy handles discovery and connection management.
 
 ## Component Details
 
 ### 1. Avalonia.Mcp.Core
 
-**Purpose**: Embeddable library that provides MCP capabilities to any Avalonia application.
+**Purpose**: Embeddable library that provides diagnostic and MCP capabilities to any Avalonia application.
 
 **Key Classes**:
 
-- **IMcpHandler**: Main interface for MCP functionality
-  - Manages tool registration
-  - Handles tool execution
-  - Manages connection to proxy
-
-- **McpHandler**: Default implementation of IMcpHandler
-  - Tool catalog management
-  - Tool invocation routing
-  - Connection lifecycle
+- **DiagnosticListener** (`Diagnostics/`): TCP server embedded in apps
+  - Listens on a random available port
+  - Accepts proxy connections
+  - Handles handshake, tool invocation, and shutdown messages
+  - Defines `DiagnosticTool` and `DiagnosticResult` types
 
 - **StandardUiTools**: Pre-built UI interaction tools
   - ClickElement(x, y)
@@ -87,83 +90,94 @@ The Avalonia MCP Proxy Platform enables AI agents (Claude, GitHub Copilot, etc.)
   - FindElement(selector)
   - WaitForElement(selector, timeoutMs)
 
-- **Transport Layer**:
-  - ITransportClient: Abstract transport interface
-  - TcpTransportClient: TCP-based implementation
-  - TransportClientFactory: Creates appropriate transport
+- **IAvaloniaUiService / AvaloniaUiService**: UI interaction service
+  - Click, type, screenshot, element tree inspection
+  - Element search and wait
 
-**Integration Pattern**:
+- **Models**: Shared types
+  - `McpToolDefinition`: Tool name, description, input schema
+  - `McpToolResult`: Success/failure with data/error
+  - `McpToolInvocation`: Tool invocation request
 
-```csharp
-// In your Avalonia app's service registration:
-services.AddMcpHandler(config =>
-{
-    config.ApplicationName = "MyApp";
-    config.ProxyEndpoint = "tcp://localhost:5100";
-    config.AutoConnect = true;
-}, registerStandardTools: true);
-```
+**Legacy Components** (from earlier architecture, may be removed):
+- `IMcpHandler / McpHandler`: MCP handler with auto-reconnect
+- `ITransportClient / TcpTransportClient`: TCP transport layer
+- `TransportClientFactory`: Transport creation (tcp:// supported, pipe:// not yet)
+- `ServiceCollectionExtensions`: DI registration via `AddMcpHandler()`
 
 ### 2. Avalonia.McpProxy
 
-**Purpose**: Standalone server that aggregates multiple app handlers and exposes unified MCP interface.
+**Purpose**: System tray application that aggregates multiple app handlers and exposes a unified MCP interface to AI agents.
 
 **Key Classes**:
 
-- **ProxyServer**: Main server implementation
-  - Stdio handler for agent communication (MCP protocol)
-  - TCP listener for app connections
-  - Message routing between agents and apps
+- **McpProxyBridge** (`Services/`): MCP stdio protocol bridge
+  - Reads JSON-RPC from stdin, writes responses to stdout
+  - Handles `initialize`, `tools/list`, `tools/call`
+  - Exposes proxy management tools: `launch_app`, `list_apps`, `stop_app`
+  - Federates tools from all connected apps with `AppName:tool` namespacing
 
-- **AppRegistry**: Manages connected applications
-  - Tracks registered apps
-  - Maintains tool catalog
-  - Handles app lifecycle (connect/disconnect)
+- **AppConnectionManager** (`Services/`): Connection hub
+  - Connects TO apps via TCP (inverted model)
+  - Persists app state to `%LOCALAPPDATA%/AvaloniaProxy/apps.json`
+  - Handles handshake, tool invocation routing, disconnection monitoring
+  - Reconnects to known apps on startup
 
-- **ProxyConfiguration**: Server configuration
-  - Bind address for TCP listener
-  - Expected app list (informational)
-  - Logging and connection limits
+- **ProcessManager** (`Services/`): App launcher
+  - Launches Avalonia apps with diagnostic support
+  - Captures `DIAGNOSTIC_PORT:NNNN` from app stdout
+  - Registers discovered apps with AppConnectionManager
+
+- **ProxyViewModel** (`ViewModels/`): MVVM ViewModel
+  - Observable collection of connected apps
+  - Log buffer with 50KB cap
+  - Clear and reconnect commands
+
+- **App.axaml.cs**: Application entry point
+  - System tray icon with context menu (Show Logs, Reconnect All, Exit)
+  - `ShutdownMode.OnExplicitShutdown` (runs without main window)
+  - Log window shown on demand
 
 **Startup Flow**:
 
-1. Load configuration from `.mcpproxy.json`
-2. Start TCP listener on configured address
-3. Start stdio handler for MCP protocol
-4. Wait for app connections and agent requests
+1. Avalonia app starts with system tray icon
+2. ProxyViewModel created, starts AppConnectionManager
+3. AppConnectionManager loads persisted app state and reconnects
+4. McpProxyBridge starts reading MCP requests from stdin
+5. Agents can also launch apps via `launch_app` tool
 
 **Message Flow**:
 
 ```
-Agent → Proxy (stdio):
+Agent -> Proxy (stdio):
   {"jsonrpc":"2.0","method":"tools/list","id":1}
 
-Proxy → Agent (stdio):
+Proxy -> Agent (stdio):
   {"jsonrpc":"2.0","result":{"tools":[...]},"id":1}
 
-Agent → Proxy (stdio):
+Agent -> Proxy (stdio):
   {"jsonrpc":"2.0","method":"tools/call","params":{"name":"WatchTower:ClickElement","arguments":{"x":100,"y":50}},"id":2}
 
-Proxy → App (TCP):
-  {"tool":"ClickElement","parameters":{"x":100,"y":50}}
+Proxy -> App (TCP, line-delimited JSON):
+  {"type":"toolInvocation","correlationId":1,"tool":"ClickElement","parameters":{"x":100,"y":50}}
 
-App → Proxy (TCP):
-  {"success":true,"data":{"x":100,"y":50,"clicked":true}}
+App -> Proxy (TCP):
+  {"correlationId":1,"result":{"success":true,"data":"{...}"}}
 
-Proxy → Agent (stdio):
+Proxy -> Agent (stdio):
   {"jsonrpc":"2.0","result":{"content":[{"type":"text","text":"..."}]},"id":2}
 ```
 
 ### 3. Client Applications (WatchTower)
 
-**Purpose**: Avalonia applications that embed the MCP handler for agent interaction.
+**Purpose**: Avalonia applications that embed a DiagnosticListener for agent interaction.
 
 **Integration**:
 
-- Add `Avalonia.Mcp.Core` package reference
-- Register MCP handler in DI container
-- Optionally register custom domain-specific tools
-- Run application (auto-connects to proxy if configured)
+- Add `Avalonia.Mcp.Core` project reference
+- Start a DiagnosticListener on app startup
+- Register standard and custom tools with the listener
+- Print `DIAGNOSTIC_PORT:NNNN` to stdout so the proxy can discover it
 
 ## Tool Namespacing
 
@@ -174,197 +188,32 @@ Tools are automatically namespaced by application name to avoid conflicts:
 
 This allows multiple apps to expose tools with the same name without conflicts.
 
-Example tool catalog from proxy:
+## Proxy Management Tools
 
-```json
-{
-  "tools": [
-    {"name": "WatchTower:ClickElement", "description": "..."},
-    {"name": "WatchTower:TypeText", "description": "..."},
-    {"name": "WatchTower:CaptureScreenshot", "description": "..."},
-    {"name": "AdminTool:ClickElement", "description": "..."},
-    {"name": "AdminTool:ResetDatabase", "description": "..."}
-  ]
-}
-```
+The proxy itself exposes three management tools to agents:
 
-## Connection Lifecycle
-
-### App Startup
-
-1. App starts and initializes services (including MCP handler)
-2. If `AutoConnect: true`, handler immediately attempts connection
-3. Handler creates TCP client and connects to proxy endpoint
-4. Handler sends registration message with app name and tools
-5. Proxy adds app to registry and acknowledges registration
-6. Connection remains open for bidirectional communication
-
-### App Shutdown
-
-1. App shutdown triggered (user closes, Ctrl+C, etc.)
-2. MCP handler Dispose() called
-3. Handler disconnects TCP connection
-4. Proxy detects disconnection and marks app as offline
-5. Proxy removes app's tools from aggregated catalog
-
-### Reconnection
-
-1. If connection lost, handler attempts reconnect (if `AutoConnect: true`)
-2. Reconnection interval controlled by `ReconnectIntervalMs` (default: 5000ms)
-3. On successful reconnect, re-sends registration message
-4. Proxy treats as new connection and re-adds tools
+| Tool | Description |
+|------|-------------|
+| `launch_app` | Launch an Avalonia app with diagnostic support |
+| `list_apps` | List all connected apps and their tools |
+| `stop_app` | Send shutdown signal to an app by port |
 
 ## Security Model
 
 **Current Implementation**: Simple, trust-based security suitable for local development.
 
-- **Proxy**: Listens only on localhost (not exposed to network)
-- **Apps**: Connect only to localhost proxy
+- **Proxy**: Connects only to localhost apps
+- **Apps**: Listen only on localhost
 - **No Authentication**: Trust all apps on localhost
 - **No Authorization**: All tools exposed to agents
 
-**Future Enhancements** (not in current scope):
-
-- API key authentication for app connections
-- Role-based access control for tool execution
-- TLS/SSL for encrypted communication
-- Network-exposed proxy with proper security
-
-## Configuration
-
-### Proxy Configuration (.mcpproxy.json)
-
-```json
-{
-  "Proxy": {
-    "BindAddress": "localhost:5100",
-    "LogLevel": "Information",
-    "MaxConnections": 50,
-    "Apps": [
-      {
-        "Name": "WatchTower",
-        "Endpoint": "tcp://localhost:5000",
-        "Description": "Main application"
-      }
-    ]
-  }
-}
-```
-
-### App Configuration (In-Code)
-
-```csharp
-services.AddMcpHandler(config =>
-{
-    config.ApplicationName = "WatchTower";
-    config.ProxyEndpoint = "tcp://localhost:5100";  // Connect TO proxy
-    config.AutoConnect = true;
-    config.ReconnectIntervalMs = 5000;
-    config.HeadlessMode = false;
-}, registerStandardTools: true);
-```
-
-## Deployment Scenarios
-
-### Local Development (Current)
-
-- Proxy runs on localhost:5100
-- Apps connect to localhost:5100
-- Agent connects via stdio to proxy
-- All components on same machine
-
-### Multi-Machine Development (Future)
-
-- Proxy runs on dedicated server (e.g., dev-server:5100)
-- Apps connect from different machines
-- Requires network security (authentication, TLS)
-
-### CI/CD (Future)
-
-- Proxy and apps run in containers
-- Headless mode for all apps
-- Automated testing via agent scripts
-
-## Extension Points
-
-### Custom Tools
-
-Apps can register custom domain-specific tools:
-
-```csharp
-handler.RegisterTool(
-    new McpToolDefinition
-    {
-        Name = "ExecuteQuery",
-        Description = "Execute a database query",
-        InputSchema = new
-        {
-            type = "object",
-            properties = new
-            {
-                query = new { type = "string" }
-            }
-        }
-    },
-    async (parameters) =>
-    {
-        var query = parameters["query"].ToString();
-        var result = await database.ExecuteAsync(query);
-        return McpToolResult.Ok(result);
-    }
-);
-```
-
-### Custom Transports
-
-Implement `ITransportClient` for new transport protocols:
-
-```csharp
-public class HttpSseTransportClient : ITransportClient
-{
-    // Implementation for HTTP/SSE transport
-}
-```
-
-### Custom MCP Handler
-
-Extend or replace `McpHandler` for specialized behavior:
-
-```csharp
-public class CustomMcpHandler : McpHandler
-{
-    // Override methods for custom behavior
-}
-```
-
 ## Performance Considerations
 
-- **TCP Connections**: Persistent, low overhead
+- **TCP Connections**: Persistent, low overhead, line-delimited JSON
 - **Message Serialization**: JSON (text-based, human-readable)
 - **Tool Execution**: Async/await throughout
-- **Concurrency**: Multi-threaded, handles multiple apps and requests
-
-**Typical Latencies**:
-
-- Tool discovery: < 10ms
-- Tool execution: < 100ms (depends on tool complexity)
-- Screenshot capture: < 200ms
-
-## Observability
-
-### Logging
-
-All components use `Microsoft.Extensions.Logging`:
-
-- **Core Library**: Logs tool registration, execution, connection events
-- **Proxy**: Logs app registration, tool routing, agent requests
-- **Apps**: Log MCP handler lifecycle events
-
-### Monitoring (Future)
-
-- Tool execution metrics (count, latency, success rate)
-- App connection status (online, offline, reconnecting)
-- Agent activity (requests per minute, popular tools)
+- **Concurrency**: Handles multiple apps and requests concurrently
+- **Correlation IDs**: Match responses to requests for multiplexed communication
 
 ## Limitations
 
@@ -372,18 +221,11 @@ All components use `Microsoft.Extensions.Logging`:
 
 - Localhost-only (no network exposure)
 - No authentication/authorization
-- TCP transport only (Named Pipes and HTTP/SSE are placeholders)
-- Standard tools are stubs (need actual Avalonia input system integration)
+- TCP transport only (Named Pipes placeholder in Core)
+- Standard UI tools need deeper Avalonia input system integration
 - No tool execution timeout
 - No request queueing or throttling
-
-**Future Improvements**:
-
-- Network-exposed proxy with security
-- Complete transport implementations
-- Full Avalonia input system integration
-- Request rate limiting
-- Tool execution monitoring and analytics
+- Dual communication patterns in Core (legacy McpHandler + new DiagnosticListener)
 
 ## License
 
