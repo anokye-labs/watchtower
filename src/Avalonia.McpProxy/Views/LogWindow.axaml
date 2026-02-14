@@ -4,12 +4,12 @@
         x:Class="Avalonia.McpProxy.Views.LogWindow"
         x:DataType="vm:ProxyViewModel"
         Title="MCP Proxy Dashboard"
-        Width="900" Height="700"
+        Width="900" Height="750"
         MinWidth="600" MinHeight="500"
         WindowStartupLocation="CenterScreen"
         Background="#0f0f23">
     
-    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
         
         <!-- Title Bar -->
         <Border Grid.Row="0" Background="#1a1a2e" Padding="16,12">
@@ -18,80 +18,156 @@
                        Foreground="#8be9fd"/>
         </Border>
         
-        <!-- Connected Apps Section -->
+        <!-- Registered Apps Section -->
         <Border Grid.Row="1" Background="#12122a" Padding="16,10">
             <StackPanel Spacing="8">
-                <TextBlock Text="Connected Apps" 
+                <TextBlock Text="Registered Apps" 
                            FontWeight="SemiBold" Foreground="#8be9fd" 
                            FontSize="13" Margin="0,0,0,4"/>
                 
-                <ItemsControl ItemsSource="{Binding ConnectedApps}">
+                <ItemsControl ItemsSource="{Binding RegisteredApps}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ConnectedAppInfo">
+                        <DataTemplate x:DataType="vm:AppGroupViewModel">
                             <Border Background="#16213e" CornerRadius="6" Padding="12,8" Margin="0,2">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <!-- App info -->
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                        <Ellipse Width="10" Height="10" Fill="{Binding StatusColor}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Name}" Foreground="White" FontWeight="SemiBold" FontSize="13"/>
-                                        <TextBlock Text="{Binding ToolCount, StringFormat=\{0\} tools}" Foreground="#50fa7b" FontSize="12"/>
-                                    </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <!-- App header: name, path, actions -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding Name}" 
+                                                       Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Text="{Binding Path}" 
+                                                       Foreground="#666" FontSize="11" 
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Button Content="▶ Start"
+                                                    Click="OnStartAppClick"
+                                                    Tag="{Binding}"
+                                                    Padding="10,4"
+                                                    FontSize="11"
+                                                    Background="#1a3a1a" Foreground="#50fa7b"
+                                                    CornerRadius="4"/>
+                                            <Button Content="✕ Remove"
+                                                    Click="OnUnregisterAppClick"
+                                                    Tag="{Binding}"
+                                                    Padding="10,4"
+                                                    FontSize="11"
+                                                    Background="#3a1a1a" Foreground="#ff5555"
+                                                    CornerRadius="4"/>
+                                        </StackPanel>
+                                    </Grid>
                                     
-                                    <!-- Per-app action buttons -->
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                                        <Button Content="Screenshot" 
-                                                Click="OnScreenshotAppClick"
-                                                Tag="{Binding}"
-                                                Padding="10,4"
-                                                FontSize="11"
-                                                Background="#2a3a5e" Foreground="#8be9fd"
-                                                CornerRadius="4"/>
-                                        <Button Content="Stop" 
-                                                Click="OnStopAppClick"
-                                                Tag="{Binding}"
-                                                Padding="10,4"
-                                                FontSize="11"
-                                                Background="#3a1a1a" Foreground="#ff5555"
-                                                CornerRadius="4"/>
-                                    </StackPanel>
-                                </Grid>
+                                    <!-- Instances list (nested) -->
+                                    <ItemsControl ItemsSource="{Binding Instances}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ProcessInstanceViewModel">
+                                                <Border Background="#1a2440" CornerRadius="4" Padding="10,5" Margin="8,1,0,1">
+                                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                                                        <Ellipse Grid.Column="0" Width="8" Height="8" 
+                                                                 Fill="{Binding StatusColor}" 
+                                                                 VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <TextBlock Grid.Column="1" 
+                                                                   Text="{Binding Pid, StringFormat='PID {0}'}" 
+                                                                   Foreground="#aaa" FontSize="11" 
+                                                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                        <TextBlock Grid.Column="2" 
+                                                                   Text="{Binding ToolCount, StringFormat='{}{0} tools'}" 
+                                                                   Foreground="#50fa7b" FontSize="11" 
+                                                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+                                                            <Button Content="Screenshot"
+                                                                    Click="OnScreenshotInstanceClick"
+                                                                    Tag="{Binding}"
+                                                                    Padding="8,3"
+                                                                    FontSize="10"
+                                                                    Background="#2a3a5e" Foreground="#8be9fd"
+                                                                    CornerRadius="3"/>
+                                                            <Button Content="Stop"
+                                                                    Click="OnStopInstanceClick"
+                                                                    Tag="{Binding}"
+                                                                    Padding="8,3"
+                                                                    FontSize="10"
+                                                                    Background="#3a1a1a" Foreground="#ff5555"
+                                                                    CornerRadius="3"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 
-                <TextBlock Text="No apps connected" 
+                <TextBlock Text="No apps registered" 
                            Foreground="#555" FontSize="12"
-                           IsVisible="{Binding !HasConnectedApps}" 
+                           IsVisible="{Binding !HasRegisteredApps}" 
                            Margin="4,4,0,0"/>
-                
-                <!-- Launch App Section -->
-                <Border Background="#16213e" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
-                    <Grid ColumnDefinitions="Auto,*,Auto" >
-                        <TextBlock Grid.Column="0" Text="Launch App:" 
+            </StackPanel>
+        </Border>
+
+        <!-- Register New App Section -->
+        <Border Grid.Row="2" Background="#12122a" Padding="16,10" Margin="0,1,0,0">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Register New App" 
+                           FontWeight="SemiBold" Foreground="#8be9fd" 
+                           FontSize="13" Margin="0,0,0,4"/>
+                <Border Background="#16213e" CornerRadius="6" Padding="12,10">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="70,*" >
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" 
                                    Foreground="#888" FontSize="12" 
-                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox Grid.Column="1" 
-                                 Text="{Binding LaunchAppPath, Mode=TwoWay}"
+                                   VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" 
+                                 Text="{Binding RegisterAppName, Mode=TwoWay}"
+                                 Watermark="e.g. WatchTower"
+                                 FontSize="12"
+                                 Background="#0f0f23" Foreground="#ccc"
+                                 BorderBrush="#333" CornerRadius="4"
+                                 Padding="8,4"
+                                 Margin="0,0,0,4"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Path:" 
+                                   Foreground="#888" FontSize="12" 
+                                   VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" 
+                                 Text="{Binding RegisterAppPath, Mode=TwoWay}"
                                  Watermark="Path to executable..."
                                  FontSize="12"
                                  Background="#0f0f23" Foreground="#ccc"
                                  BorderBrush="#333" CornerRadius="4"
                                  Padding="8,4"
-                                 Margin="0,0,8,0"/>
-                        <Button Grid.Column="2" Content="Launch" 
-                                Command="{Binding LaunchAppCommand}"
-                                Padding="14,4"
+                                 Margin="0,0,0,4"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Args:" 
+                                   Foreground="#888" FontSize="12" 
+                                   VerticalAlignment="Center" Margin="0,0,8,4"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" 
+                                 Text="{Binding RegisterAppArgs, Mode=TwoWay}"
+                                 Watermark="Optional arguments..."
+                                 FontSize="12"
+                                 Background="#0f0f23" Foreground="#ccc"
+                                 BorderBrush="#333" CornerRadius="4"
+                                 Padding="8,4"
+                                 Margin="0,0,0,4"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="1" 
+                                Content="Register" 
+                                Command="{Binding RegisterAppCommand}"
+                                HorizontalAlignment="Left"
+                                Padding="16,5"
                                 FontSize="12"
                                 Background="#1a3a1a" Foreground="#50fa7b"
-                                CornerRadius="4"/>
+                                CornerRadius="4"
+                                Margin="0,2,0,0"/>
                     </Grid>
                 </Border>
             </StackPanel>
         </Border>
 
         <!-- Screenshot Preview Section -->
-        <Border Grid.Row="2" Background="#12122a" Padding="16,10"
+        <Border Grid.Row="3" Background="#12122a" Padding="16,10"
                 IsVisible="{Binding ScreenshotImage, Converter={x:Static ObjectConverters.IsNotNull}}">
             <StackPanel Spacing="6">
                 <TextBlock Text="Screenshot Preview" 
@@ -106,9 +182,9 @@
         </Border>
         
         <!-- Log Output -->
-        <Border Grid.Row="3" Background="#0f0f23" Padding="16,10">
+        <Border Grid.Row="4" Background="#0f0f23" Padding="16,10">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="Log Output" 
+                <TextBlock DockPanel.Dock="Top" Text="Log" 
                            FontWeight="SemiBold" Foreground="#8be9fd" 
                            FontSize="13" Margin="0,0,0,6"/>
                 <Border Background="#0a0a1a" CornerRadius="6" Padding="8">
@@ -124,7 +200,7 @@
         </Border>
         
         <!-- Status Bar -->
-        <Border Grid.Row="4" Background="#1a1a2e" Padding="16,8">
+        <Border Grid.Row="5" Background="#1a1a2e" Padding="16,8">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <TextBlock Grid.Column="0" 
                            Text="{Binding StatusText, StringFormat='Status: {0}'}" 
@@ -135,18 +211,11 @@
                            Foreground="#666" FontSize="11"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Center"/>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                    <Button Content="Clear Logs" 
-                            Command="{Binding ClearLogsCommand}" 
-                            Padding="12,4" FontSize="11"
-                            Background="#2a2a4e" Foreground="#aaa"
-                            CornerRadius="4"/>
-                    <Button Content="Reconnect All" 
-                            Command="{Binding ReconnectCommand}" 
-                            Padding="12,4" FontSize="11"
-                            Background="#2a3a5e" Foreground="#8be9fd"
-                            CornerRadius="4"/>
-                </StackPanel>
+                <Button Grid.Column="2" Content="Clear Logs" 
+                        Command="{Binding ClearLogsCommand}" 
+                        Padding="12,4" FontSize="11"
+                        Background="#2a2a4e" Foreground="#aaa"
+                        CornerRadius="4"/>
             </Grid>
         </Border>
     </Grid>

@@ -11,19 +11,35 @@ public partial class LogWindow : Window
         InitializeComponent();
     }
 
-    private async void OnScreenshotAppClick(object? sender, RoutedEventArgs e)
+    private async void OnStartAppClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: ConnectedAppInfo app } && DataContext is ProxyViewModel vm)
+        if (sender is Button { Tag: AppGroupViewModel app } && DataContext is ProxyViewModel vm)
         {
-            await vm.TakeScreenshotOfAppAsync(app);
+            await vm.StartAppAsync(app.Name);
         }
     }
 
-    private async void OnStopAppClick(object? sender, RoutedEventArgs e)
+    private void OnUnregisterAppClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: ConnectedAppInfo app } && DataContext is ProxyViewModel vm)
+        if (sender is Button { Tag: AppGroupViewModel app } && DataContext is ProxyViewModel vm)
         {
-            await vm.StopAppAsync(app);
+            vm.UnregisterApp(app.Name);
+        }
+    }
+
+    private async void OnScreenshotInstanceClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: ProcessInstanceViewModel instance } && DataContext is ProxyViewModel vm)
+        {
+            await vm.TakeScreenshotOfInstanceAsync(instance.AppName);
+        }
+    }
+
+    private void OnStopInstanceClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: ProcessInstanceViewModel instance } && DataContext is ProxyViewModel vm)
+        {
+            vm.StopProcessInstance(instance.Pid, instance.AppName);
         }
     }
 }

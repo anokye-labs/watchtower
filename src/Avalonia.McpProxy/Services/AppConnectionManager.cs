@@ -26,17 +26,23 @@ public class AppConnectionManager
 
     public int ListenPort => _listenPort;
 
+    /// <summary>
+    /// Expose the MCP bridge so the ViewModel can access the ProcessManager.
+    /// </summary>
+    public McpProxyBridge McpBridge => _mcpBridge;
+
     public AppConnectionManager(
         Action<string> log,
         Action<string, int> onAppConnected,
         Action<string> onAppDisconnected,
+        AppRegistry registry,
         int listenPort = 5100)
     {
         _log = log;
         _onAppConnected = onAppConnected;
         _onAppDisconnected = onAppDisconnected;
         _listenPort = listenPort;
-        _mcpBridge = new McpProxyBridge(log, this);
+        _mcpBridge = new McpProxyBridge(log, this, registry);
     }
 
     public void Start()

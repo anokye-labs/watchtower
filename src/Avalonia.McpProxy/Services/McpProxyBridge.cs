@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Mcp.Core.Models;
 
 namespace Avalonia.McpProxy.Services;
@@ -11,19 +13,28 @@ namespace Avalonia.McpProxy.Services;
 /// <summary>
 /// Bridges MCP stdio protocol to connected diagnostic apps.
 /// Receives MCP requests from agents, routes to apps, returns responses.
+/// Tools: register_app, unregister_app, list_apps, start_app, stop_process, list_processes,
+/// plus app-specific tools routed via AppName:ToolName pattern.
 /// </summary>
 public class McpProxyBridge
 {
     private readonly Action<string> _log;
     private readonly AppConnectionManager _connectionManager;
+    private readonly AppRegistry _registry;
     private readonly ProcessManager _processManager;
 
-    public McpProxyBridge(Action<string> log, AppConnectionManager connectionManager)
+    public McpProxyBridge(Action<string> log, AppConnectionManager connectionManager, AppRegistry registry)
     {
         _log = log;
         _connectionManager = connectionManager;
+        _registry = registry;
         _processManager = new ProcessManager(log, connectionManager.ListenPort);
     }
+
+    /// <summary>
+    /// Expose the ProcessManager so the ViewModel can query process state.
+    /// </summary>
+    public ProcessManager ProcessManager => _processManager;
 
     public async Task StartAsync(CancellationToken ct)
     {
@@ -33,8 +44,6 @@ public class McpProxyBridge
         using var stdout = Console.OpenStandardOutput();
         using var reader = new StreamReader(stdin, Encoding.UTF8);
         using var writer = new StreamWriter(stdout, Encoding.UTF8) { AutoFlush = true };
-
-        var buffer = new StringBuilder();
 
         while (!ct.IsCancellationRequested)
         {
@@ -70,7 +79,7 @@ public class McpProxyBridge
                 {
                     protocolVersion = "2024-11-05",
                     capabilities = new { tools = new { listChanged = false } },
-                    serverInfo = new { name = "avalonia-mcp-proxy", version = "2.0.0" }
+                    serverInfo = new { name = "avalonia-mcp-proxy", version = "3.0.0" }
                 });
                 break;
 
@@ -88,47 +97,86 @@ public class McpProxyBridge
     {
         var tools = new List<object>();
 
-        // Proxy management tools
+        // --- Proxy management tools ---
+
         tools.Add(new
         {
-            name = "launch_app",
-            description = "Launch an Avalonia app. The app will connect back to the proxy automatically.",
+            name = "register_app",
+            description = "Register an app with the proxy. Registration is persistent and survives proxy restarts. Use start_app to launch a registered app.",
             inputSchema = new
             {
                 type = "object",
-                properties = new
+                properties = new Dictionary<string, object>
                 {
-                    path = new { type = "string", description = "Path to the application executable" },
-                    args = new { type = "string", description = "Optional command line arguments" },
-                    working_directory = new { type = "string", description = "Optional working directory" }
+                    ["name"] = new { type = "string", description = "Unique name for the app (e.g. 'WatchTower')" },
+                    ["path"] = new { type = "string", description = "Path to the application executable" },
+                    ["args"] = new { type = "string", description = "Optional command line arguments" },
+                    ["working_directory"] = new { type = "string", description = "Optional working directory" }
                 },
-                required = new[] { "path" }
+                required = new[] { "name", "path" }
+            }
+        });
+
+        tools.Add(new
+        {
+            name = "unregister_app",
+            description = "Remove an app from the registry. Does not stop running instances.",
+            inputSchema = new
+            {
+                type = "object",
+                properties = new Dictionary<string, object>
+                {
+                    ["name"] = new { type = "string", description = "Name of the registered app to remove" }
+                },
+                required = new[] { "name" }
             }
         });
 
         tools.Add(new
         {
             name = "list_apps",
-            description = "List all connected apps and their available tools.",
-            inputSchema = new { type = "object", properties = new { } }
+            description = "List all registered apps with their running instance count and connected tool count.",
+            inputSchema = new { type = "object", properties = new Dictionary<string, object>() }
         });
 
         tools.Add(new
         {
-            name = "stop_app",
-            description = "Stop a connected app by sending it a shutdown signal.",
+            name = "start_app",
+            description = "Start an instance of a registered app. The app will connect back to the proxy automatically.",
             inputSchema = new
             {
                 type = "object",
-                properties = new
+                properties = new Dictionary<string, object>
                 {
-                    app_name = new { type = "string", description = "The name of the app to stop" }
+                    ["name"] = new { type = "string", description = "Name of the registered app to start" }
+                },
+                required = new[] { "name" }
+            }
+        });
+
+        tools.Add(new
+        {
+            name = "stop_process",
+            description = "Stop all running processes for a given app name and disconnect it from the proxy.",
+            inputSchema = new
+            {
+                type = "object",
+                properties = new Dictionary<string, object>
+                {
+                    ["app_name"] = new { type = "string", description = "Name of the app whose processes to stop" }
                 },
                 required = new[] { "app_name" }
             }
         });
 
-        // Add tools from all connected apps (already namespaced by McpHandler as "AppName:ToolName")
+        tools.Add(new
+        {
+            name = "list_processes",
+            description = "List all running process instances grouped by app name, with connection status.",
+            inputSchema = new { type = "object", properties = new Dictionary<string, object>() }
+        });
+
+        // --- App-specific tools from connected apps (namespaced as AppName:ToolName) ---
         foreach (var (appName, appTools) in _connectionManager.GetConnectedApps())
         {
             foreach (var tool in appTools)
@@ -153,32 +201,46 @@ public class McpProxyBridge
 
         string resultText;
 
-        // Handle proxy management tools
-        if (toolName == "launch_app")
+        switch (toolName)
         {
-            resultText = await _processManager.LaunchAppAsync(arguments, ct);
-        }
-        else if (toolName == "list_apps")
-        {
-            resultText = GetAppsList();
-        }
-        else if (toolName == "stop_app")
-        {
-            var appName = arguments.GetProperty("app_name").GetString()!;
-            resultText = await StopAppAsync(appName, ct);
-        }
-        else if (toolName.Contains(':'))
-        {
-            // App-specific tool: "AppName:ToolName" - send full name to app (McpHandler expects it)
-            var parts = toolName.Split(':', 2);
-            var appName = parts[0];
+            case "register_app":
+                resultText = HandleRegisterApp(arguments);
+                break;
 
-            var (success, data, error) = await _connectionManager.InvokeToolAsync(appName, toolName, arguments, ct);
-            resultText = success ? data! : JsonSerializer.Serialize(new { error = error ?? $"App '{appName}' not connected" });
-        }
-        else
-        {
-            resultText = JsonSerializer.Serialize(new { error = $"Unknown tool: {toolName}" });
+            case "unregister_app":
+                resultText = HandleUnregisterApp(arguments);
+                break;
+
+            case "list_apps":
+                resultText = HandleListApps();
+                break;
+
+            case "start_app":
+                resultText = await HandleStartAppAsync(arguments, ct);
+                break;
+
+            case "stop_process":
+                resultText = HandleStopProcess(arguments);
+                break;
+
+            case "list_processes":
+                resultText = HandleListProcesses();
+                break;
+
+            default:
+                if (toolName.Contains(':'))
+                {
+                    // App-specific tool: "AppName:ToolName"
+                    var parts = toolName.Split(':', 2);
+                    var appName = parts[0];
+                    var (success, data, error) = await _connectionManager.InvokeToolAsync(appName, toolName, arguments, ct);
+                    resultText = success ? data! : JsonSerializer.Serialize(new { error = error ?? $"App '{appName}' not connected" });
+                }
+                else
+                {
+                    resultText = JsonSerializer.Serialize(new { error = $"Unknown tool: {toolName}" });
+                }
+                break;
         }
 
         await SendResponseAsync(writer, id, new
@@ -187,38 +249,115 @@ public class McpProxyBridge
         });
     }
 
-    private string GetAppsList()
+    private string HandleRegisterApp(JsonElement arguments)
     {
-        var apps = new List<object>();
-        
-        foreach (var (name, tools) in _connectionManager.GetConnectedApps())
+        var name = arguments.GetProperty("name").GetString()!;
+        var path = arguments.GetProperty("path").GetString()!;
+        var args = arguments.TryGetProperty("args", out var a) ? a.GetString() : null;
+        var workDir = arguments.TryGetProperty("working_directory", out var w) ? w.GetString() : null;
+
+        var success = _registry.Register(name, path, args, workDir);
+        return JsonSerializer.Serialize(new { success, name, message = $"App '{name}' registered. Use start_app to launch it." });
+    }
+
+    private string HandleUnregisterApp(JsonElement arguments)
+    {
+        var name = arguments.GetProperty("name").GetString()!;
+        var success = _registry.Unregister(name);
+        return JsonSerializer.Serialize(new
         {
+            success,
+            name,
+            message = success ? $"App '{name}' unregistered." : $"App '{name}' not found in registry."
+        });
+    }
+
+    private string HandleListApps()
+    {
+        var connectedApps = _connectionManager.GetConnectedApps().ToList();
+        var apps = new List<object>();
+
+        foreach (var reg in _registry.GetApps())
+        {
+            var processes = _processManager.GetProcessesForApp(reg.Name);
+            var connected = connectedApps.FirstOrDefault(c =>
+                c.Name.Equals(reg.Name, StringComparison.OrdinalIgnoreCase));
+
             apps.Add(new
             {
-                name,
-                tool_count = tools.Count,
-                tools = tools.Select(t => t.Name).ToList()
+                name = reg.Name,
+                path = reg.Path,
+                args = reg.Args,
+                working_directory = reg.WorkingDirectory,
+                registered_at = reg.RegisteredAt,
+                running_instances = processes.Count,
+                pids = processes.Select(p => p.Pid).ToList(),
+                connected = connected.Name != null,
+                tool_count = connected.Tools?.Count ?? 0,
+                tools = connected.Tools?.Select(t => t.Name).ToList() ?? new List<string>()
             });
         }
 
         return JsonSerializer.Serialize(new { apps, count = apps.Count });
     }
 
-    private async Task<string> StopAppAsync(string appName, CancellationToken ct)
+    private async Task<string> HandleStartAppAsync(JsonElement arguments, CancellationToken ct)
     {
-        _log($"Stopping app: {appName}");
+        var name = arguments.GetProperty("name").GetString()!;
+        var app = _registry.GetApp(name);
 
-        // Disconnect from the proxy side
-        _connectionManager.DisconnectApp(appName);
-
-        // Kill the process by name
-        var killed = 0;
-        foreach (var proc in Process.GetProcessesByName(appName))
+        if (app == null)
         {
-            try { proc.Kill(); killed++; } catch { }
+            return JsonSerializer.Serialize(new
+            {
+                success = false,
+                error = $"App '{name}' not found in registry. Use register_app first."
+            });
         }
 
-        return JsonSerializer.Serialize(new { status = "stopped", app_name = appName, processes_killed = killed });
+        return await _processManager.LaunchRegisteredAppAsync(app, ct);
+    }
+
+    private string HandleStopProcess(JsonElement arguments)
+    {
+        var appName = arguments.GetProperty("app_name").GetString()!;
+        _log($"Stopping all processes for app: {appName}");
+
+        var killed = _processManager.StopAllForApp(appName);
+        _connectionManager.DisconnectApp(appName);
+
+        return JsonSerializer.Serialize(new
+        {
+            status = "stopped",
+            app_name = appName,
+            processes_killed = killed,
+            message = $"Stopped {killed} process(es) for '{appName}' and disconnected."
+        });
+    }
+
+    private string HandleListProcesses()
+    {
+        var processes = _processManager.GetRunningProcesses();
+        var connectedApps = _connectionManager.GetConnectedApps()
+            .ToDictionary(c => c.Name, c => c.Tools, StringComparer.OrdinalIgnoreCase);
+
+        var grouped = processes
+            .GroupBy(p => p.AppName, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new
+            {
+                app_name = g.Key,
+                connected = connectedApps.ContainsKey(g.Key),
+                tool_count = connectedApps.TryGetValue(g.Key, out var tools) ? tools.Count : 0,
+                instances = g.Select(p => new
+                {
+                    pid = p.Pid,
+                    started_at = p.StartedAt,
+                    is_running = p.IsRunning
+                }).ToList()
+            })
+            .ToList();
+
+        return JsonSerializer.Serialize(new { groups = grouped, total_processes = processes.Count });
     }
 
     private async Task SendResponseAsync(StreamWriter writer, JsonElement id, object result)

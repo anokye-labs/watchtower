@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.McpProxy.Services;
 using Avalonia.McpProxy.ViewModels;
 using Avalonia.McpProxy.Views;
 using Avalonia.Platform;
@@ -25,8 +26,9 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Create view model
-            ViewModel = new ProxyViewModel();
+            // Create registry and view model
+            var registry = new AppRegistry(msg => Console.Error.WriteLine($"[Registry] {msg}"));
+            ViewModel = new ProxyViewModel(registry);
             
             // Don't show main window on startup - just tray icon
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -48,12 +50,6 @@ public class App : Application
         var showLogsItem = new NativeMenuItem("Show Dashboard");
         showLogsItem.Click += (_, _) => ShowLogWindow();
         menu.Add(showLogsItem);
-        
-        menu.Add(new NativeMenuItemSeparator());
-        
-        var reconnectItem = new NativeMenuItem("Reconnect All Apps");
-        reconnectItem.Click += (_, _) => ViewModel?.ReconnectAll();
-        menu.Add(reconnectItem);
         
         menu.Add(new NativeMenuItemSeparator());
         

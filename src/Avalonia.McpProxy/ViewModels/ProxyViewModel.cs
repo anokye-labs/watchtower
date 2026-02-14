@@ -2,10 +2,12 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.McpProxy.Services;
 using Avalonia.Media;
@@ -18,24 +20,26 @@ public class ProxyViewModel : INotifyPropertyChanged
 {
     private readonly StringBuilder _logBuilder = new();
     private readonly AppConnectionManager _connectionManager;
+    private readonly AppRegistry _registry;
     private string _logText = "";
     private string _statusText = "Starting...";
     private string _appStatusText = "Idle";
-    private ConnectedAppInfo? _selectedApp;
     private string? _screenshotBase64;
     private Bitmap? _screenshotImage;
-    private string _launchAppPath = "";
+    private string _registerAppName = "";
+    private string _registerAppPath = "";
+    private string _registerAppArgs = "";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<ConnectedAppInfo> ConnectedApps { get; } = new();
-    
+    public ObservableCollection<AppGroupViewModel> RegisteredApps { get; } = new();
+
     public string LogText
     {
         get => _logText;
         private set { _logText = value; OnPropertyChanged(); }
     }
-    
+
     public string StatusText
     {
         get => _statusText;
@@ -47,14 +51,8 @@ public class ProxyViewModel : INotifyPropertyChanged
         get => _appStatusText;
         private set { _appStatusText = value; OnPropertyChanged(); }
     }
-    
-    public bool HasConnectedApps => ConnectedApps.Count > 0;
 
-    public ConnectedAppInfo? SelectedApp
-    {
-        get => _selectedApp;
-        set { _selectedApp = value; OnPropertyChanged(); }
-    }
+    public bool HasRegisteredApps => RegisteredApps.Count > 0;
 
     public string? ScreenshotBase64
     {
@@ -68,33 +66,48 @@ public class ProxyViewModel : INotifyPropertyChanged
         private set { _screenshotImage = value; OnPropertyChanged(); }
     }
 
-    public string LaunchAppPath
+    public string RegisterAppName
     {
-        get => _launchAppPath;
-        set { _launchAppPath = value; OnPropertyChanged(); }
+        get => _registerAppName;
+        set { _registerAppName = value; OnPropertyChanged(); }
+    }
+
+    public string RegisterAppPath
+    {
+        get => _registerAppPath;
+        set { _registerAppPath = value; OnPropertyChanged(); }
+    }
+
+    public string RegisterAppArgs
+    {
+        get => _registerAppArgs;
+        set { _registerAppArgs = value; OnPropertyChanged(); }
     }
 
     public ICommand ClearLogsCommand { get; }
-    public ICommand ReconnectCommand { get; }
-    public ICommand LaunchAppCommand { get; }
-    public ICommand StopAppCommand { get; }
-    public ICommand TakeScreenshotCommand { get; }
+    public ICommand RegisterAppCommand { get; }
 
-    public ProxyViewModel()
+    public ProxyViewModel(AppRegistry registry)
     {
-        _connectionManager = new AppConnectionManager(Log, OnAppConnected, OnAppDisconnected);
-        
+        _registry = registry;
+        _connectionManager = new AppConnectionManager(Log, OnAppConnected, OnAppDisconnected, registry);
+
         ClearLogsCommand = new RelayCommand(() =>
         {
             _logBuilder.Clear();
             LogText = "";
         });
-        
-        ReconnectCommand = new RelayCommand(ReconnectAll);
-        LaunchAppCommand = new RelayCommand(LaunchApp);
-        StopAppCommand = new AsyncRelayCommand(StopSelectedAppAsync);
-        TakeScreenshotCommand = new AsyncRelayCommand(TakeScreenshotAsync);
+
+        RegisterAppCommand = new RelayCommand(RegisterApp);
+
+        // Load registered apps into UI on startup
+        LoadRegisteredApps();
     }
+
+    /// <summary>
+    /// Access the ProcessManager through the MCP bridge for process queries.
+    /// </summary>
+    internal ProcessManager? ProcessManager => _connectionManager.McpBridge?.ProcessManager;
 
     public void Start()
     {
@@ -111,99 +124,112 @@ public class ProxyViewModel : INotifyPropertyChanged
         StatusText = "Stopped";
     }
 
-    public void ReconnectAll()
+    private void RegisterApp()
     {
-        Log("Apps reconnect automatically - no manual reconnect needed");
-    }
+        var name = RegisterAppName?.Trim();
+        var path = RegisterAppPath?.Trim();
 
-    private void LaunchApp()
-    {
-        var path = LaunchAppPath?.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            Log("App name is required");
+            return;
+        }
+
         if (string.IsNullOrEmpty(path))
         {
-            Log("No app path specified");
+            Log("App path is required");
             return;
         }
 
-        if (!File.Exists(path))
+        var args = RegisterAppArgs?.Trim();
+        _registry.Register(name, path, string.IsNullOrEmpty(args) ? null : args, null);
+
+        // Refresh UI
+        LoadRegisteredApps();
+
+        // Clear inputs
+        RegisterAppName = "";
+        RegisterAppPath = "";
+        RegisterAppArgs = "";
+
+        AppStatusText = $"Registered: {name}";
+    }
+
+    public async Task StartAppAsync(string appName)
+    {
+        var app = _registry.GetApp(appName);
+        if (app == null)
         {
-            Log($"File not found: {path}");
+            Log($"App '{appName}' not found in registry");
             return;
         }
+
+        var pm = ProcessManager;
+        if (pm == null)
+        {
+            Log("ProcessManager not available");
+            return;
+        }
+
+        Log($"Starting {appName}...");
+        AppStatusText = $"Starting {appName}...";
 
         try
         {
-            Log($"Launching app: {path}");
-            AppStatusText = "Launching...";
-            var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true
-            });
+            var result = await pm.LaunchRegisteredAppAsync(app, CancellationToken.None);
+            Log($"Start result: {result}");
+            AppStatusText = $"Started: {appName}";
 
-            if (process != null)
-            {
-                Log($"Launched PID {process.Id}, waiting for app to connect...");
-                AppStatusText = "Launched, waiting for connection...";
-            }
+            // Refresh process list in UI
+            RefreshAppInstances(appName);
         }
         catch (Exception ex)
         {
-            Log($"Failed to launch app: {ex.Message}");
-            AppStatusText = "Launch failed";
+            Log($"Failed to start {appName}: {ex.Message}");
+            AppStatusText = $"Start failed: {appName}";
         }
     }
 
-    private async Task StopSelectedAppAsync()
+    public void UnregisterApp(string appName)
     {
-        var app = SelectedApp;
-        if (app == null)
-        {
-            Log("No app selected");
-            return;
-        }
-
-        try
-        {
-            Log($"Sending shutdown to {app.Name}...");
-            AppStatusText = $"Stopping {app.Name}...";
-            var (success, data, error) = await _connectionManager.InvokeToolAsync(
-                app.Name, "__shutdown__", default, CancellationToken.None);
-
-            if (success)
-            {
-                Log($"Shutdown sent to {app.Name}");
-                AppStatusText = $"{app.Name} stopped";
-            }
-            else
-            {
-                Log($"Shutdown failed for {app.Name}: {error}");
-                AppStatusText = $"Stop failed: {error}";
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"Error stopping {app.Name}: {ex.Message}");
-            AppStatusText = "Stop failed";
-        }
+        _registry.Unregister(appName);
+        LoadRegisteredApps();
+        AppStatusText = $"Unregistered: {appName}";
     }
 
-    private async Task TakeScreenshotAsync()
+    public void StopProcessInstance(int pid, string appName)
     {
-        var app = SelectedApp;
-        if (app == null)
-        {
-            Log("No app selected for screenshot");
-            return;
-        }
+        var pm = ProcessManager;
+        if (pm == null) return;
 
+        pm.StopProcess(pid);
+        _connectionManager.DisconnectApp(appName);
+        Log($"Stopped PID {pid} ({appName})");
+
+        RefreshAppInstances(appName);
+    }
+
+    public void StopAllForApp(string appName)
+    {
+        var pm = ProcessManager;
+        if (pm == null) return;
+
+        var killed = pm.StopAllForApp(appName);
+        _connectionManager.DisconnectApp(appName);
+        Log($"Stopped {killed} process(es) for {appName}");
+
+        RefreshAppInstances(appName);
+    }
+
+    public async Task TakeScreenshotOfInstanceAsync(string appName)
+    {
         try
         {
-            Log($"Capturing screenshot from {app.Name}...");
+            Log($"Capturing screenshot from {appName}...");
             AppStatusText = "Capturing screenshot...";
 
             var (success, data, error) = await _connectionManager.InvokeToolAsync(
-                app.Name, "CaptureScreenshot", default, CancellationToken.None);
+                appName, $"{appName}:CaptureScreenshot", default, CancellationToken.None);
 
             if (!success || data == null)
             {
@@ -212,7 +238,6 @@ public class ProxyViewModel : INotifyPropertyChanged
                 return;
             }
 
-            // Parse the JSON response to extract base64 data
             var json = JsonDocument.Parse(data);
             var base64Data = json.RootElement.TryGetProperty("base64Data", out var b64El)
                 ? b64El.GetString()
@@ -227,7 +252,6 @@ public class ProxyViewModel : INotifyPropertyChanged
 
             ScreenshotBase64 = base64Data;
 
-            // Decode base64 to Bitmap for display
             var bytes = Convert.FromBase64String(base64Data);
             using var ms = new MemoryStream(bytes);
             var bitmap = new Bitmap(ms);
@@ -237,7 +261,7 @@ public class ProxyViewModel : INotifyPropertyChanged
                 ScreenshotImage = bitmap;
             });
 
-            Log($"Screenshot captured from {app.Name} ({bytes.Length:N0} bytes)");
+            Log($"Screenshot captured from {appName} ({bytes.Length:N0} bytes)");
             AppStatusText = "Screenshot captured";
         }
         catch (Exception ex)
@@ -247,43 +271,117 @@ public class ProxyViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Take a screenshot of a specific app by port (called from UI per-app buttons).
-    /// </summary>
-    public async Task TakeScreenshotOfAppAsync(ConnectedAppInfo app)
+    private void LoadRegisteredApps()
     {
-        SelectedApp = app;
-        await TakeScreenshotAsync();
+        Dispatcher.UIThread.Post(() =>
+        {
+            RegisteredApps.Clear();
+
+            foreach (var app in _registry.GetApps())
+            {
+                var group = CreateAppGroup(app);
+                RegisteredApps.Add(group);
+            }
+
+            OnPropertyChanged(nameof(HasRegisteredApps));
+        });
     }
 
-    /// <summary>
-    /// Stop a specific app by port (called from UI per-app buttons).
-    /// </summary>
-    public async Task StopAppAsync(ConnectedAppInfo app)
+    private AppGroupViewModel CreateAppGroup(RegisteredApp app)
     {
-        SelectedApp = app;
-        await StopSelectedAppAsync();
+        var group = new AppGroupViewModel
+        {
+            Name = app.Name,
+            Path = $"{app.Path} {app.Args}".Trim(),
+            IsRegistered = true,
+            StartCommand = new AsyncRelayCommand(async () => await StartAppAsync(app.Name)),
+            UnregisterCommand = new RelayCommand(() => UnregisterApp(app.Name))
+        };
+
+        // Populate instances from process manager
+        var pm = ProcessManager;
+        if (pm != null)
+        {
+            var connectedApps = _connectionManager.GetConnectedApps().ToList();
+            var connected = connectedApps.FirstOrDefault(c =>
+                c.Name.Equals(app.Name, StringComparison.OrdinalIgnoreCase));
+            var toolCount = connected.Tools?.Count ?? 0;
+            var isConnected = connected.Name != null;
+
+            foreach (var proc in pm.GetProcessesForApp(app.Name))
+            {
+                group.Instances.Add(new ProcessInstanceViewModel
+                {
+                    Pid = proc.Pid,
+                    AppName = app.Name,
+                    IsRunning = proc.IsRunning,
+                    IsConnected = isConnected,
+                    ToolCount = toolCount,
+                    StatusColor = isConnected ? Brushes.LimeGreen : (proc.IsRunning ? Brushes.Orange : Brushes.Gray),
+                    StopCommand = new RelayCommand(() => StopProcessInstance(proc.Pid, app.Name)),
+                    ScreenshotCommand = new AsyncRelayCommand(async () => await TakeScreenshotOfInstanceAsync(app.Name))
+                });
+            }
+        }
+
+        return group;
+    }
+
+    private void RefreshAppInstances(string appName)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            var existing = RegisteredApps.FirstOrDefault(a =>
+                a.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
+            {
+                var idx = RegisteredApps.IndexOf(existing);
+                var app = _registry.GetApp(appName);
+                if (app != null)
+                {
+                    RegisteredApps[idx] = CreateAppGroup(app);
+                }
+            }
+            else
+            {
+                // App might have been added by the MCP tool - reload all
+                LoadRegisteredApps();
+            }
+        });
     }
 
     private void OnAppConnected(string appName, int toolCount)
     {
         Dispatcher.UIThread.Post(() =>
         {
-            // Remove existing entry if any
-            for (int i = ConnectedApps.Count - 1; i >= 0; i--)
+            Log($"App connected: {appName} ({toolCount} tools)");
+
+            var existing = RegisteredApps.FirstOrDefault(a =>
+                a.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
             {
-                if (string.Equals(ConnectedApps[i].Name, appName, StringComparison.OrdinalIgnoreCase))
-                    ConnectedApps.RemoveAt(i);
+                // Refresh the group to pick up connection state
+                var idx = RegisteredApps.IndexOf(existing);
+                var app = _registry.GetApp(appName);
+                if (app != null)
+                {
+                    RegisteredApps[idx] = CreateAppGroup(app);
+                }
+                else
+                {
+                    // App connected but not in registry (ad-hoc) - add a transient group
+                    UpdateOrAddTransientGroup(appName, toolCount, isConnected: true);
+                }
             }
-            
-            ConnectedApps.Add(new ConnectedAppInfo
+            else
             {
-                Name = appName,
-                ToolCount = toolCount,
-                StatusColor = Brushes.LimeGreen
-            });
-            
-            OnPropertyChanged(nameof(HasConnectedApps));
+                // App connected but not in registry - add transient entry
+                UpdateOrAddTransientGroup(appName, toolCount, isConnected: true);
+            }
+
+            OnPropertyChanged(nameof(HasRegisteredApps));
         });
     }
 
@@ -291,15 +389,60 @@ public class ProxyViewModel : INotifyPropertyChanged
     {
         Dispatcher.UIThread.Post(() =>
         {
-            for (int i = ConnectedApps.Count - 1; i >= 0; i--)
+            Log($"App disconnected: {appName}");
+
+            var existing = RegisteredApps.FirstOrDefault(a =>
+                a.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
             {
-                if (string.Equals(ConnectedApps[i].Name, appName, StringComparison.OrdinalIgnoreCase))
+                var app = _registry.GetApp(appName);
+                if (app != null)
                 {
-                    ConnectedApps[i].StatusColor = Brushes.Gray;
+                    var idx = RegisteredApps.IndexOf(existing);
+                    RegisteredApps[idx] = CreateAppGroup(app);
+                }
+                else
+                {
+                    // Transient group - update instances to disconnected
+                    foreach (var inst in existing.Instances)
+                    {
+                        inst.IsConnected = false;
+                        inst.StatusColor = inst.IsRunning ? Brushes.Orange : Brushes.Gray;
+                        inst.ToolCount = 0;
+                    }
                 }
             }
-            OnPropertyChanged(nameof(HasConnectedApps));
+
+            OnPropertyChanged(nameof(HasRegisteredApps));
         });
+    }
+
+    private void UpdateOrAddTransientGroup(string appName, int toolCount, bool isConnected)
+    {
+        var group = new AppGroupViewModel
+        {
+            Name = appName,
+            Path = "(not registered - connected ad-hoc)",
+            IsRegistered = false,
+            StartCommand = new RelayCommand(() => { }),
+            UnregisterCommand = new RelayCommand(() => { })
+        };
+
+        // Add a virtual instance for the connection
+        group.Instances.Add(new ProcessInstanceViewModel
+        {
+            Pid = 0,
+            AppName = appName,
+            IsRunning = true,
+            IsConnected = isConnected,
+            ToolCount = toolCount,
+            StatusColor = isConnected ? Brushes.LimeGreen : Brushes.Gray,
+            StopCommand = new RelayCommand(() => StopAllForApp(appName)),
+            ScreenshotCommand = new AsyncRelayCommand(async () => await TakeScreenshotOfInstanceAsync(appName))
+        });
+
+        RegisteredApps.Add(group);
     }
 
     private readonly object _logLock = new();
@@ -314,7 +457,6 @@ public class ProxyViewModel : INotifyPropertyChanged
         {
             _logBuilder.Append(line);
 
-            // Keep log size reasonable
             if (_logBuilder.Length > 50000)
             {
                 _logBuilder.Remove(0, 10000);
@@ -322,12 +464,12 @@ public class ProxyViewModel : INotifyPropertyChanged
 
             snapshot = _logBuilder.ToString();
         }
-        
+
         Dispatcher.UIThread.Post(() =>
         {
             LogText = snapshot;
         });
-        
+
         Console.Error.WriteLine(message);
     }
 
@@ -337,35 +479,66 @@ public class ProxyViewModel : INotifyPropertyChanged
     }
 }
 
-public class ConnectedAppInfo : INotifyPropertyChanged
+public class AppGroupViewModel : INotifyPropertyChanged
 {
-    private IBrush _statusColor = Brushes.Gray;
-    private bool _isSelected;
-    
     public string Name { get; init; } = "";
-    public int ToolCount { get; init; }
-    
+    public string Path { get; init; } = "";
+    public bool IsRegistered { get; init; }
+    public ObservableCollection<ProcessInstanceViewModel> Instances { get; } = new();
+    public bool HasRunningInstances => Instances.Any(i => i.IsRunning);
+
+    public ICommand StartCommand { get; init; } = null!;
+    public ICommand UnregisterCommand { get; init; } = null!;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
+
+public class ProcessInstanceViewModel : INotifyPropertyChanged
+{
+    private bool _isRunning;
+    private bool _isConnected;
+    private int _toolCount;
+    private IBrush _statusColor = Brushes.Gray;
+
+    public int Pid { get; init; }
+    public string AppName { get; init; } = "";
+
+    public bool IsRunning
+    {
+        get => _isRunning;
+        set { _isRunning = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsRunning))); }
+    }
+
+    public bool IsConnected
+    {
+        get => _isConnected;
+        set { _isConnected = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsConnected))); }
+    }
+
+    public int ToolCount
+    {
+        get => _toolCount;
+        set { _toolCount = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ToolCount))); }
+    }
+
     public IBrush StatusColor
     {
         get => _statusColor;
         set { _statusColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StatusColor))); }
     }
 
-    public bool IsSelected
-    {
-        get => _isSelected;
-        set { _isSelected = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected))); }
-    }
-    
+    public ICommand StopCommand { get; init; } = null!;
+    public ICommand ScreenshotCommand { get; init; } = null!;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
 public class RelayCommand : ICommand
 {
     private readonly Action _execute;
-    
+
     public RelayCommand(Action execute) => _execute = execute;
-    
+
     public event EventHandler? CanExecuteChanged;
     public bool CanExecute(object? parameter) => true;
     public void Execute(object? parameter) => _execute();
@@ -384,10 +557,10 @@ public class AsyncRelayCommand : ICommand
     public async void Execute(object? parameter)
     {
         if (_isExecuting) return;
-        
+
         _isExecuting = true;
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        
+
         try
         {
             await _execute();
