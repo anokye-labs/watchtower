@@ -57,13 +57,13 @@
       },
       "FluentIcons.Avalonia.Fluent": {
         "type": "Direct",
-        "requested": "[2.0.316.1, )",
-        "resolved": "2.0.316.1",
-        "contentHash": "LesHEYNnK0ABpwMKjzTaTabbYTUCTnb8vRoFjU6PN9S0rcgkq1R2g9FzOzRGKFMhJME4aysb9oZ5dycwAvSyIQ==",
+        "requested": "[2.0.319, )",
+        "resolved": "2.0.319",
+        "contentHash": "HBOYiYkX3apIu2IU05rJuU0dJFaYrK6dckPHGF+LGQEVe05h1+wMKkNbGnvI5//fbdGeTJ4wtd4H/ooT4X4H4Q==",
         "dependencies": {
           "FluentAvaloniaUI": "2.0.0",
-          "FluentIcons.Avalonia": "[2.0.316.1]",
-          "FluentIcons.Common": "[2.0.316]"
+          "FluentIcons.Common": "[2.0.319]",
+          "FluentIcons.Resources.Avalonia": "[2.0.319]"
         }
       },
       "Iciclecreek.AdaptiveCards.Rendering.Avalonia": {
@@ -394,26 +394,25 @@
       },
       "FluentIcons.Avalonia": {
         "type": "Transitive",
-        "resolved": "2.0.316.1",
-        "contentHash": "lFW8oYLaJPyEvCKTNAJbcW6Bfk+Jop48cELrvHZZ635la9fKiSUc/rNOM5CQnNjlDqkfZy1fLu62mHQfGHSm3w==",
+        "resolved": "1.1.223",
+        "contentHash": "HGnlhdc4z7yMJiQERTSuVHPNMObJwfxnXjQb9E6nqm4bxmLR+XJbHXHopdfK4gu3Ymtq0kPwdTlNq+kRkpA2UQ==",
         "dependencies": {
           "Avalonia": "11.0.0",
-          "FluentIcons.Common": "[2.0.316]",
-          "FluentIcons.Resources.Avalonia": "[2.0.316]"
+          "FluentIcons.Common": "[1.1.223]"
         }
       },
       "FluentIcons.Common": {
         "type": "Transitive",
-        "resolved": "2.0.316",
-        "contentHash": "SUsRQfm+jVutoA52jxA9rYiDf1O/1HBn7SpKyU31YbVvOX+lzzSmfeLIPRtdGA9A0c3SXx1B7hneIAFL84tQxw=="
+        "resolved": "2.0.319",
+        "contentHash": "2Lo1FapFIIgNCzu1XiCumfgqP/iBaAkgV8zAHQXVCAdghFfYT4DEIipzwhH4fRMVcK52MWpJTfMYCrVAt8bmBw=="
       },
       "FluentIcons.Resources.Avalonia": {
         "type": "Transitive",
-        "resolved": "2.0.316",
-        "contentHash": "4P4QWv4AG8JPicaCwrErjmL/VhJHQc4BKDSRCXzAwHQggf0J17WFDZgiW4ar1EHz5aVlsUXkA7RbH7cR5ZYOeQ==",
+        "resolved": "2.0.319",
+        "contentHash": "gfHR7D2SiYFjIMAvHKaVmwpjLfxuUq4VhJ/BIEDDm6IHwOnG7MIz9aYgspO93uJrTH2FcBRK6cb/THVpXuMvXQ==",
         "dependencies": {
           "Avalonia": "11.0.0",
-          "FluentIcons.Common": "[2.0.316]"
+          "FluentIcons.Common": "[2.0.319]"
         }
       },
       "HarfBuzzSharp": {
