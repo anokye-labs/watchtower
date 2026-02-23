@@ -90,9 +90,9 @@
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
-        "requested": "[1.47.0, )",
-        "resolved": "1.47.0",
-        "contentHash": "gCEeM0AqC+c3nn5Fd27jN16+zWf0N9Fcil0dyveFGASBFEIx2OyEzMi4+hQqwWyr54uHkgfPTmApA9dQfeUwmg==",
+        "requested": "[1.48.2, )",
+        "resolved": "1.48.2",
+        "contentHash": "WC68m5n+97mmY88qUa8oYorj5j1qnVt9WfjDmmcRCKv6Mpevz5UE8vFExrkcaifALQ66WEsB83OmHOkwCOHh/A==",
         "dependencies": {
           "Azure.Core": "1.44.1"
         }
@@ -779,9 +779,9 @@
     "net10.0/win-x64": {
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
-        "requested": "[1.47.0, )",
-        "resolved": "1.47.0",
-        "contentHash": "gCEeM0AqC+c3nn5Fd27jN16+zWf0N9Fcil0dyveFGASBFEIx2OyEzMi4+hQqwWyr54uHkgfPTmApA9dQfeUwmg==",
+        "requested": "[1.48.2, )",
+        "resolved": "1.48.2",
+        "contentHash": "WC68m5n+97mmY88qUa8oYorj5j1qnVt9WfjDmmcRCKv6Mpevz5UE8vFExrkcaifALQ66WEsB83OmHOkwCOHh/A==",
         "dependencies": {
           "Azure.Core": "1.44.1"
         }
