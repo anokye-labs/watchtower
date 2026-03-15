@@ -19,11 +19,15 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Run Claude Code
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           trigger_phrase: "@claude"
-          prompt: |
-            ${{ github.event_name == 'issues' && format('Implement the feature described in this issue and create a PR referencing issue #{0}.\n\nIssue title: {1}\n\nIssue body:\n{2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) || '' }}
+          prompt: "${{ github.event_name == 'issues' && format('Implement the feature described in this issue and create a PR referencing issue #{0}.\n\nIssue title: {1}\n\nIssue body:\n{2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) || '' }}"
