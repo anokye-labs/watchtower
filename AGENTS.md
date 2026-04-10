@@ -338,7 +338,6 @@ Last Updated: 2025-12-28 | Constitution Version: 1.2.0
 The following rules are enforced on this repository's default branch:
 
 - **Pull request required** — All changes must go through a pull request. Direct pushes to the default branch are blocked.
-- **Review required** — At least 1 approving review is required before merging. Stale reviews are dismissed when new commits are pushed.
 - **Conversation resolution required** — All PR review comments and conversations must be resolved before merging.
 - **Force pushes blocked** — Force pushes to the default branch are not allowed.
 - **Branch deletion blocked** — The default branch cannot be deleted.
