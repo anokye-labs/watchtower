@@ -401,3 +401,36 @@ Use the GraphQL API for issue types, sub-issues, and relationship management. Th
 1. Create the issue with proper type, description, and relationships
 2. Edit the issue and assign it to `@copilot`
 3. Copilot will pick up the issue and open a PR
+
+## Verification and Validation
+
+**Agents must verify their own work thoroughly before handing back control.** Writing code and hoping it works is not acceptable. Verification goes beyond running unit tests — it means confirming the system actually behaves correctly end-to-end.
+
+### Verification Expectations
+
+1. **Build and test** — Run the build and all existing tests. Fix failures before declaring done.
+2. **Runtime verification** — If the change affects runtime behavior, run the application and confirm it works. Don't just assume passing tests means the system is correct.
+3. **Web UI verification** — If web pages or browser-based interfaces are involved, use the **Playwright CLI** skill to navigate, interact, screenshot, and validate the UI behaves correctly.
+4. **Desktop/GUI verification** — If desktop GUI or graphical applications are involved and you're running in Copilot CLI, check for the availability of the **computer-use MCP server**. If available, use it to interact with and verify the GUI. If not available and you believe you need it, **ask the user to install it**.
+5. **Integration verification** — If the change involves APIs, services, or external systems, make real calls and confirm responses. Don't mock what you can test live.
+
+### When You Cannot Verify
+
+If you cannot fully verify your work — due to missing tools, environment limitations, or access constraints:
+
+1. **State it explicitly.** When you hand back control, clearly list what you were NOT able to validate.
+2. **Explain why.** Say what tool, access, or capability you were missing.
+3. **Ask for help.** If a tool or MCP server would enable verification, ask the user to install or configure it before you proceed.
+4. **Never claim "done" without disclosure.** An honest "I could not verify X because Y" is always better than a silent gap.
+
+### Available Verification Tools
+
+| Scenario | Tool | How to Access |
+|----------|------|---------------|
+| Web pages / browser UI | Playwright CLI | Use the `playwright-cli` skill |
+| Desktop GUI / graphical apps | Computer Use MCP | Check MCP server availability; ask user to install if needed |
+| API endpoints | curl / Invoke-RestMethod | Direct HTTP calls |
+| Build / test suites | Project build system | `dotnet test`, `npm test`, `pytest`, `cargo test`, etc. |
+| File system / output | Direct inspection | Read and verify output files, logs, generated artifacts |
+
+**Bottom line:** Do as much as possible to verify. Ask for help if you can't. Be transparent about what remains unverified.
