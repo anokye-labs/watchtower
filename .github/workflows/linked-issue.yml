@@ -1,0 +1,65 @@
+name: linked-issue
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: linked-issue-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-linked-issue:
+    name: check-linked-issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: check-linked-issue
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as handle:
+              event = json.load(handle)
+
+          pull_request = event["pull_request"]
+          title = (pull_request.get("title") or "").strip()
+          body = pull_request.get("body") or ""
+          author = ((pull_request.get("user") or {}).get("login") or "").strip()
+          labels = {
+              label.get("name")
+              for label in pull_request.get("labels", [])
+              if label.get("name")
+          }
+
+          if author in {"dependabot[bot]", "renovate[bot]", "github-actions[bot]"}:
+              print(f"Skipping linked issue enforcement for bot author {author}.")
+              sys.exit(0)
+
+          if "no-linked-issue-required" in labels:
+              print("Bypass label no-linked-issue-required is present.")
+              sys.exit(0)
+
+          text = "\n".join(part for part in (title, body) if part)
+          patterns = (
+              re.compile(r"(?i)\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|ref(?:erence)?s?|see)\s*:?\s+(?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?#\d+\b"),
+              re.compile(r"(?i)https://github\.com/[^/\s]+/[^/\s]+/issues/\d+\b"),
+              re.compile(r"(?<![/\w])#\d+\b"),
+          )
+
+          if any(pattern.search(text) for pattern in patterns):
+              print("Issue reference found in PR title/body.")
+              sys.exit(0)
+
+          print(
+              '::error title=Linked issue required::Add an issue reference to the PR title or body (for example, "Closes #123" or "#123"), or apply the "no-linked-issue-required" label.'
+          )
+          sys.exit(1)
+          PY
