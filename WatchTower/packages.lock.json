@@ -90,9 +90,9 @@
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
-        "requested": "[1.47.0, )",
-        "resolved": "1.47.0",
-        "contentHash": "gCEeM0AqC+c3nn5Fd27jN16+zWf0N9Fcil0dyveFGASBFEIx2OyEzMi4+hQqwWyr54uHkgfPTmApA9dQfeUwmg==",
+        "requested": "[1.49.0, )",
+        "resolved": "1.49.0",
+        "contentHash": "374iZGc9HHAueKp5fwjPcenpUDO1dCLVQhUoAWeZRpC67yscvCUs+cM1NGHLdV21Zy38Zx8ugF5RUdqQS4f7gQ==",
         "dependencies": {
           "Azure.Core": "1.44.1"
         }
@@ -154,9 +154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "kICGrGYEzCNI3wPzfEXcwNHgTvlvVn9yJDhSdRK+oZQy4jvYH529u7O0xf5ocQKzOMjfS07+3z9PKRIjrFMJDA=="
+        "requested": "[10.0.3, )",
+        "resolved": "10.0.3",
+        "contentHash": "0B6nZyCHWXnvmlB559oduOspVdNOnpNXPjhpWVMovLPAsDVG7A4jJR9rzECf67JUzxP8/ee/wA8clwIzJcWNFA=="
       },
       "NAudio": {
         "type": "Direct",
@@ -779,9 +779,9 @@
     "net10.0/win-x64": {
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
-        "requested": "[1.47.0, )",
-        "resolved": "1.47.0",
-        "contentHash": "gCEeM0AqC+c3nn5Fd27jN16+zWf0N9Fcil0dyveFGASBFEIx2OyEzMi4+hQqwWyr54uHkgfPTmApA9dQfeUwmg==",
+        "requested": "[1.49.0, )",
+        "resolved": "1.49.0",
+        "contentHash": "374iZGc9HHAueKp5fwjPcenpUDO1dCLVQhUoAWeZRpC67yscvCUs+cM1NGHLdV21Zy38Zx8ugF5RUdqQS4f7gQ==",
         "dependencies": {
           "Azure.Core": "1.44.1"
         }
