@@ -70,6 +70,7 @@ public partial class App : Application
             shellViewModel.ExitRequested += exitHandler;
 
             desktop.MainWindow = shellWindow;
+
             shellWindow.Show();
 
             // Start async startup workflow

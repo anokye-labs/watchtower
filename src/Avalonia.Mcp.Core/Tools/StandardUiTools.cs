@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Avalonia.Mcp.Core.Handlers;
 using Avalonia.Mcp.Core.Models;
 using Avalonia.Mcp.Core.Services;
@@ -21,6 +22,11 @@ public class StandardUiTools
         _uiService = uiService;
         _logger = logger;
     }
+
+    // Helpers to safely extract values from parameters that may be JsonElement or boxed primitives
+    private static double ToDouble(object? obj) => obj is JsonElement el ? el.GetDouble() : Convert.ToDouble(obj);
+    private static int ToInt(object? obj) => obj is JsonElement el ? el.GetInt32() : Convert.ToInt32(obj);
+    private static string? ToStr(object? obj) => obj is JsonElement el ? el.GetString() : obj?.ToString();
 
     /// <summary>
     /// Registers all standard UI tools with the MCP handler.
@@ -63,8 +69,8 @@ public class StandardUiTools
                 if (!parameters.TryGetValue("x", out var xObj) || !parameters.TryGetValue("y", out var yObj))
                     return McpToolResult.Fail("Missing x or y coordinates");
 
-                var x = Convert.ToDouble(xObj);
-                var y = Convert.ToDouble(yObj);
+                var x = ToDouble(xObj);
+                var y = ToDouble(yObj);
 
                 _logger?.LogInformation("Clicking at ({X}, {Y})", x, y);
 
@@ -104,7 +110,7 @@ public class StandardUiTools
                 if (parameters == null || !parameters.TryGetValue("text", out var textObj))
                     return McpToolResult.Fail("Text parameter is required");
 
-                var text = textObj.ToString() ?? "";
+                var text = ToStr(textObj) ?? "";
                 _logger?.LogInformation("Typing text: {Text}", text);
 
                 var typed = await _uiService.TypeTextAsync(text);
@@ -140,7 +146,7 @@ public class StandardUiTools
             try
             {
                 var format = parameters?.TryGetValue("format", out var formatObj) == true
-                    ? formatObj.ToString() ?? "png"
+                    ? ToStr(formatObj) ?? "png"
                     : "png";
 
                 _logger?.LogInformation("Capturing screenshot in format: {Format}", format);
@@ -185,7 +191,7 @@ public class StandardUiTools
             try
             {
                 var maxDepth = parameters?.TryGetValue("maxDepth", out var depthObj) == true
-                    ? Convert.ToInt32(depthObj)
+                    ? ToInt(depthObj)
                     : 10;
 
                 _logger?.LogInformation("Getting element tree with max depth: {MaxDepth}", maxDepth);
@@ -228,7 +234,7 @@ public class StandardUiTools
                 if (parameters == null || !parameters.TryGetValue("selector", out var selectorObj))
                     return McpToolResult.Fail("Selector parameter is required");
 
-                var selector = selectorObj.ToString() ?? "";
+                var selector = ToStr(selectorObj) ?? "";
                 _logger?.LogInformation("Finding element: {Selector}", selector);
 
                 var result = await _uiService.FindElementAsync(selector);
@@ -268,9 +274,9 @@ public class StandardUiTools
                 if (parameters == null || !parameters.TryGetValue("selector", out var selectorObj))
                     return McpToolResult.Fail("Selector parameter is required");
 
-                var selector = selectorObj.ToString() ?? "";
+                var selector = ToStr(selectorObj) ?? "";
                 var timeoutMs = parameters.TryGetValue("timeoutMs", out var timeoutObj)
-                    ? Convert.ToInt32(timeoutObj)
+                    ? ToInt(timeoutObj)
                     : 5000;
 
                 _logger?.LogInformation("Waiting for element: {Selector} (timeout: {TimeoutMs}ms)", selector, timeoutMs);

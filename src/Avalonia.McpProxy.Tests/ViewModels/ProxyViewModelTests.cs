@@ -1,3 +1,4 @@
+using Avalonia.McpProxy.Services;
 using Avalonia.McpProxy.ViewModels;
 using Xunit;
 
@@ -10,21 +11,24 @@ namespace Avalonia.McpProxy.Tests.ViewModels;
 /// </summary>
 public class ProxyViewModelTests
 {
+    private static AppRegistry CreateTestRegistry() =>
+        new AppRegistry(_ => { });
+
     [Fact]
     public void ProxyViewModel_CanBeCreated()
     {
-        var vm = new ProxyViewModel();
+        var vm = new ProxyViewModel(CreateTestRegistry());
 
         Assert.NotNull(vm);
         Assert.Equal("Starting...", vm.StatusText);
-        Assert.Empty(vm.ConnectedApps);
-        Assert.False(vm.HasConnectedApps);
+        Assert.Empty(vm.RegisteredApps);
+        Assert.False(vm.HasRegisteredApps);
     }
 
     [Fact]
     public void ProxyViewModel_LogText_StartsEmpty()
     {
-        var vm = new ProxyViewModel();
+        var vm = new ProxyViewModel(CreateTestRegistry());
 
         Assert.Equal("", vm.LogText);
     }
@@ -32,25 +36,25 @@ public class ProxyViewModelTests
     [Fact]
     public void ProxyViewModel_ClearLogsCommand_IsNotNull()
     {
-        var vm = new ProxyViewModel();
+        var vm = new ProxyViewModel(CreateTestRegistry());
 
         Assert.NotNull(vm.ClearLogsCommand);
         Assert.True(vm.ClearLogsCommand.CanExecute(null));
     }
 
     [Fact]
-    public void ProxyViewModel_ReconnectCommand_IsNotNull()
+    public void ProxyViewModel_RegisterAppCommand_IsNotNull()
     {
-        var vm = new ProxyViewModel();
+        var vm = new ProxyViewModel(CreateTestRegistry());
 
-        Assert.NotNull(vm.ReconnectCommand);
-        Assert.True(vm.ReconnectCommand.CanExecute(null));
+        Assert.NotNull(vm.RegisterAppCommand);
+        Assert.True(vm.RegisterAppCommand.CanExecute(null));
     }
 
     [Fact]
     public void ProxyViewModel_ClearLogsCommand_ClearsLogText()
     {
-        var vm = new ProxyViewModel();
+        var vm = new ProxyViewModel(CreateTestRegistry());
 
         vm.ClearLogsCommand.Execute(null);
 
@@ -59,48 +63,72 @@ public class ProxyViewModelTests
 }
 
 /// <summary>
-/// Tests for ConnectedAppInfo model.
+/// Tests for AppGroupViewModel model.
 /// </summary>
-public class ConnectedAppInfoTests
+public class AppGroupViewModelTests
 {
     [Fact]
-    public void ConnectedAppInfo_StoresProperties()
+    public void AppGroupViewModel_StoresProperties()
     {
-        var info = new ConnectedAppInfo
+        var group = new AppGroupViewModel
         {
             Name = "WatchTower",
-            Port = 5100,
-            ToolCount = 6
+            Path = "/path/to/app",
+            IsRegistered = true,
+            StartCommand = new RelayCommand(() => { }),
+            UnregisterCommand = new RelayCommand(() => { })
         };
 
-        Assert.Equal("WatchTower", info.Name);
-        Assert.Equal(5100, info.Port);
-        Assert.Equal(6, info.ToolCount);
+        Assert.Equal("WatchTower", group.Name);
+        Assert.Equal("/path/to/app", group.Path);
+        Assert.True(group.IsRegistered);
+        Assert.Empty(group.Instances);
+        Assert.False(group.HasRunningInstances);
+    }
+}
+
+/// <summary>
+/// Tests for ProcessInstanceViewModel model.
+/// </summary>
+public class ProcessInstanceViewModelTests
+{
+    [Fact]
+    public void ProcessInstanceViewModel_DefaultValues()
+    {
+        var instance = new ProcessInstanceViewModel
+        {
+            Pid = 0,
+            AppName = "",
+            StopCommand = new RelayCommand(() => { }),
+            ScreenshotCommand = new RelayCommand(() => { })
+        };
+
+        Assert.Equal(0, instance.Pid);
+        Assert.Equal("", instance.AppName);
+        Assert.False(instance.IsRunning);
+        Assert.False(instance.IsConnected);
+        Assert.Equal(0, instance.ToolCount);
     }
 
     [Fact]
-    public void ConnectedAppInfo_DefaultValues()
+    public void ProcessInstanceViewModel_StatusColor_RaisesPropertyChanged()
     {
-        var info = new ConnectedAppInfo();
-
-        Assert.Equal("", info.Name);
-        Assert.Equal(0, info.Port);
-        Assert.Equal(0, info.ToolCount);
-    }
-
-    [Fact]
-    public void ConnectedAppInfo_StatusColor_RaisesPropertyChanged()
-    {
-        var info = new ConnectedAppInfo();
+        var instance = new ProcessInstanceViewModel
+        {
+            Pid = 0,
+            AppName = "",
+            StopCommand = new RelayCommand(() => { }),
+            ScreenshotCommand = new RelayCommand(() => { })
+        };
         var propertyChanged = false;
 
-        info.PropertyChanged += (_, args) =>
+        instance.PropertyChanged += (_, args) =>
         {
-            if (args.PropertyName == nameof(ConnectedAppInfo.StatusColor))
+            if (args.PropertyName == nameof(ProcessInstanceViewModel.StatusColor))
                 propertyChanged = true;
         };
 
-        info.StatusColor = Avalonia.Media.Brushes.LimeGreen;
+        instance.StatusColor = Avalonia.Media.Brushes.LimeGreen;
 
         Assert.True(propertyChanged);
     }

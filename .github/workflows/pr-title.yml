@@ -1,0 +1,49 @@
+name: pr-title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: pr-title
+    runs-on: ubuntu-latest
+    steps:
+      - name: pr-title
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as handle:
+              event = json.load(handle)
+
+          title = (event["pull_request"].get("title") or "").strip()
+          if not title:
+              print("::error title=PR title required::PR title cannot be empty.")
+              sys.exit(1)
+
+          blocked_patterns = (
+              re.compile(r"(?i)^\s*\[?\s*wip\b"),
+              re.compile(r"(?i)^\s*\[?\s*draft\b"),
+              re.compile(r"(?i)^\s*(?:do not merge|dnm)\b"),
+          )
+          if any(pattern.search(title) for pattern in blocked_patterns):
+              print(
+                  '::error title=Invalid PR title::Use a descriptive title and avoid empty, WIP, draft, or do-not-merge titles.'
+              )
+              sys.exit(1)
+
+          print(f"PR title is valid: {title}")
+          PY
