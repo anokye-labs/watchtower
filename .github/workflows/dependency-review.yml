@@ -1,0 +1,25 @@
+name: dependency-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: dependency-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: dependency-review
+    runs-on: ubuntu-latest
+    steps:
+      - name: dependency-review-private-skip
+        if: ${{ github.event.repository.private }}
+        run: echo "Dependency review is skipped on private repositories unless GitHub Advanced Security is enabled."
+      - name: dependency-review
+        if: ${{ !github.event.repository.private }}
+        uses: actions/dependency-review-action@v4
