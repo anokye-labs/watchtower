@@ -84,9 +84,9 @@
       },
       "Meziantou.Framework.Win32.CredentialManager": {
         "type": "Direct",
-        "requested": "[1.7.15, )",
-        "resolved": "1.7.15",
-        "contentHash": "sB3ZhG4/64PJ6SMeksQixFQ+e+FF5L+CrnQ/eKemaqquVK/tWdrmoLLoWGHVZThbMUShN9W+Ou0VXvkeUDHnfQ=="
+        "requested": "[1.7.17, )",
+        "resolved": "1.7.17",
+        "contentHash": "HdLOn5gKSMp4ZpZr8ZryGCD99KHGx6auhItZxrY3VpeUBGY8XYGPtYJwcsQ+EFIUBIbs9d9ZATe7oMe7XBBRYQ=="
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
@@ -154,9 +154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "kICGrGYEzCNI3wPzfEXcwNHgTvlvVn9yJDhSdRK+oZQy4jvYH529u7O0xf5ocQKzOMjfS07+3z9PKRIjrFMJDA=="
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "A+5ZuQ0f449tM+MQrhf6R9ZX7lYpjk/ODEwLYKrnF6111rtARx8fVsm4YznUnQiKnnXfaXNBqgxmil6RW3L3SA=="
       },
       "NAudio": {
         "type": "Direct",
