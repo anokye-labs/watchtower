@@ -5,10 +5,10 @@
       "Avalonia.Headless.XUnit": {
         "type": "Direct",
         "requested": "[11.*, )",
-        "resolved": "11.3.13",
-        "contentHash": "JW8sCVNqNC2en7X3l+Zugb+QRMPOc13vkDKuPawwS03x7DEi1/BgpvQinDJKY3l5P+PCSTLoIxut6SRVUqk6YQ==",
+        "resolved": "11.3.14",
+        "contentHash": "vYJgNuiaRUjMHRSyR/yJRpcW3AMJMcmnOGAFnRz4Dk/9jsIEBDSMfEZOoRJ5qwNWLBmL2UIS35OosGSIbgpvcw==",
         "dependencies": {
-          "Avalonia.Headless": "11.3.13",
+          "Avalonia.Headless": "11.3.14",
           "xunit.core": "2.4.0"
         }
       },
@@ -72,11 +72,11 @@
       },
       "Avalonia": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "3o7hhaJSUZTq7CwQiL987df6CkQhdyt2VbL9jN5iq42ZB1/zvFiGG2+4czuZYKFVIo2kl313sJKZ8/3TAnhSYw==",
+        "resolved": "11.3.14",
+        "contentHash": "RcGp0iXRBqMrDRXOTUOn9OaUTx8NlukTdhuBmY9w5JmVreDtZRRErKwwiHPw+YjkbTHvhfFFNsu3Hhd+oJGIZQ==",
         "dependencies": {
           "Avalonia.BuildServices": "11.3.2",
-          "Avalonia.Remote.Protocol": "11.3.13",
+          "Avalonia.Remote.Protocol": "11.3.14",
           "MicroCom.Runtime": "0.11.0"
         }
       },
@@ -157,10 +157,10 @@
       },
       "Avalonia.Headless": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "bHIu/S4aB+uezw0BLdDBO/3UH4FCyPvlfrQQF2JKG5rQ+zby586CNcFZcQUSXTM1VjdKcZiyzI8uqVAo6kLctQ==",
+        "resolved": "11.3.14",
+        "contentHash": "6UzWJmk47XKutVmKZL6ZpFIxhs4Lb5mjfT9R9u4GXDrNDMC4C2YZR3CLR/A1J0yCwOJQJh04ISE59/jqc2U7ZA==",
         "dependencies": {
-          "Avalonia": "11.3.13"
+          "Avalonia": "11.3.14"
         }
       },
       "Avalonia.Markup.Xaml.Loader": {
@@ -191,8 +191,8 @@
       },
       "Avalonia.Remote.Protocol": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "ATDouTcCn484dUxmvzmyuOfNpwWxOKTz8LbBNnHpMZFCtyzZ0b4gvfZXh/d5szyRIF+kaTPK97LMQ5UH8ZQNhg=="
+        "resolved": "11.3.14",
+        "contentHash": "P4QPwf9VQt4CjntmfGo8uL+S1RaVbTlcFgECSFIWN3AWc/IbKs76tbZ6ibpdFg1C+IKubBPQ+hUeUq7MrBIWDA=="
       },
       "Avalonia.Skia": {
         "type": "Transitive",
@@ -399,8 +399,8 @@
       },
       "Meziantou.Framework.Win32.CredentialManager": {
         "type": "Transitive",
-        "resolved": "1.7.15",
-        "contentHash": "sB3ZhG4/64PJ6SMeksQixFQ+e+FF5L+CrnQ/eKemaqquVK/tWdrmoLLoWGHVZThbMUShN9W+Ou0VXvkeUDHnfQ=="
+        "resolved": "1.7.17",
+        "contentHash": "HdLOn5gKSMp4ZpZr8ZryGCD99KHGx6auhItZxrY3VpeUBGY8XYGPtYJwcsQ+EFIUBIbs9d9ZATe7oMe7XBBRYQ=="
       },
       "MicroCom.CodeGenerator.MSBuild": {
         "type": "Transitive",
@@ -494,8 +494,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+        "resolved": "10.0.5",
+        "contentHash": "iVMtq9eRvzyhx8949EGT0OCYJfXi737SbRVzWXE5GrOgGj5AaZ9eUuxA/BSUfmOMALKn/g8KfFaNQw0eiB3lyA=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
@@ -537,10 +537,10 @@
       },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "RZkez/JjpnO+MZ6efKkSynN6ZztLpw3WbxNzjLCPBd97wWj1S9ZYPWi0nmT4kWBRa6atHsdM1ydGkUr8GudyDQ==",
+        "resolved": "10.0.5",
+        "contentHash": "9HOdqlDtPptVcmKAjsQ/Nr5Rxfq6FMYLdhvZh1lVmeKR738qeYecQD7+ldooXf+u2KzzR1kafSphWngIM3C6ug==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
         }
       },
       "Microsoft.Extensions.Logging.Configuration": {
@@ -871,8 +871,8 @@
         "dependencies": {
           "Avalonia": "[11.3.11, )",
           "Avalonia.Headless": "[11.3.11, )",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.2, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.2, )"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.5, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.5, )"
         }
       },
       "watchtower": {
@@ -886,7 +886,7 @@
           "Avalonia.Themes.Fluent": "[11.3.11, )",
           "FluentIcons.Avalonia.Fluent": "[2.0.316.1, )",
           "Iciclecreek.AdaptiveCards.Rendering.Avalonia": "[1.0.4, )",
-          "Meziantou.Framework.Win32.CredentialManager": "[1.7.15, )",
+          "Meziantou.Framework.Win32.CredentialManager": "[1.7.17, )",
           "Microsoft.CognitiveServices.Speech": "[1.47.0, )",
           "Microsoft.Extensions.Configuration": "[10.0.2, )",
           "Microsoft.Extensions.Configuration.Json": "[10.0.2, )",
