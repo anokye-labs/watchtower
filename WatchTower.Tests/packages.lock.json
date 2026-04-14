@@ -5,10 +5,10 @@
       "Avalonia.Headless.XUnit": {
         "type": "Direct",
         "requested": "[11.*, )",
-        "resolved": "11.3.13",
-        "contentHash": "JW8sCVNqNC2en7X3l+Zugb+QRMPOc13vkDKuPawwS03x7DEi1/BgpvQinDJKY3l5P+PCSTLoIxut6SRVUqk6YQ==",
+        "resolved": "11.3.14",
+        "contentHash": "vYJgNuiaRUjMHRSyR/yJRpcW3AMJMcmnOGAFnRz4Dk/9jsIEBDSMfEZOoRJ5qwNWLBmL2UIS35OosGSIbgpvcw==",
         "dependencies": {
-          "Avalonia.Headless": "11.3.13",
+          "Avalonia.Headless": "11.3.14",
           "xunit.core": "2.4.0"
         }
       },
@@ -72,11 +72,11 @@
       },
       "Avalonia": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "3o7hhaJSUZTq7CwQiL987df6CkQhdyt2VbL9jN5iq42ZB1/zvFiGG2+4czuZYKFVIo2kl313sJKZ8/3TAnhSYw==",
+        "resolved": "11.3.14",
+        "contentHash": "RcGp0iXRBqMrDRXOTUOn9OaUTx8NlukTdhuBmY9w5JmVreDtZRRErKwwiHPw+YjkbTHvhfFFNsu3Hhd+oJGIZQ==",
         "dependencies": {
           "Avalonia.BuildServices": "11.3.2",
-          "Avalonia.Remote.Protocol": "11.3.13",
+          "Avalonia.Remote.Protocol": "11.3.14",
           "MicroCom.Runtime": "0.11.0"
         }
       },
@@ -157,10 +157,10 @@
       },
       "Avalonia.Headless": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "bHIu/S4aB+uezw0BLdDBO/3UH4FCyPvlfrQQF2JKG5rQ+zby586CNcFZcQUSXTM1VjdKcZiyzI8uqVAo6kLctQ==",
+        "resolved": "11.3.14",
+        "contentHash": "6UzWJmk47XKutVmKZL6ZpFIxhs4Lb5mjfT9R9u4GXDrNDMC4C2YZR3CLR/A1J0yCwOJQJh04ISE59/jqc2U7ZA==",
         "dependencies": {
-          "Avalonia": "11.3.13"
+          "Avalonia": "11.3.14"
         }
       },
       "Avalonia.Markup.Xaml.Loader": {
@@ -191,8 +191,8 @@
       },
       "Avalonia.Remote.Protocol": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "ATDouTcCn484dUxmvzmyuOfNpwWxOKTz8LbBNnHpMZFCtyzZ0b4gvfZXh/d5szyRIF+kaTPK97LMQ5UH8ZQNhg=="
+        "resolved": "11.3.14",
+        "contentHash": "P4QPwf9VQt4CjntmfGo8uL+S1RaVbTlcFgECSFIWN3AWc/IbKs76tbZ6ibpdFg1C+IKubBPQ+hUeUq7MrBIWDA=="
       },
       "Avalonia.Skia": {
         "type": "Transitive",
@@ -612,51 +612,51 @@
       },
       "NAudio": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "c0DzwiyyklM0TP39Y7RObwO3QkWecgM6H60ikiEnsV/aEAJPbj5MFCLaD8BSfKuZe0HGuh9GRGWWlJmSxDc9MA==",
+        "resolved": "2.3.0",
+        "contentHash": "xN+Lzlu9DmXqBiL6XkP0VZmgTxZPdSGjVSWtKG9HKuar3LhIYNOIYQETieigS+QDS+nrs1QmHbBWWOru0nWA5A==",
         "dependencies": {
-          "NAudio.Asio": "2.2.1",
-          "NAudio.Core": "2.2.1",
-          "NAudio.Midi": "2.2.1",
-          "NAudio.Wasapi": "2.2.1",
-          "NAudio.WinMM": "2.2.1"
+          "NAudio.Asio": "2.3.0",
+          "NAudio.Core": "2.3.0",
+          "NAudio.Midi": "2.3.0",
+          "NAudio.Wasapi": "2.3.0",
+          "NAudio.WinMM": "2.3.0"
         }
       },
       "NAudio.Asio": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "hQglyOT5iT3XuGpBP8ZG0+aoqwRfidHjTNehpoWwX0g6KJEgtH2VaqM2nuJ2mheKZa/IBqB4YQTZVvrIapzfOA==",
+        "resolved": "2.3.0",
+        "contentHash": "I+rAAPT8vmSEw4d4ie+AoSkrvNK6ylRrXznnjQKS+qZgTA9Jnt1Pxe0EaU8nXxOOq5h8ucBSWccBEw6I/J0nkQ==",
         "dependencies": {
-          "NAudio.Core": "2.2.1"
+          "NAudio.Core": "2.3.0"
         }
       },
       "NAudio.Core": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "GgkdP6K/7FqXFo7uHvoqGZTJvW4z8g2IffhOO4JHaLzKCdDOUEzVKtveoZkCuUX8eV2HAINqi7VFqlFndrnz/g=="
+        "resolved": "2.3.0",
+        "contentHash": "jMd7r6dB6tAtXhOYL58ntPqwERNm1/Rhw5MKOIYvsnXzuX+PTGsa2VMam6n0npZYSwlSidKa4GAm4bFcXFUlcg=="
       },
       "NAudio.Midi": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "6r23ylGo5aeP02WFXsPquz0T0hFJWyh+7t++tz19tc3Kr38NHm+Z9j+FiAv+xkH8tZqXJqus9Q8p6u7bidIgbw==",
+        "resolved": "2.3.0",
+        "contentHash": "t8wvPFPHHQOHhoNMCaDE8OiYZoJuxmY4H6UPBtmnf+xx7oQuajFCqlG4Q00ID+tiEyj471WeVb4Nkylr4tDoow==",
         "dependencies": {
-          "NAudio.Core": "2.2.1"
+          "NAudio.Core": "2.3.0"
         }
       },
       "NAudio.Wasapi": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "lFfXoqacZZe0WqNChJgGYI+XV/n/61LzPHT3C1CJp4khoxeo2sziyX5wzNYWeCMNbsWxFvT3b3iXeY1UYjBhZw==",
+        "resolved": "2.3.0",
+        "contentHash": "y5K2BxrLnvohgu5znzg5wRsai3YcuNXfrpo68i7PmCQqpK5MC/R24e5aO3OyN/XhfRr12e0QYV0OnUWEHi5SzA==",
         "dependencies": {
-          "NAudio.Core": "2.2.1"
+          "NAudio.Core": "2.3.0"
         }
       },
       "NAudio.WinMM": {
         "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "xFHRFwH4x6aq3IxRbewvO33ugJRvZFEOfO62i7uQJRUNW2cnu6BeBTHUS0JD5KBucZbHZaYqxQG8dwZ47ezQuQ==",
+        "resolved": "2.3.0",
+        "contentHash": "5G1dRjsZm50T3luyuqcmI2BSvj3K4ZJaD/x776/0Epj88qOsOryDZG40+MufwIk1UFJSFWhRobBqtJYFc8Ss4g==",
         "dependencies": {
-          "NAudio.Core": "2.2.1"
+          "NAudio.Core": "2.3.0"
         }
       },
       "Newtonsoft.Json": {
@@ -893,7 +893,7 @@
           "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
           "Microsoft.Extensions.Logging": "[10.0.2, )",
           "Microsoft.Extensions.Logging.Console": "[10.0.2, )",
-          "NAudio": "[2.2.1, )",
+          "NAudio": "[2.3.0, )",
           "PiperSharp": "[1.0.6, )",
           "Silk.NET.SDL": "[2.22.0, )",
           "Vosk": "[0.3.38, )"
