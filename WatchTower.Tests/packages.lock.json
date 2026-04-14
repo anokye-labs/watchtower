@@ -72,12 +72,12 @@
       },
       "Avalonia": {
         "type": "Transitive",
-        "resolved": "12.0.0",
-        "contentHash": "/dTINvK2kc8wiV1k6owfJS9gVLwt5vzv3gZEJbl/k7exfIIp+XqSwQQuZq9IFsV8A1Kn+p9btnPDtG4xtPUCaA==",
+        "resolved": "11.3.14",
+        "contentHash": "RcGp0iXRBqMrDRXOTUOn9OaUTx8NlukTdhuBmY9w5JmVreDtZRRErKwwiHPw+YjkbTHvhfFFNsu3Hhd+oJGIZQ==",
         "dependencies": {
           "Avalonia.BuildServices": "11.3.2",
-          "Avalonia.Remote.Protocol": "12.0.0",
-          "MicroCom.Runtime": "0.11.4"
+          "Avalonia.Remote.Protocol": "11.3.14",
+          "MicroCom.Runtime": "0.11.0"
         }
       },
       "Avalonia.Angle.Windows.Natives": {
@@ -140,10 +140,10 @@
       },
       "Avalonia.Fonts.Inter": {
         "type": "Transitive",
-        "resolved": "12.0.0",
-        "contentHash": "UFIHXwHE7Cb8ogSICRU1/CwZZJu0wNN88TITag6evLqaF4aULFn9mXmSlP6TbA86Xt6FoksYJpgXHvxRXZQhOw==",
+        "resolved": "11.3.11",
+        "contentHash": "VzfS95eXV2YlMxizNWGug3eb4717lNGZ3lIfl5os+DTL+A1djDT+Sv87oXAj8jGVqijdA/eFP9jax5JA9GCb3g==",
         "dependencies": {
-          "Avalonia": "12.0.0"
+          "Avalonia": "11.3.11"
         }
       },
       "Avalonia.FreeDesktop": {
@@ -191,8 +191,8 @@
       },
       "Avalonia.Remote.Protocol": {
         "type": "Transitive",
-        "resolved": "12.0.0",
-        "contentHash": "4uafS+y4s/FPJiOms5ZMFSWUNsx0QdWnkcbdiimch73WnApccgbWb6p082tCAPvSw6SbqoQB5IHgHsHGI7gPSw=="
+        "resolved": "11.3.14",
+        "contentHash": "P4QPwf9VQt4CjntmfGo8uL+S1RaVbTlcFgECSFIWN3AWc/IbKs76tbZ6ibpdFg1C+IKubBPQ+hUeUq7MrBIWDA=="
       },
       "Avalonia.Skia": {
         "type": "Transitive",
@@ -409,8 +409,8 @@
       },
       "MicroCom.Runtime": {
         "type": "Transitive",
-        "resolved": "0.11.4",
-        "contentHash": "yZ8+Lgwo+KtRI29TB2mIOEMzV+csMJ+pKZg4YHReAP3vRewWLKKeYfrBDo5FS69rWnEbCfU3sbM+ZEQr+GDLtg=="
+        "resolved": "0.11.0",
+        "contentHash": "MEnrZ3UIiH40hjzMDsxrTyi8dtqB5ziv3iBeeU4bXsL/7NLSal9F1lZKpK+tfBRnUoDSdtcW3KufE4yhATOMCA=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
@@ -878,10 +878,10 @@
       "watchtower": {
         "type": "Project",
         "dependencies": {
-          "Avalonia": "[12.0.0, )",
+          "Avalonia": "[11.3.11, )",
           "Avalonia.Desktop": "[11.3.11, )",
           "Avalonia.Diagnostics": "[11.3.11, )",
-          "Avalonia.Fonts.Inter": "[12.0.0, )",
+          "Avalonia.Fonts.Inter": "[11.3.11, )",
           "Avalonia.Mcp.Core": "[1.0.0, )",
           "Avalonia.Themes.Fluent": "[11.3.11, )",
           "FluentIcons.Avalonia.Fluent": "[2.0.316.1, )",
