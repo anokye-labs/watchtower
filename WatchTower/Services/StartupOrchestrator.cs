@@ -78,20 +78,11 @@ public class StartupOrchestrator : IStartupOrchestrator
             services.AddSingleton<IAdaptiveCardService, AdaptiveCardService>();
             services.AddSingleton<IGameControllerService, GameControllerService>();
 
-            // Register HttpClientFactory for HTTP-based services
-            services.AddHttpClient();
-
-            // Register Developer Build Menu services
-            services.AddSingleton<IBuildCacheService, BuildCacheService>();
-            services.AddSingleton<IGitHubBuildService, GitHubBuildService>();
-
             logger.Info("UserPreferencesService registered");
             logger.Info("CredentialStorageService registered");
             logger.Info("AdaptiveCardThemeService registered");
             logger.Info("AdaptiveCardService registered");
             logger.Info("GameControllerService registered");
-            logger.Info("BuildCacheService registered");
-            logger.Info("GitHubBuildService registered");
 
             // Register MCP handler
             services.AddMcpHandler(config =>
