@@ -423,8 +423,8 @@
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Transitive",
-        "resolved": "1.47.0",
-        "contentHash": "gCEeM0AqC+c3nn5Fd27jN16+zWf0N9Fcil0dyveFGASBFEIx2OyEzMi4+hQqwWyr54uHkgfPTmApA9dQfeUwmg==",
+        "resolved": "1.49.0",
+        "contentHash": "374iZGc9HHAueKp5fwjPcenpUDO1dCLVQhUoAWeZRpC67yscvCUs+cM1NGHLdV21Zy38Zx8ugF5RUdqQS4f7gQ==",
         "dependencies": {
           "Azure.Core": "1.44.1"
         }
@@ -886,7 +886,7 @@
           "FluentIcons.Avalonia.Fluent": "[2.0.323, )",
           "Iciclecreek.AdaptiveCards.Rendering.Avalonia": "[1.0.4, )",
           "Meziantou.Framework.Win32.CredentialManager": "[1.7.17, )",
-          "Microsoft.CognitiveServices.Speech": "[1.47.0, )",
+          "Microsoft.CognitiveServices.Speech": "[1.49.0, )",
           "Microsoft.Extensions.Configuration": "[10.0.5, )",
           "Microsoft.Extensions.Configuration.Json": "[10.0.5, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.5, )",
