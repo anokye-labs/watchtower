@@ -7,7 +7,7 @@ WatchTower integrates the `FluentIcons.Avalonia.Fluent` package to provide acces
 ## Package Information
 
 - **Package**: [FluentIcons.Avalonia.Fluent](https://www.nuget.org/packages/FluentIcons.Avalonia.Fluent/)
-- **Version**: 2.0.316.1
+- **Version**: 2.0.323
 - **License**: MIT
 
 ## Integration
