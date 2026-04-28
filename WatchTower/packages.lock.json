@@ -84,9 +84,9 @@
       },
       "Meziantou.Framework.Win32.CredentialManager": {
         "type": "Direct",
-        "requested": "[1.7.17, )",
-        "resolved": "1.7.17",
-        "contentHash": "HdLOn5gKSMp4ZpZr8ZryGCD99KHGx6auhItZxrY3VpeUBGY8XYGPtYJwcsQ+EFIUBIbs9d9ZATe7oMe7XBBRYQ=="
+        "requested": "[1.7.18, )",
+        "resolved": "1.7.18",
+        "contentHash": "+rcvMXmecrTzKEVxLZdi64U2ghOdzj3MfZF5/HjYWixXyWK5pTDFne1SwnXEHCi8Jwgza8aUHiY0B0NsQlTsDg=="
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
