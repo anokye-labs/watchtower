@@ -86,10 +86,10 @@
       },
       "Avalonia.Headless": {
         "type": "Transitive",
-        "resolved": "11.3.13",
-        "contentHash": "bHIu/S4aB+uezw0BLdDBO/3UH4FCyPvlfrQQF2JKG5rQ+zby586CNcFZcQUSXTM1VjdKcZiyzI8uqVAo6kLctQ==",
+        "resolved": "11.3.14",
+        "contentHash": "6UzWJmk47XKutVmKZL6ZpFIxhs4Lb5mjfT9R9u4GXDrNDMC4C2YZR3CLR/A1J0yCwOJQJh04ISE59/jqc2U7ZA==",
         "dependencies": {
-          "Avalonia": "11.3.13"
+          "Avalonia": "11.3.14"
         }
       },
       "Avalonia.Native": {
@@ -440,8 +440,8 @@
       "avalonia.mcp.core": {
         "type": "Project",
         "dependencies": {
-          "Avalonia": "[11.3.13, )",
-          "Avalonia.Headless": "[11.3.13, )",
+          "Avalonia": "[11.3.14, )",
+          "Avalonia.Headless": "[11.3.14, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.5, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.5, )"
         }

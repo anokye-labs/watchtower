@@ -180,8 +180,8 @@
       "avalonia.mcp.core": {
         "type": "Project",
         "dependencies": {
-          "Avalonia": "[11.3.13, )",
-          "Avalonia.Headless": "[11.3.13, )",
+          "Avalonia": "[11.3.14, )",
+          "Avalonia.Headless": "[11.3.14, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.5, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.5, )"
         }
