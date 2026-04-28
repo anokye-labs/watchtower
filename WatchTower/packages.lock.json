@@ -57,13 +57,13 @@
       },
       "FluentIcons.Avalonia.Fluent": {
         "type": "Direct",
-        "requested": "[2.0.323, )",
-        "resolved": "2.0.323",
-        "contentHash": "3z/BugpYFmPrpecfw55LLZ39dY8hjXgXG9r3O7W9yFaC/FlGrhuQGB/j9FJeVZuzOFU0qZwR0vZEagqzLYEKpg==",
+        "requested": "[2.0.325, )",
+        "resolved": "2.0.325",
+        "contentHash": "sPR7HU80w852I/lyQ+ZTNwy4vqrT6Xm0SromOatzitaB+BZSo6O/WEjlNLNZNp9/QTAAwbY0OxrNDllaJPWrWQ==",
         "dependencies": {
           "FluentAvaloniaUI": "2.0.0",
-          "FluentIcons.Common": "[2.1.323]",
-          "FluentIcons.Resources.Avalonia": "[2.0.323]"
+          "FluentIcons.Common": "[2.1.325]",
+          "FluentIcons.Resources.Avalonia": "[2.0.325]"
         }
       },
       "Iciclecreek.AdaptiveCards.Rendering.Avalonia": {
@@ -84,9 +84,9 @@
       },
       "Meziantou.Framework.Win32.CredentialManager": {
         "type": "Direct",
-        "requested": "[1.7.17, )",
-        "resolved": "1.7.17",
-        "contentHash": "HdLOn5gKSMp4ZpZr8ZryGCD99KHGx6auhItZxrY3VpeUBGY8XYGPtYJwcsQ+EFIUBIbs9d9ZATe7oMe7XBBRYQ=="
+        "requested": "[1.7.18, )",
+        "resolved": "1.7.18",
+        "contentHash": "+rcvMXmecrTzKEVxLZdi64U2ghOdzj3MfZF5/HjYWixXyWK5pTDFne1SwnXEHCi8Jwgza8aUHiY0B0NsQlTsDg=="
       },
       "Microsoft.CognitiveServices.Speech": {
         "type": "Direct",
@@ -154,9 +154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.2, )",
-        "resolved": "10.0.2",
-        "contentHash": "sXdDtMf2qcnbygw9OdE535c2lxSxrZP8gO4UhDJ0xiJbl1wIqXS1OTcTDFTIJPOFd6Mhcm8gPEthqWGUxBsTqw=="
+        "requested": "[10.0.3, )",
+        "resolved": "10.0.3",
+        "contentHash": "0B6nZyCHWXnvmlB559oduOspVdNOnpNXPjhpWVMovLPAsDVG7A4jJR9rzECf67JUzxP8/ee/wA8clwIzJcWNFA=="
       },
       "NAudio": {
         "type": "Direct",
@@ -403,16 +403,16 @@
       },
       "FluentIcons.Common": {
         "type": "Transitive",
-        "resolved": "2.1.323",
-        "contentHash": "J/J+32dKvpakxagxpl8PnYXex7H32C8soHGqkmR5ZQW/vH+QhzKPkRBYfA2UDUnUk1jAIW76SRJJpZsxX1CKoA=="
+        "resolved": "2.1.325",
+        "contentHash": "aM9/X5pYZ+QTR+7E8M13nHQlLVQrUFav2WVB3Y1RnTu3/S4fN4ElvmdkUJ6/7krwtJE/2g8bbHZ1AscM2DBvxw=="
       },
       "FluentIcons.Resources.Avalonia": {
         "type": "Transitive",
-        "resolved": "2.0.323",
-        "contentHash": "D+nwKFjmh/W5hWiNF8oUk3xvyWolWOczHtWbLkUcS9kWgqkLbyVgyQB0JINnngbSDZriyS+2frAemlu/DgzIgQ==",
+        "resolved": "2.0.325",
+        "contentHash": "nXpgWLLwlzcoA1RgRcKOjUr/HywlPdiRU0HcWblj8DQsF8w+Mt0v+M6Q6yzq3eUC7o+qcaVjQphnDkFm24088A==",
         "dependencies": {
           "Avalonia": "11.0.0",
-          "FluentIcons.Common": "[2.1.323]"
+          "FluentIcons.Common": "[2.1.325]"
         }
       },
       "HarfBuzzSharp": {
