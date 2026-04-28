@@ -14,7 +14,7 @@
       },
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[10.*, )",
+        "requested": "[10.0.0, )",
         "resolved": "10.0.0",
         "contentHash": "WFejCcOUR6k8UYyDnnR6Gk+obFYMsWrZuNqPJnsVFGVhpPSN0y20D4qbdKJnXinYGx9PQ397Hf9TnU1NBST8vA=="
       },
