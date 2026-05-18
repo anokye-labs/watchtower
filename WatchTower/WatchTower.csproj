@@ -26,11 +26,11 @@
     <PackageReference Include="Iciclecreek.AdaptiveCards.Rendering.Avalonia" Version="1.0.4" />
     <PackageReference Include="Meziantou.Framework.Win32.CredentialManager" Version="1.7.18" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.49.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
     <PackageReference Include="NAudio" Version="2.3.0" />
     <PackageReference Include="PiperSharp" Version="1.0.6" />
     <PackageReference Include="Silk.NET.SDL" Version="2.23.0" />
