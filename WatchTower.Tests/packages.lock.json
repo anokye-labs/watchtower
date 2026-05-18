@@ -5,18 +5,18 @@
       "Avalonia.Headless.XUnit": {
         "type": "Direct",
         "requested": "[11.*, )",
-        "resolved": "11.3.14",
-        "contentHash": "vYJgNuiaRUjMHRSyR/yJRpcW3AMJMcmnOGAFnRz4Dk/9jsIEBDSMfEZOoRJ5qwNWLBmL2UIS35OosGSIbgpvcw==",
+        "resolved": "11.3.15",
+        "contentHash": "AImlvXxW69r3eb48yfcuiUeB+gDIx8CX+F2vfO7bxEkwQU4q2vijB2T6m18iqZc0fSZzyMeAeGO47Gdyi9lbiw==",
         "dependencies": {
-          "Avalonia.Headless": "11.3.14",
+          "Avalonia.Headless": "11.3.15",
           "xunit.core": "2.4.0"
         }
       },
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "WFejCcOUR6k8UYyDnnR6Gk+obFYMsWrZuNqPJnsVFGVhpPSN0y20D4qbdKJnXinYGx9PQ397Hf9TnU1NBST8vA=="
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "27jXSV/0DbVqF5jDrAxuQFZ9oaz6gmG03p8ttxAFk+X0M4woFYj7MoWDLCna5EGLb0CE6OE7X6ZH3Wt5smTtaA=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -72,11 +72,11 @@
       },
       "Avalonia": {
         "type": "Transitive",
-        "resolved": "11.3.14",
-        "contentHash": "RcGp0iXRBqMrDRXOTUOn9OaUTx8NlukTdhuBmY9w5JmVreDtZRRErKwwiHPw+YjkbTHvhfFFNsu3Hhd+oJGIZQ==",
+        "resolved": "11.3.15",
+        "contentHash": "ItV84a//zz0ZN622kc7n2awvFUsowep9iIUA3WpcnEEo5aq6wwf4YIIMFIJuvi+gS4pUMHcM4WLvdGduaKCbYg==",
         "dependencies": {
           "Avalonia.BuildServices": "11.3.2",
-          "Avalonia.Remote.Protocol": "11.3.14",
+          "Avalonia.Remote.Protocol": "11.3.15",
           "MicroCom.Runtime": "0.11.0"
         }
       },
@@ -157,10 +157,10 @@
       },
       "Avalonia.Headless": {
         "type": "Transitive",
-        "resolved": "11.3.14",
-        "contentHash": "6UzWJmk47XKutVmKZL6ZpFIxhs4Lb5mjfT9R9u4GXDrNDMC4C2YZR3CLR/A1J0yCwOJQJh04ISE59/jqc2U7ZA==",
+        "resolved": "11.3.15",
+        "contentHash": "27E7lR4Inb0+/IQPDukrg+/GwvJL/umppNoZMEjX5TR7ZOcSDdIxG4Gg9uUrEkmJ+4/+ug2wLLlLP8mAIKeYBQ==",
         "dependencies": {
-          "Avalonia": "11.3.14"
+          "Avalonia": "11.3.15"
         }
       },
       "Avalonia.Markup.Xaml.Loader": {
@@ -191,8 +191,8 @@
       },
       "Avalonia.Remote.Protocol": {
         "type": "Transitive",
-        "resolved": "11.3.14",
-        "contentHash": "P4QPwf9VQt4CjntmfGo8uL+S1RaVbTlcFgECSFIWN3AWc/IbKs76tbZ6ibpdFg1C+IKubBPQ+hUeUq7MrBIWDA=="
+        "resolved": "11.3.15",
+        "contentHash": "7XLBHWke50/b0ORVCTFQjbKbb5lnigsqVQHa4dtcgHOHsqNORYOs8wXOEWcdJDQFeIpJ3iqROBeZHaqMX8FaFA=="
       },
       "Avalonia.Skia": {
         "type": "Transitive",
