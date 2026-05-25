@@ -57,13 +57,13 @@
       },
       "FluentIcons.Avalonia.Fluent": {
         "type": "Direct",
-        "requested": "[2.0.325, )",
-        "resolved": "2.0.325",
-        "contentHash": "sPR7HU80w852I/lyQ+ZTNwy4vqrT6Xm0SromOatzitaB+BZSo6O/WEjlNLNZNp9/QTAAwbY0OxrNDllaJPWrWQ==",
+        "requested": "[2.0.328, )",
+        "resolved": "2.0.328",
+        "contentHash": "9e8GML0SeU+zOJJ72Y0wEcTiO3/hrhXav+b/1HAEhqUYmDn+6OAWppxu8aBPSg7zKc1ottQY4AeGi+Gsameglg==",
         "dependencies": {
           "FluentAvaloniaUI": "2.0.0",
-          "FluentIcons.Common": "[2.1.325]",
-          "FluentIcons.Resources.Avalonia": "[2.0.325]"
+          "FluentIcons.Common": "[2.1.328]",
+          "FluentIcons.Resources.Avalonia": "[2.0.328]"
         }
       },
       "Iciclecreek.AdaptiveCards.Rendering.Avalonia": {
@@ -154,9 +154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.2, )",
-        "resolved": "10.0.2",
-        "contentHash": "sXdDtMf2qcnbygw9OdE535c2lxSxrZP8gO4UhDJ0xiJbl1wIqXS1OTcTDFTIJPOFd6Mhcm8gPEthqWGUxBsTqw=="
+        "requested": "[10.0.3, )",
+        "resolved": "10.0.3",
+        "contentHash": "0B6nZyCHWXnvmlB559oduOspVdNOnpNXPjhpWVMovLPAsDVG7A4jJR9rzECf67JUzxP8/ee/wA8clwIzJcWNFA=="
       },
       "NAudio": {
         "type": "Direct",
@@ -403,16 +403,16 @@
       },
       "FluentIcons.Common": {
         "type": "Transitive",
-        "resolved": "2.1.325",
-        "contentHash": "aM9/X5pYZ+QTR+7E8M13nHQlLVQrUFav2WVB3Y1RnTu3/S4fN4ElvmdkUJ6/7krwtJE/2g8bbHZ1AscM2DBvxw=="
+        "resolved": "2.1.328",
+        "contentHash": "SthigV7PMFBjC2IGznr2JarBF/xTsASqFyeGmgWk3MB+0AG3fCaa3xylEljzK9CnpKV7Bs6tWMAxMK5MbqizBQ=="
       },
       "FluentIcons.Resources.Avalonia": {
         "type": "Transitive",
-        "resolved": "2.0.325",
-        "contentHash": "nXpgWLLwlzcoA1RgRcKOjUr/HywlPdiRU0HcWblj8DQsF8w+Mt0v+M6Q6yzq3eUC7o+qcaVjQphnDkFm24088A==",
+        "resolved": "2.0.328",
+        "contentHash": "4BQzpGlDprOt3MnUl0lCNyXlr07Pww90rGb6h644Dk+4Qvdk4f66Sj+Zsy7imBB3jMg+/TrvUOSdQoIgDeVwAA==",
         "dependencies": {
           "Avalonia": "11.0.0",
-          "FluentIcons.Common": "[2.1.325]"
+          "FluentIcons.Common": "[2.1.328]"
         }
       },
       "HarfBuzzSharp": {
